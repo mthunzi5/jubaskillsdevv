@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Evaluations{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Evaluations</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-clipboard-check"></i> Performance Evaluations</h2>
+            <p class="text-muted">
+                {% if current_user.role == 'intern' %}
+                View your performance evaluations and feedback
+                {% else %}
+                Create and manage intern evaluations
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if current_user.role in ['admin', 'staff'] %}
+            <a href="{{ url_for('lms.create_evaluation') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create Evaluation
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if evaluations %}
+    <div class="row">
+        {% for eval in evaluations %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header {% if eval.overall_rating >= 4 %}bg-success{% elif eval.overall_rating >= 3 %}bg-info{% else %}bg-warning{% endif %} text-white">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Evaluation</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_user.role != 'intern' %}
+                    <h5 class="card-title">{{ eval.intern.name }} {{ eval.intern.surname }}</h5>
+                    {% endif %}
+                    
+                    <p class="card-text mb-2">
+                        <strong>Period:</strong> {{ eval.period }}
+                    </p>
+                    <p class="card-text mb-2">
+                        <strong>Evaluator:</strong> {{ eval.evaluator.name }} {{ eval.evaluator.surname }}
+                    </p>
+                    <p class="card-text mb-3">
+                        <strong>Date:</strong> {{ eval.evaluation_date.strftime('%Y-%m-%d') }}
+                    </p>
+                    
+                    <div class="text-center mb-3">
+                        <h2 class="mb-0 {% if eval.overall_rating >= 4 %}text-success{% elif eval.overall_rating >= 3 %}text-info{% else %}text-warning{% endif %}">
+                            {{ "%.1f"|format(eval.overall_rating) }}/5
+                        </h2>
+                        <small class="text-muted">Overall Rating</small>
+                        <div class="mt-1">
+                            {% for i in range(5) %}
+                                {% if i < eval.overall_rating|int %}
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                {% else %}
+                                    <i class="bi bi-star text-muted"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    {% if eval.strengths %}
+                    <p class="card-text small">
+                        <strong>Strengths:</strong><br>
+                        {{ eval.strengths[:100] }}{% if eval.strengths|length > 100 %}...{% endif %}
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('lms.view_evaluation', eval_id=eval.id) }}" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-eye"></i> View Full Evaluation
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 
+        {% if current_user.role == 'intern' %}
+        No evaluations available yet. Your supervisor will evaluate your performance periodically.
+        {% else %}
+        No evaluations have been created yet. <a href="{{ url_for('lms.create_evaluation') }}">Create the first evaluation</a>.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

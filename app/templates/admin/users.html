@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Users - Juba Skills LMS{% endblock %}
+
+{% block page_title %}Manage Users{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Users</li>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('admin.users', role='all') }}" class="btn btn-sm btn-{{ 'primary' if role_filter == 'all' else 'outline-primary' }}">All</a>
+            <a href="{{ url_for('admin.users', role='admin') }}" class="btn btn-sm btn-{{ 'primary' if role_filter == 'admin' else 'outline-primary' }}">Admins</a>
+            <a href="{{ url_for('admin.users', role='staff') }}" class="btn btn-sm btn-{{ 'primary' if role_filter == 'staff' else 'outline-primary' }}">Staff</a>
+            <a href="{{ url_for('admin.users', role='intern') }}" class="btn btn-sm btn-{{ 'primary' if role_filter == 'intern' else 'outline-primary' }}">Interns</a>
+        </div>
+        <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary" data-bs-toggle="tooltip" title="Create a new user account">
+            <i class="bi bi-plus-circle"></i> Add User
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID/Email</th>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Type</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.email or user.id_number }}</td>
+                        <td>{{ user.name }} {{ user.surname }}</td>
+                        <td><span class="badge bg-{{ 'primary' if user.role == 'admin' else 'info' if user.role == 'staff' else 'success' }}">{{ user.role|title }}</span></td>
+                        <td>{% if user.role == 'intern' %}{{ user.intern_type|upper }}{% else %}-{% endif %}</td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}</td>
+                        <td class="table-actions">
+                            <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% if user.id != current_user.id %}
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    
+                    <!-- Delete Modal -->
+                    <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Delete User</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}">
+                                    <div class="modal-body">
+                                        <p>Are you sure you want to delete <strong>{{ user.name }} {{ user.surname }}</strong>?</p>
+                                        <div class="mb-3">
+                                            <label for="reason{{ user.id }}" class="form-label">Reason for deletion *</label>
+                                            <textarea class="form-control" id="reason{{ user.id }}" name="reason" rows="3" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

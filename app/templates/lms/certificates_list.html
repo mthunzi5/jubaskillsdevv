@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Certificates{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Certificates</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-award"></i> Certificates</h2>
+            <p class="text-muted">
+                {% if current_user.role == 'intern' %}
+                View your earned certificates
+                {% else %}
+                Manage issued certificates
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    {% if certificates %}
+    <div class="row">
+        {% for cert in certificates %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-award-fill"></i> Certificate</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ cert.intern_name }}</h5>
+                    <p class="card-text"><strong>Program:</strong> {{ cert.program_name }}</p>
+                    <p class="card-text"><strong>Certificate #:</strong> <code>{{ cert.certificate_number }}</code></p>
+                    
+                    <hr>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <h4 class="mb-0 text-success">{{ "%.1f"|format(cert.final_grade) }}%</h4>
+                            <small class="text-muted">Grade</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="mb-0 text-info">{{ cert.tasks_completed }}</h4>
+                            <small class="text-muted">Tasks</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="mb-0 text-warning">{{ "%.0f"|format(cert.total_hours) }}</h4>
+                            <small class="text-muted">Hours</small>
+                        </div>
+                    </div>
+                    
+                    <p class="card-text mb-1"><small class="text-muted">
+                        <i class="bi bi-calendar-check"></i> Completed: {{ cert.completion_date.strftime('%Y-%m-%d') }}
+                    </small></p>
+                    <p class="card-text mb-0"><small class="text-muted">
+                        <i class="bi bi-calendar-event"></i> Issued: {{ cert.issue_date.strftime('%Y-%m-%d') }}
+                    </small></p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('lms.view_certificate', cert_id=cert.id) }}" class="btn btn-success w-100">
+                        <i class="bi bi-eye"></i> View Certificate
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 
+        {% if current_user.role == 'intern' %}
+        You haven't earned any certificates yet. Keep working on your tasks!
+        {% else %}
+        No certificates have been issued yet.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

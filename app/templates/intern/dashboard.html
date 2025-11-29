@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Intern Dashboard - Juba Skills LMS{% endblock %}
+
+{% block page_title %}My Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 col-sm-6 col-lg-4 mb-3 mb-lg-0">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_submissions }}</h3>
+                    <p class="mb-0">Total Submissions</p>
+                </div>
+                <i class="bi bi-file-earmark-check fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-4 mb-3 mb-lg-0">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ current_month_submissions }}</h3>
+                    <p class="mb-0">This Month</p>
+                </div>
+                <i class="bi bi-calendar-check fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="mb-1">Type</p>
+                    <h4 class="mb-0">{{ current_user.intern_type|upper }}</h4>
+                </div>
+                <i class="bi bi-person-badge fs-1"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('intern.submit_timesheet') }}" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Submit Timesheet
+                    </a>
+                    <a href="{{ url_for('intern.timesheets') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-file-earmark-text"></i> View My Timesheets
+                    </a>
+                    <a href="{{ url_for('intern.profile') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-person"></i> My Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Recent Submissions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_submissions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Filename</th>
+                                <th>Month</th>
+                                <th>Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for timesheet in recent_submissions %}
+                            <tr>
+                                <td>{{ timesheet.original_filename }}</td>
+                                <td>{{ timesheet.submission_month }}</td>
+                                <td>{{ timesheet.submission_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No submissions yet. Submit your first timesheet!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

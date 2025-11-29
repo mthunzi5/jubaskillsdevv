@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Create Evaluation{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.evaluations_list') }}">Evaluations</a></li>
+        <li class="breadcrumb-item active">Create</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-clipboard-check"></i> Create Performance Evaluation</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Basic Info -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="intern_id" class="form-label">Intern <span class="text-danger">*</span></label>
+                                <select class="form-select" id="intern_id" name="intern_id" required>
+                                    <option value="">Select Intern</option>
+                                    {% for intern in interns %}
+                                    <option value="{{ intern.id }}">{{ intern.name }} {{ intern.surname }}{% if intern.email %} ({{ intern.email }}){% endif %}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="period" class="form-label">Evaluation Period <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="period" name="period" 
+                                       placeholder="e.g., Week 1, Month 1, Q1 2025" required>
+                            </div>
+                        </div>
+
+                        <!-- Skills Rating (1-5 Scale) -->
+                        <h5 class="mb-3"><i class="bi bi-bar-chart"></i> Skills Assessment (1-5 Rating)</h5>
+                        <div class="alert alert-info">
+                            <small>
+                                <strong>Rating Scale:</strong> 
+                                1 = Needs Improvement | 2 = Below Average | 3 = Average | 4 = Above Average | 5 = Excellent
+                            </small>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label for="technical_skills" class="form-label">Technical Skills <span class="text-danger">*</span></label>
+                                <input type="range" class="form-range" id="technical_skills" name="technical_skills" 
+                                       min="1" max="5" value="3" oninput="this.nextElementSibling.textContent = this.value" required>
+                                <div class="text-center"><span class="badge bg-primary">3</span></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="communication" class="form-label">Communication <span class="text-danger">*</span></label>
+                                <input type="range" class="form-range" id="communication" name="communication" 
+                                       min="1" max="5" value="3" oninput="this.nextElementSibling.textContent = this.value" required>
+                                <div class="text-center"><span class="badge bg-primary">3</span></div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label for="teamwork" class="form-label">Teamwork <span class="text-danger">*</span></label>
+                                <input type="range" class="form-range" id="teamwork" name="teamwork" 
+                                       min="1" max="5" value="3" oninput="this.nextElementSibling.textContent = this.value" required>
+                                <div class="text-center"><span class="badge bg-primary">3</span></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="problem_solving" class="form-label">Problem Solving <span class="text-danger">*</span></label>
+                                <input type="range" class="form-range" id="problem_solving" name="problem_solving" 
+                                       min="1" max="5" value="3" oninput="this.nextElementSibling.textContent = this.value" required>
+                                <div class="text-center"><span class="badge bg-primary">3</span></div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-3">
+                                <label for="punctuality" class="form-label">Punctuality <span class="text-danger">*</span></label>
+                                <input type="range" class="form-range" id="punctuality" name="punctuality" 
+                                       min="1" max="5" value="3" oninput="this.nextElementSibling.textContent = this.value" required>
+                                <div class="text-center"><span class="badge bg-primary">3</span></div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="initiative" class="form-label">Initiative <span class="text-danger">*</span></label>
+                                <input type="range" class="form-range" id="initiative" name="initiative" 
+                                       min="1" max="5" value="3" oninput="this.nextElementSibling.textContent = this.value" required>
+                                <div class="text-center"><span class="badge bg-primary">3</span></div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="professionalism" class="form-label">Professionalism <span class="text-danger">*</span></label>
+                                <input type="range" class="form-range" id="professionalism" name="professionalism" 
+                                       min="1" max="5" value="3" oninput="this.nextElementSibling.textContent = this.value" required>
+                                <div class="text-center"><span class="badge bg-primary">3</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Qualitative Feedback -->
+                        <h5 class="mb-3"><i class="bi bi-chat-left-text"></i> Qualitative Feedback</h5>
+
+                        <div class="mb-3">
+                            <label for="strengths" class="form-label">Strengths</label>
+                            <textarea class="form-control" id="strengths" name="strengths" rows="3" 
+                                      placeholder="What does the intern do well?"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="areas_for_improvement" class="form-label">Areas for Improvement</label>
+                            <textarea class="form-control" id="areas_for_improvement" name="areas_for_improvement" rows="3"
+                                      placeholder="What areas need development?"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="additional_comments" class="form-label">Additional Comments</label>
+                            <textarea class="form-control" id="additional_comments" name="additional_comments" rows="3"
+                                      placeholder="Any additional observations or notes"></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="recommendations" class="form-label">Recommendations</label>
+                            <textarea class="form-control" id="recommendations" name="recommendations" rows="3"
+                                      placeholder="Recommendations for future development"></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('lms.evaluations_list') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Submit Evaluation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

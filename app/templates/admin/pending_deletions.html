@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Deletions - Juba Skills LMS{% endblock %}
+
+{% block page_title %}Pending Deletion Approvals{% endblock %}
+
+{% block content %}
+{% if pending_items %}
+<div class="row">
+    {% for item in pending_items %}
+    <div class="col-md-6 mb-4">
+        <div class="card border-warning">
+            <div class="card-header bg-warning bg-opacity-10">
+                <h6 class="mb-0">
+                    <i class="bi bi-file-earmark-text"></i> Timesheet Deletion Request
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>Intern:</strong> {{ item.item.intern_name }}
+                </div>
+                <div class="mb-2">
+                    <strong>Type:</strong> <span class="badge bg-info">{{ item.item.intern_type|upper }}</span>
+                </div>
+                <div class="mb-2">
+                    <strong>File:</strong> {{ item.item.filename }}
+                </div>
+                <div class="mb-2">
+                    <strong>Submission:</strong> {{ item.item.submission_date.strftime('%Y-%m-%d %H:%M') if item.item.submission_date }}
+                </div>
+                <div class="mb-3">
+                    <strong>Deletion Reason:</strong>
+                    <p class="text-muted mb-0">{{ item.soft_delete.deletion_reason }}</p>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">
+                        Requested by {{ item.soft_delete.deleter_name }} on 
+                        {{ item.soft_delete.deleted_at.strftime('%Y-%m-%d %H:%M') }}
+                    </small>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                    <form method="POST" action="{{ url_for('admin.approve_deletion', soft_delete_id=item.soft_delete.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="bi bi-check-circle"></i> Approve Deletion
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.reject_deletion', soft_delete_id=item.soft_delete.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <i class="bi bi-x-circle"></i> Reject & Restore
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> No pending deletion approvals.
+</div>
+{% endif %}
+{% endblock %}

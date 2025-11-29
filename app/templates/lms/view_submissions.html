@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Submissions - {{ task.title }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.tasks_list_v2') }}">Tasks</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.view_task_v2', task_id=task.id) }}">{{ task.title }}</a></li>
+        <li class="breadcrumb-item active">Submissions</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-list-check"></i> Submissions for "{{ task.title }}"</h2>
+            <p class="text-muted">{{ task.category }} | {{ task.assignments|length }} intern(s) assigned</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('lms.view_task_v2', task_id=task.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Task
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ stats.total }}</h3>
+                    <p class="text-muted mb-0">Total Assigned</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h3 class="mb-0 text-warning">{{ stats.pending }}</h3>
+                    <p class="text-muted mb-0">Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <h3 class="mb-0 text-info">{{ stats.submitted }}</h3>
+                    <p class="text-muted mb-0">Submitted</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h3 class="mb-0 text-success">{{ stats.completed }}</h3>
+                    <p class="text-muted mb-0">Graded</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submissions Table -->
+    <div class="card shadow">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Intern</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Grade</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in task.assignments|sort(attribute='intern.email') %}
+                    <tr>
+                        <td>
+                            <strong>{{ assignment.intern.name or '' }} {{ assignment.intern.surname or '' }}</strong><br>
+                            <small class="text-muted">{{ assignment.intern.email }}</small>
+                        </td>
+                        <td>
+                            {% if assignment.intern.intern_type %}
+                            <span class="badge bg-secondary">{{ assignment.intern.intern_type|upper }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if assignment.status == 'completed' else 'info' if assignment.status == 'submitted' else 'warning' }}">
+                                {{ assignment.status|replace('_', ' ')|title }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if assignment.submitted_at %}
+                            {{ assignment.submitted_at.strftime('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                            <span class="text-muted">Not submitted</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if assignment.grade is not none %}
+                            <strong class="{{ 'text-success' if assignment.grade >= 70 else 'text-warning' }}">
+                                {{ assignment.grade }}%
+                            </strong>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if assignment.status == 'submitted' %}
+                            <a href="{{ url_for('lms.grade_task_v2', task_id=task.id, assignment_id=assignment.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-pencil"></i> Grade
+                            </a>
+                            {% elif assignment.status == 'completed' %}
+                            <a href="{{ url_for('lms.grade_task_v2', task_id=task.id, assignment_id=assignment.id) }}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            {% else %}
+                            <span class="text-muted">Waiting...</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

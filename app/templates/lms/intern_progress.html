@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}My Progress{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">My Progress</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <h2 class="mb-4"><i class="bi bi-person-circle"></i> My Learning Progress</h2>
+
+            <!-- Overall Progress Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-graph-up"></i> Overall Progress</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-4">
+                        <div class="col-md-3">
+                            <h2 class="mb-0">{{ progress.total_tasks }}</h2>
+                            <small class="text-muted">Total Tasks</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h2 class="mb-0 text-success">{{ progress.completed_tasks }}</h2>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h2 class="mb-0 {% if progress.average_grade >= 70 %}text-success{% elif progress.average_grade >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                {{ "%.1f"|format(progress.average_grade) }}%
+                            </h2>
+                            <small class="text-muted">Average Grade</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h2 class="mb-0 text-info">{{ "%.1f"|format(progress.total_hours_logged) }}</h2>
+                            <small class="text-muted">Hours Logged</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><strong>Completion Progress</strong></span>
+                            <span><strong>{{ "%.1f"|format(progress.completion_percentage) }}%</strong></span>
+                        </div>
+                        <div class="progress" style="height: 30px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated 
+                                        {% if progress.completion_percentage >= 80 %}bg-success
+                                        {% elif progress.completion_percentage >= 50 %}bg-info
+                                        {% else %}bg-warning{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ progress.completion_percentage }}%"
+                                 aria-valuenow="{{ progress.completion_percentage }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                {{ "%.0f"|format(progress.completion_percentage) }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-muted mb-0"><small>Last updated: {{ progress.last_updated.strftime('%Y-%m-%d %H:%M') }}</small></p>
+                </div>
+            </div>
+
+            <!-- Certificate Status -->
+            <div class="card shadow mb-4">
+                <div class="card-header {% if progress.certificate_issued %}bg-success{% elif progress.is_eligible_for_certificate %}bg-warning{% else %}bg-secondary{% endif %} text-white">
+                    <h4 class="mb-0"><i class="bi bi-award"></i> Certificate Status</h4>
+                </div>
+                <div class="card-body">
+                    {% if progress.certificate_issued %}
+                    <div class="alert alert-success">
+                        <h5><i class="bi bi-check-circle-fill"></i> Congratulations!</h5>
+                        <p>You have successfully completed the program and your certificate has been issued!</p>
+                        <a href="{{ url_for('lms.certificates_list') }}" class="btn btn-success">
+                            <i class="bi bi-award"></i> View My Certificate
+                        </a>
+                    </div>
+                    {% elif progress.is_eligible_for_certificate %}
+                    <div class="alert alert-warning">
+                        <h5><i class="bi bi-star-fill"></i> You're Eligible for Certificate!</h5>
+                        <p>You've met the requirements! Please contact your supervisor to generate your certificate.</p>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> Certificate Requirements</h5>
+                        <p>To earn your certificate, you need to achieve:</p>
+                        <ul>
+                            <li>At least 80% task completion (Current: {{ "%.1f"|format(progress.completion_percentage) }}%)</li>
+                            <li>At least 70% average grade (Current: {{ "%.1f"|format(progress.average_grade) }}%)</li>
+                        </ul>
+                        <p class="mb-0">Keep up the great work!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-book"></i> Training Materials</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <h2 class="mb-0">{{ progress.materials_viewed }}</h2>
+                            <small class="text-muted">Materials Viewed</small>
+                            <hr>
+                            <a href="{{ url_for('lms.materials_list') }}" class="btn btn-outline-info">
+                                <i class="bi bi-eye"></i> View Materials
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="bi bi-list-task"></i> Active Tasks</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <h2 class="mb-0">{{ progress.total_tasks - progress.completed_tasks }}</h2>
+                            <small class="text-muted">Tasks Remaining</small>
+                            <hr>
+                            <a href="{{ url_for('lms.tasks_list') }}" class="btn btn-outline-warning">
+                                <i class="bi bi-list"></i> View Tasks
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

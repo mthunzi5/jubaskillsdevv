@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Task{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.tasks_list_v2') }}">Tasks</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.view_task_v2', task_id=task.id) }}">{{ task.title }}</a></li>
+        <li class="breadcrumb-item active">Submit</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-upload"></i> Submit Task</h4>
+                </div>
+                <div class="card-body">
+                    <h5>{{ task.title }}</h5>
+                    <p class="text-muted">{{ task.description }}</p>
+
+                    {% if task.reference_file %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-file-earmark-arrow-down"></i> 
+                        <a href="{{ url_for('static', filename='uploads/tasks/' + task.reference_file) }}" target="_blank">
+                            Download Reference File
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    {% if task.category == 'Quiz' %}
+                    <!-- Quiz Submission Form -->
+                    <form method="POST">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-clock"></i> <strong>Note:</strong> This quiz will be auto-graded when you submit. 
+                            You have one attempt. Passing score: {{ task.passing_score }}%
+                        </div>
+
+                        {% for question in task.quiz_questions|sort(attribute='question_order') %}
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    Question {{ loop.index }} of {{ task.quiz_questions|length }}
+                                    <span class="badge bg-secondary float-end">{{ question.points }} pts</span>
+                                </h6>
+                                <p class="card-text">{{ question.question_text }}</p>
+
+                                {% if question.question_type == 'multiple_choice' %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="answer_{{ question.id }}" 
+                                           id="q{{ question.id }}_a" value="A" required>
+                                    <label class="form-check-label" for="q{{ question.id }}_a">
+                                        A. {{ question.option_a }}
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="answer_{{ question.id }}" 
+                                           id="q{{ question.id }}_b" value="B" required>
+                                    <label class="form-check-label" for="q{{ question.id }}_b">
+                                        B. {{ question.option_b }}
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="answer_{{ question.id }}" 
+                                           id="q{{ question.id }}_c" value="C" required>
+                                    <label class="form-check-label" for="q{{ question.id }}_c">
+                                        C. {{ question.option_c }}
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="answer_{{ question.id }}" 
+                                           id="q{{ question.id }}_d" value="D" required>
+                                    <label class="form-check-label" for="q{{ question.id }}_d">
+                                        D. {{ question.option_d }}
+                                    </label>
+                                </div>
+
+                                {% elif question.question_type == 'true_false' %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="answer_{{ question.id }}" 
+                                           id="q{{ question.id }}_true" value="True" required>
+                                    <label class="form-check-label" for="q{{ question.id }}_true">
+                                        True
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="answer_{{ question.id }}" 
+                                           id="q{{ question.id }}_false" value="False" required>
+                                    <label class="form-check-label" for="q{{ question.id }}_false">
+                                        False
+                                    </label>
+                                </div>
+
+                                {% elif question.question_type == 'short_answer' %}
+                                <textarea class="form-control" name="answer_{{ question.id }}" rows="3" required></textarea>
+                                <div class="form-text">Provide a brief answer</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Once submitted, you cannot change your answers. 
+                            Please review carefully before submitting.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('lms.view_task_v2', task_id=task.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Submit Quiz
+                            </button>
+                        </div>
+                    </form>
+
+                    {% else %}
+                    <!-- Regular Task Submission Form -->
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="submission_text" class="form-label">Your Response <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="submission_text" name="submission_text" 
+                                      rows="10" required></textarea>
+                            <div class="form-text">Provide detailed information about your work</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="submission_file" class="form-label">Upload File (Optional)</label>
+                            <input type="file" class="form-control" id="submission_file" name="submission_file"
+                                   accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.xlsx,.xls,.zip">
+                            <div class="form-text">Upload supporting documents, code files, or project files</div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Your submission will be reviewed by staff and you'll receive feedback.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('lms.view_task_v2', task_id=task.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-check-circle"></i> Submit Task
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

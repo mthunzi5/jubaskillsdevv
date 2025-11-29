@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Dashboard - Juba Skills LMS{% endblock %}
+
+{% block page_title %}Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 col-sm-6 col-lg-4 mb-3 mb-lg-0">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_timesheets }}</h3>
+                    <p class="mb-0">Total Timesheets</p>
+                </div>
+                <i class="bi bi-file-earmark-text fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-4 mb-3 mb-lg-0">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ current_month_timesheets }}</h3>
+                    <p class="mb-0">This Month</p>
+                </div>
+                <i class="bi bi-calendar-check fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_interns }}</h3>
+                    <p class="mb-0">Active Interns</p>
+                </div>
+                <i class="bi bi-people fs-1"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Submissions</h5>
+                <a href="{{ url_for('staff.timesheets') }}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_submissions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Intern</th>
+                                <th>Type</th>
+                                <th>Filename</th>
+                                <th>Submitted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for timesheet in recent_submissions %}
+                            <tr>
+                                <td>{{ timesheet.intern.name }} {{ timesheet.intern.surname }}</td>
+                                <td><span class="badge bg-info">{{ timesheet.intern.intern_type|upper }}</span></td>
+                                <td>{{ timesheet.original_filename }}</td>
+                                <td>{{ timesheet.submission_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('staff.download_timesheet', timesheet_id=timesheet.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No recent submissions</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

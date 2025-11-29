@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Interns - Juba Skills LMS{% endblock %}
+
+{% block page_title %}Interns{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <div class="btn-group w-100 w-md-auto" role="group">
+        <a href="{{ url_for('staff.interns', intern_type='all') }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'all' else 'outline-primary' }}">All</a>
+        <a href="{{ url_for('staff.interns', intern_type='varsity') }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'varsity' else 'outline-primary' }}">Varsity</a>
+        <a href="{{ url_for('staff.interns', intern_type='tvet') }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'tvet' else 'outline-primary' }}">TVET</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID Number</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Type</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for intern in interns %}
+                    <tr>
+                        <td>{{ intern.id_number }}</td>
+                        <td>{{ intern.name }} {{ intern.surname }}</td>
+                        <td>{{ intern.email or '-' }}</td>
+                        <td>{{ intern.phone or '-' }}</td>
+                        <td><span class="badge bg-info">{{ intern.intern_type|upper }}</span></td>
+                        <td>
+                            <a href="{{ url_for('staff.intern_timesheets', intern_id=intern.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-file-earmark-text"></i> Timesheets
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

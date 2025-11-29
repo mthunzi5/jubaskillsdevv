@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Task Deletion History{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.tasks_list') }}">Tasks</a></li>
+        <li class="breadcrumb-item active">Deletion History</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-clock-history"></i> Task Deletion History</h2>
+            <p class="text-muted">Complete record of all deleted tasks</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('lms.task_deletion_requests') }}" class="btn btn-outline-warning">
+                <i class="bi bi-exclamation-triangle"></i> Pending Requests
+            </a>
+        </div>
+    </div>
+
+    {% if history %}
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Task Details</th>
+                            <th>Assigned To</th>
+                            <th>Status/Grade</th>
+                            <th>Deletion Reason</th>
+                            <th>Deleted By</th>
+                            <th>Approved By</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in history %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.task_title }}</strong><br>
+                                <small class="text-muted">{{ item.task_category or 'N/A' }}</small>
+                            </td>
+                            <td>{{ item.assigned_to_name }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ item.task_status }}</span>
+                                {% if item.task_grade %}
+                                <br><small>Grade: {{ item.task_grade }}%</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ item.deletion_reason[:100] }}{% if item.deletion_reason|length > 100 %}...{% endif %}</small>
+                            </td>
+                            <td>{{ item.deleter.name }} {{ item.deleter.surname }}</td>
+                            <td>
+                                {% if item.approver %}
+                                {{ item.approver.name }} {{ item.approver.surname }}<br>
+                                <small class="text-muted">{{ item.approved_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                {% else %}
+                                <span class="text-muted">Direct delete</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.deleted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No deletion history available.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Tasks</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2><i class="bi bi-list-task"></i> Tasks</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            {% if current_user.is_staff() or current_user.is_admin() %}
+            <a href="{{ url_for('lms.create_task_v2') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create Task
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == 'all' %}active{% endif %}" 
+               href="{{ url_for('lms.tasks_list_v2', status='all') }}">All Tasks</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == 'pending' %}active{% endif %}" 
+               href="{{ url_for('lms.tasks_list_v2', status='pending') }}">Pending</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == 'submitted' %}active{% endif %}" 
+               href="{{ url_for('lms.tasks_list_v2', status='submitted') }}">Submitted</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == 'completed' %}active{% endif %}" 
+               href="{{ url_for('lms.tasks_list_v2', status='completed') }}">Completed</a>
+        </li>
+    </ul>
+
+    {% if tasks %}
+    <div class="row">
+        {% for task in tasks %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{ task.title }}</h5>
+                        <span class="badge bg-{{ 'danger' if task.priority == 'high' else 'warning' if task.priority == 'medium' else 'secondary' }}">
+                            {{ task.priority|upper }}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <span class="badge bg-primary">{{ task.category }}</span>
+                        <span class="badge bg-{{ 'success' if task.is_open else 'secondary' }}">
+                            <i class="bi bi-{{ 'unlock' if task.is_open else 'lock' }}"></i> {{ 'Open' if task.is_open else 'Closed' }}
+                        </span>
+                    </div>
+                    
+                    <p class="card-text text-muted small">
+                        {{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}
+                    </p>
+                    
+                    {% if assignments and task.id in assignments %}
+                        {% set assignment = assignments[task.id] %}
+                        <div class="mb-2">
+                            <span class="badge bg-{{ 'success' if assignment.status == 'completed' else 'info' if assignment.status == 'submitted' else 'warning' }}">
+                                {{ assignment.status|replace('_', ' ')|title }}
+                            </span>
+                            {% if assignment.grade %}
+                            <span class="badge bg-dark">Grade: {{ assignment.grade }}%</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if task.due_date %}
+                    <p class="mb-2 small">
+                        <i class="bi bi-calendar"></i> Due: {{ task.due_date.strftime('%Y-%m-%d') }}
+                    </p>
+                    {% endif %}
+                    
+                    <div class="d-grid">
+                        <a href="{{ url_for('lms.view_task_v2', task_id=task.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No tasks found.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

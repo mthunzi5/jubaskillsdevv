@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Tasks</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-list-task"></i> Tasks & Assignments</h2>
+            <p class="text-muted">
+                {% if current_user.role == 'intern' %}
+                Your assigned tasks and assignments
+                {% else %}
+                Manage tasks and assignments for interns
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if current_user.role in ['admin', 'staff'] %}
+            <a href="{{ url_for('lms.create_task') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create Task
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('lms.tasks_list', status='all') }}" 
+                   class="btn btn-sm {{ 'btn-primary' if current_status == 'all' else 'btn-outline-primary' }}">
+                    All
+                </a>
+                <a href="{{ url_for('lms.tasks_list', status='pending') }}" 
+                   class="btn btn-sm {{ 'btn-primary' if current_status == 'pending' else 'btn-outline-primary' }}">
+                    Pending
+                </a>
+                <a href="{{ url_for('lms.tasks_list', status='in_progress') }}" 
+                   class="btn btn-sm {{ 'btn-primary' if current_status == 'in_progress' else 'btn-outline-primary' }}">
+                    In Progress
+                </a>
+                <a href="{{ url_for('lms.tasks_list', status='submitted') }}" 
+                   class="btn btn-sm {{ 'btn-primary' if current_status == 'submitted' else 'btn-outline-primary' }}">
+                    Submitted
+                </a>
+                <a href="{{ url_for('lms.tasks_list', status='completed') }}" 
+                   class="btn btn-sm {{ 'btn-primary' if current_status == 'completed' else 'btn-outline-primary' }}">
+                    Completed
+                </a>
+                <a href="{{ url_for('lms.tasks_list', status='overdue') }}" 
+                   class="btn btn-sm {{ 'btn-primary' if current_status == 'overdue' else 'btn-outline-primary' }}">
+                    Overdue
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks List -->
+    {% if tasks %}
+    <div class="row">
+        {% for task in tasks %}
+        <div class="col-md-12 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-start mb-2">
+                                <h5 class="card-title mb-0">{{ task.title }}</h5>
+                                <span class="badge ms-2 
+                                    {% if task.status == 'completed' %}bg-success
+                                    {% elif task.status == 'submitted' %}bg-info
+                                    {% elif task.status == 'overdue' %}bg-danger
+                                    {% elif task.status == 'in_progress' %}bg-warning
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ task.status.replace('_', ' ').title() }}
+                                </span>
+                                <span class="badge ms-1 
+                                    {% if task.priority == 'high' %}bg-danger
+                                    {% elif task.priority == 'medium' %}bg-warning
+                                    {% else %}bg-info{% endif %}">
+                                    {{ task.priority.title() }}
+                                </span>
+                            </div>
+                            
+                            {% if task.category %}
+                            <span class="badge bg-secondary mb-2">{{ task.category }}</span>
+                            {% endif %}
+                            
+                            <p class="card-text text-muted mb-2">{{ task.description[:150] }}{% if task.description|length > 150 %}...{% endif %}</p>
+                            
+                            <div class="d-flex gap-3 text-muted small">
+                                {% if current_user.role != 'intern' %}
+                                <span><i class="bi bi-person"></i> {{ task.intern.name }} {{ task.intern.surname }}</span>
+                                {% endif %}
+                                <span><i class="bi bi-person-badge"></i> {{ task.assigner.name }} {{ task.assigner.surname }}</span>
+                                {% if task.due_date %}
+                                <span>
+                                    <i class="bi bi-calendar"></i> 
+                                    Due: {{ task.due_date.strftime('%Y-%m-%d') }}
+                                    {% if task.days_until_due() is not none %}
+                                        {% if task.days_until_due() < 0 %}
+                                        <span class="badge bg-danger">{{ task.days_until_due()|abs }} days overdue</span>
+                                        {% elif task.days_until_due() <= 3 %}
+                                        <span class="badge bg-warning">{{ task.days_until_due() }} days left</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-end">
+                            {% if task.grade is not none %}
+                            <div class="mb-2">
+                                <h3 class="mb-0 {% if task.grade >= 70 %}text-success{% elif task.grade >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ task.grade }}%
+                                </h3>
+                                <small class="text-muted">Grade</small>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="btn-group-vertical w-100">
+                                <a href="{{ url_for('lms.view_task', task_id=task.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                                
+                                {% if current_user.role == 'intern' and task.status in ['pending', 'in_progress'] %}
+                                <a href="{{ url_for('lms.submit_task', task_id=task.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-upload"></i> Submit Task
+                                </a>
+                                {% endif %}
+                                
+                                {% if current_user.role in ['admin', 'staff'] and task.status == 'submitted' %}
+                                <a href="{{ url_for('lms.grade_task', task_id=task.id) }}" class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-circle"></i> Grade Task
+                                </a>
+                                {% endif %}
+                                
+                                {% if current_user.role in ['admin', 'staff'] %}
+                                <a href="{{ url_for('lms.delete_task', task_id=task.id) }}" class="btn btn-sm btn-outline-danger w-100">
+                                    <i class="bi bi-trash"></i> Delete Task
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No tasks found.
+        {% if current_user.role in ['admin', 'staff'] %}
+        <a href="{{ url_for('lms.create_task') }}">Create the first task</a>.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

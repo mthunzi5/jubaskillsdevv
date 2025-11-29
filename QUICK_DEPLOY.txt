@@ -1,0 +1,89 @@
+╔══════════════════════════════════════════════════════════════╗
+║        PYTHONANYWHERE DEPLOYMENT - QUICK STEPS               ║
+╚══════════════════════════════════════════════════════════════╝
+
+📋 BEFORE YOU START:
+   ✓ Create account at: https://www.pythonanywhere.com/registration/register/beginner/
+   ✓ Upload your code (use Git or Files tab)
+
+🚀 DEPLOYMENT STEPS:
+
+1️⃣  BASH CONSOLE
+    cd ~/jubalmss
+    bash setup_pythonanywhere.sh
+    
+2️⃣  WEB TAB → ADD NEW WEB APP
+    • Manual configuration
+    • Python 3.10
+    
+3️⃣  WSGI FILE (click link in Code section)
+    • Copy content from: pythonanywhere_wsgi.py
+    • Replace 'yourusername' with YOUR username
+    
+4️⃣  VIRTUALENV SECTION
+    Path: /home/yourusername/jubalmss/venv
+    
+5️⃣  STATIC FILES SECTION
+    URL: /static/
+    Directory: /home/yourusername/jubalmss/app/static/
+    
+6️⃣  RELOAD BUTTON
+    Click the big green "Reload" button
+    
+7️⃣  TEST YOUR SITE
+    https://yourusername.pythonanywhere.com
+    Login: admin@juba.ac.za / Admin@2025
+
+═══════════════════════════════════════════════════════════════
+
+📁 IMPORTANT PATHS (replace 'yourusername'):
+   Project:    /home/yourusername/jubalmss
+   Venv:       /home/yourusername/jubalmss/venv
+   Static:     /home/yourusername/jubalmss/app/static
+   Database:   /home/yourusername/jubalmss/instance/juba_lms.db
+   Logs:       /var/log/yourusername.pythonanywhere.com.*.log
+
+═══════════════════════════════════════════════════════════════
+
+🔧 TROUBLESHOOTING:
+
+   ❌ Site shows "Something went wrong"
+      → Check error log in Web tab
+      → Verify WSGI file has correct username
+      → Make sure venv path is correct
+      
+   ❌ "No module named 'app'"
+      → Check WSGI file project_home path
+      → Reinstall: pip install -r requirements.txt
+      
+   ❌ Static files (CSS/images) not loading
+      → Verify static files mapping in Web tab
+      → Check path: /home/yourusername/jubalmss/app/static/
+      
+   ❌ File upload errors
+      → Run: chmod -R 755 app/static uploads
+      → Check directories exist
+
+═══════════════════════════════════════════════════════════════
+
+🔄 UPDATE CODE:
+   cd ~/jubalmss
+   git pull
+   [Web tab] → Click "Reload"
+
+💾 BACKUP DATABASE:
+   cd ~/jubalmss/instance
+   cp juba_lms.db backup_$(date +%Y%m%d).db
+
+📊 VIEW LOGS:
+   tail -f /var/log/yourusername.pythonanywhere.com.error.log
+
+═══════════════════════════════════════════════════════════════
+
+⚠️  REMEMBER:
+   • Login every 3 months to keep account active
+   • 512MB storage limit on free tier
+   • Your site: https://yourusername.pythonanywhere.com
+   • Change admin password after first login!
+
+═══════════════════════════════════════════════════════════════

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Task{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.tasks_list') }}">Tasks</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.view_task', task_id=task.id) }}">{{ task.title }}</a></li>
+        <li class="breadcrumb-item active">Submit</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Task Summary -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-file-text"></i> {{ task.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Description:</strong></p>
+                    <p class="text-muted">{{ task.description }}</p>
+                    {% if task.due_date %}
+                    <p class="mb-0"><strong><i class="bi bi-calendar"></i> Due:</strong> {{ task.due_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Submission Form -->
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bi-upload"></i> Submit Your Work</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" id="submitForm">
+                        <div class="mb-3">
+                            <label for="submission_text" class="form-label">Your Response <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="submission_text" name="submission_text" rows="10" required></textarea>
+                            <div class="form-text">Provide a detailed response to the task requirements</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="submission_file" class="form-label">Attach File (Optional)</label>
+                            <input type="file" class="form-control" id="submission_file" name="submission_file"
+                                   accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.xlsx,.xls,.zip">
+                            <div class="form-text">
+                                Upload supporting documents if needed (PDF, DOC, DOCX, PPT, PPTX, TXT, XLSX, XLS, ZIP - Max 16MB)
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> Once you submit, you cannot edit your submission. Make sure to review your work before submitting.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('lms.view_task', task_id=task.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to submit this task? You cannot edit it after submission.');">
+                                <i class="bi bi-check-circle"></i> Submit Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading overlay -->
+<script>
+document.getElementById('submitForm').addEventListener('submit', function() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+});
+</script>
+{% endblock %}

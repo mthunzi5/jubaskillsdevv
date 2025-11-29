@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Communication Board{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-chat-square-text"></i> Communication Board</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPostModal">
+        <i class="bi bi-plus-circle"></i> New Post
+    </button>
+</div>
+
+<!-- Filter Tabs -->
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link {% if post_type_filter == 'all' %}active{% endif %}" 
+           href="{{ url_for('board.board', type='all') }}">
+            <i class="bi bi-grid"></i> All Posts
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if post_type_filter == 'general' %}active{% endif %}" 
+           href="{{ url_for('board.board', type='general') }}">
+            <i class="bi bi-chat-dots"></i> General
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if post_type_filter == 'announcement' %}active{% endif %}" 
+           href="{{ url_for('board.board', type='announcement') }}">
+            <i class="bi bi-megaphone"></i> Announcements
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if post_type_filter == 'reminder' %}active{% endif %}" 
+           href="{{ url_for('board.board', type='reminder') }}">
+            <i class="bi bi-alarm"></i> Reminders
+        </a>
+    </li>
+</ul>
+
+<!-- Posts List -->
+{% if posts %}
+<div class="row">
+    {% for post in posts %}
+    <div class="col-12 mb-3">
+        <div class="card {% if post.is_pinned %}border-primary{% endif %} shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h5 class="mb-1">
+                        {% if post.is_pinned %}
+                        <i class="bi bi-pin-angle-fill text-primary"></i>
+                        {% endif %}
+                        {{ post.title }}
+                        
+                        {% if post.post_type == 'announcement' %}
+                        <span class="badge bg-warning text-dark ms-2"><i class="bi bi-megaphone"></i> Announcement</span>
+                        {% elif post.post_type == 'reminder' %}
+                        <span class="badge bg-info ms-2"><i class="bi bi-alarm"></i> Reminder</span>
+                        {% endif %}
+                    </h5>
+                    <small class="text-muted">
+                        <i class="bi bi-person-circle"></i> {{ post.author.name }} {{ post.author.surname }}
+                        <i class="bi bi-clock ms-2"></i> {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        {% if post.updated_at and post.updated_at != post.created_at %}
+                        <span class="badge bg-secondary ms-2">Edited</span>
+                        {% endif %}
+                    </small>
+                </div>
+                
+                <!-- Actions -->
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% if current_user.role == 'admin' %}
+                        <li>
+                            <form method="POST" action="{{ url_for('board.pin_post', post_id=post.id) }}" style="display: inline;">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="bi bi-pin{% if post.is_pinned %}-fill{% endif %}"></i>
+                                    {% if post.is_pinned %}Unpin{% else %}Pin{% endif %} Post
+                                </button>
+                            </form>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        
+                        {% if post.author_id == current_user.id and post.can_edit() %}
+                        <li>
+                            <a class="dropdown-item" href="#" 
+                               onclick="editPost({{ post.id }}, '{{ post.title|replace("'", "\\'") }}', `{{ post.content|replace('`', '\\`') }}`, '{{ post.external_link or '' }}', {{ post.time_remaining_to_edit() }})"
+                               data-bs-toggle="modal" data-bs-target="#editPostModal">
+                                <i class="bi bi-pencil"></i> Edit 
+                                <small class="text-muted">({{ post.time_remaining_to_edit() // 60 }}m {{ post.time_remaining_to_edit() % 60 }}s left)</small>
+                            </a>
+                        </li>
+                        <li>
+                            <form method="POST" action="{{ url_for('board.delete_post', post_id=post.id) }}" 
+                                  onsubmit="return confirm('Are you sure you want to delete this post?')">
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </form>
+                        </li>
+                        {% elif current_user.role == 'admin' %}
+                        <li>
+                            <form method="POST" action="{{ url_for('board.delete_post', post_id=post.id) }}" 
+                                  onsubmit="return confirm('Are you sure you want to delete this post?')">
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-trash"></i> Delete (Admin)
+                                </button>
+                            </form>
+                        </li>
+                        {% else %}
+                        <li><span class="dropdown-item text-muted"><i class="bi bi-lock"></i> Read Only</span></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <p class="card-text" style="white-space: pre-wrap;">{{ post.content }}</p>
+                
+                <!-- External Link -->
+                {% if post.external_link %}
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-link-45deg"></i> 
+                    <a href="{{ post.external_link }}" target="_blank" rel="noopener noreferrer">
+                        {{ post.external_link }}
+                    </a>
+                </div>
+                {% endif %}
+                
+                <!-- Attachments -->
+                {% if post.attachments.count() > 0 %}
+                <div class="border-top pt-3 mt-3">
+                    <h6 class="mb-2"><i class="bi bi-paperclip"></i> Attachments ({{ post.attachments.count() }})</h6>
+                    <div class="row g-2">
+                        {% for attachment in post.attachments %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card border">
+                                <div class="card-body p-2 d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+                                        <i class="bi {{ attachment.get_file_type_icon() }} fs-4 me-2 text-primary"></i>
+                                        <div class="overflow-hidden">
+                                            <small class="text-truncate d-block" title="{{ attachment.file_name }}">
+                                                {{ attachment.file_name }}
+                                            </small>
+                                            <small class="text-muted">
+                                                {{ (attachment.file_size / 1024) | round(1) }} KB
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="btn-group btn-group-sm ms-2">
+                                        {% if attachment.file_type == 'image' %}
+                                        <a href="{{ attachment.file_path }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{{ url_for('board.download_attachment', attachment_id=attachment.id) }}" 
+                                           class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                        {% if post.author_id == current_user.id and post.can_edit() %}
+                                        <form method="POST" action="{{ url_for('board.delete_attachment', attachment_id=attachment.id) }}" 
+                                              style="display: inline;"
+                                              onsubmit="return confirm('Delete this attachment?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info text-center">
+    <i class="bi bi-inbox fs-1"></i>
+    <p class="mb-0">No posts yet. Be the first to post!</p>
+</div>
+{% endif %}
+
+<!-- Create Post Modal -->
+<div class="modal fade" id="createPostModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('board.create_post') }}" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Create New Post</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="postType" class="form-label">Post Type</label>
+                        <select class="form-select" id="postType" name="post_type" required>
+                            <option value="general">General</option>
+                            <option value="announcement">Announcement</option>
+                            <option value="reminder">Reminder</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="postTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="postTitle" name="title" 
+                               placeholder="Enter post title" maxlength="200" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="postContent" class="form-label">Content</label>
+                        <textarea class="form-control" id="postContent" name="content" rows="6" 
+                                  placeholder="Write your message here..." required></textarea>
+                        <small class="text-muted">You can edit this post for 5 minutes after posting.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="postLink" class="form-label">External Link (Optional)</label>
+                        <input type="url" class="form-control" id="postLink" name="external_link" 
+                               placeholder="https://example.com">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="postAttachments" class="form-label">Attachments (Optional)</label>
+                        <input type="file" class="form-control" id="postAttachments" name="attachments" 
+                               multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.gif">
+                        <small class="text-muted">
+                            Max 10MB per file. Allowed: PDF, Word, Excel, PowerPoint, Text, Images
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Post
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Post Modal -->
+<div class="modal fade" id="editPostModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" id="editPostForm" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil"></i> Edit Post
+                        <small class="text-muted ms-2" id="editTimeRemaining"></small>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-clock"></i> You can edit this post for <strong id="editMinutesLeft"></strong> more.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPostTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="editPostTitle" name="title" 
+                               maxlength="200" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPostContent" class="form-label">Content</label>
+                        <textarea class="form-control" id="editPostContent" name="content" rows="6" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPostLink" class="form-label">External Link (Optional)</label>
+                        <input type="url" class="form-control" id="editPostLink" name="external_link" 
+                               placeholder="https://example.com">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPostAttachments" class="form-label">Add More Attachments (Optional)</label>
+                        <input type="file" class="form-control" id="editPostAttachments" name="attachments" 
+                               multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.gif">
+                        <small class="text-muted">Existing attachments will be kept.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editPost(postId, title, content, link, timeRemaining) {
+    document.getElementById('editPostForm').action = `/board/edit/${postId}`;
+    document.getElementById('editPostTitle').value = title;
+    document.getElementById('editPostContent').value = content;
+    document.getElementById('editPostLink').value = link;
+    
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    document.getElementById('editMinutesLeft').textContent = `${minutes}m ${seconds}s`;
+    
+    // Start countdown
+    let remaining = timeRemaining;
+    const countdown = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+            clearInterval(countdown);
+            alert('Edit time expired! This post is now read-only.');
+            bootstrap.Modal.getInstance(document.getElementById('editPostModal')).hide();
+            location.reload();
+        }
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        document.getElementById('editMinutesLeft').textContent = `${m}m ${s}s`;
+    }, 1000);
+}
+
+// Initialize Bootstrap tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

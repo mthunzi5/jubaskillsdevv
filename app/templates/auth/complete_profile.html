@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Profile - Juba Skills LMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h4 class="mb-4">Complete Your Profile</h4>
+                <p class="text-muted">Please provide your details to complete registration.</p>
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="surname" class="form-label">Surname *</label>
+                            <input type="text" class="form-control" id="surname" name="surname" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" name="phone">
+                    </div>
+                    <hr class="my-4">
+                    <h5 class="mb-3">Change Password (Optional)</h5>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password">
+                        <small class="text-muted">Leave blank to keep current password</small>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Complete Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

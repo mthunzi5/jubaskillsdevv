@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Progress Dashboard{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Progress Tracking</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-graph-up"></i> Intern Progress Dashboard</h2>
+            <p class="text-muted">Track intern development and performance</p>
+        </div>
+    </div>
+
+    <!-- Progress Cards -->
+    <div class="row">
+        {% for item in progress_data %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ item.intern.name }} {{ item.intern.surname }}</h5>
+                    <small>{{ item.intern.employee_id }}</small>
+                </div>
+                <div class="card-body">
+                    <!-- Completion Progress -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><strong>Overall Progress</strong></span>
+                            <span><strong>{{ "%.1f"|format(item.progress.completion_percentage) }}%</strong></span>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar {% if item.progress.completion_percentage >= 80 %}bg-success{% elif item.progress.completion_percentage >= 50 %}bg-info{% else %}bg-warning{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ item.progress.completion_percentage }}%"
+                                 aria-valuenow="{{ item.progress.completion_percentage }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                {{ "%.0f"|format(item.progress.completion_percentage) }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tasks Stats -->
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <h3 class="mb-0">{{ item.progress.completed_tasks }}</h3>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="mb-0">{{ item.progress.total_tasks }}</h3>
+                            <small class="text-muted">Total Tasks</small>
+                        </div>
+                    </div>
+
+                    <!-- Average Grade -->
+                    <div class="text-center mb-3">
+                        <h2 class="mb-0 {% if item.progress.average_grade >= 70 %}text-success{% elif item.progress.average_grade >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ "%.1f"|format(item.progress.average_grade) }}%
+                        </h2>
+                        <small class="text-muted">Average Grade</small>
+                    </div>
+
+                    <!-- Hours Logged -->
+                    <p class="text-center mb-3">
+                        <i class="bi bi-clock"></i> <strong>{{ "%.1f"|format(item.progress.total_hours_logged) }}</strong> hours logged
+                    </p>
+
+                    <!-- Certificate Status -->
+                    {% if item.progress.certificate_issued %}
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-award-fill"></i> Certificate Issued
+                    </div>
+                    {% elif item.progress.is_eligible_for_certificate %}
+                    <form method="POST" action="{{ url_for('lms.generate_certificate', intern_id=item.intern.id) }}">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-award"></i> Generate Certificate
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-info mb-0 small">
+                        <i class="bi bi-info-circle"></i> Need 80% completion & 70% avg grade for certificate
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">Last updated: {{ item.progress.last_updated.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not progress_data %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No intern progress data available yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

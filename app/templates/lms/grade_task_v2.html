@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Grade Submission{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.tasks_list_v2') }}">Tasks</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.view_task_v2', task_id=task.id) }}">{{ task.title }}</a></li>
+        <li class="breadcrumb-item active">Grade</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Grade Submission</h4>
+                </div>
+                <div class="card-body">
+                    <h5>{{ task.title }}</h5>
+                    <p class="text-muted">{{ task.category }} | {{ task.description[:100] }}...</p>
+
+                    <hr>
+
+                    <h6>Intern: {{ assignment.intern.name }} {{ assignment.intern.surname }}</h6>
+                    <p class="text-muted small">Submitted: {{ assignment.submitted_at.strftime('%Y-%m-%d %H:%M') if assignment.submitted_at else 'Not submitted' }}</p>
+
+                    {% if task.category == 'Quiz' %}
+                    <!-- Quiz Answers -->
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Quiz was auto-graded on submission
+                    </div>
+
+                    {% for question in task.quiz_questions|sort(attribute='question_order') %}
+                    {% set answer = assignment.quiz_answers|selectattr('question_id', 'equalto', question.id)|first %}
+                    <div class="card mb-3 {% if answer and answer.is_correct %}border-success{% else %}border-danger{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <h6>Q{{ loop.index }}: {{ question.question_text }}</h6>
+                                <span class="badge bg-{{ 'success' if answer and answer.is_correct else 'danger' }}">
+                                    {{ answer.points_earned if answer else 0 }}/{{ question.points }} pts
+                                </span>
+                            </div>
+
+                            {% if question.question_type == 'multiple_choice' %}
+                            <ul class="mt-2">
+                                <li {% if question.correct_answer == 'A' %}class="text-success fw-bold"{% endif %}>A. {{ question.option_a }}</li>
+                                <li {% if question.correct_answer == 'B' %}class="text-success fw-bold"{% endif %}>B. {{ question.option_b }}</li>
+                                <li {% if question.correct_answer == 'C' %}class="text-success fw-bold"{% endif %}>C. {{ question.option_c }}</li>
+                                <li {% if question.correct_answer == 'D' %}class="text-success fw-bold"{% endif %}>D. {{ question.option_d }}</li>
+                            </ul>
+                            {% endif %}
+
+                            {% if answer %}
+                            <p class="mb-0"><strong>Student Answer:</strong> {{ answer.answer }}</p>
+                            <p class="mb-0 {{ 'text-success' if answer.is_correct else 'text-danger' }}">
+                                <strong>{% if answer.is_correct %}✓ Correct{% else %}✗ Incorrect{% endif %}</strong>
+                                (Correct answer: {{ question.correct_answer }})
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="alert alert-{{ 'success' if assignment.grade >= task.passing_score else 'warning' }}">
+                        <h5>Final Score: {{ assignment.grade }}%</h5>
+                        <p class="mb-0">{{ 'Passed' if assignment.grade >= task.passing_score else 'Failed' }} (Passing: {{ task.passing_score }}%)</p>
+                    </div>
+
+                    {% else %}
+                    <!-- Regular Submission -->
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h6>Submission Text:</h6>
+                            <p>{{ assignment.submission_text or 'No text submission' }}</p>
+
+                            {% if assignment.submission_file %}
+                            <hr>
+                            <h6>Submitted File:</h6>
+                            <a href="{{ url_for('static', filename='uploads/submissions/' + assignment.submission_file) }}" 
+                               target="_blank" class="btn btn-outline-primary">
+                                <i class="bi bi-download"></i> Download Submission
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="grade" class="form-label">Grade (0-100) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="grade" name="grade" 
+                                   min="0" max="100" step="0.1" required 
+                                   value="{{ assignment.grade if assignment.grade is not none else '' }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="feedback" class="form-label">Feedback</label>
+                            <textarea class="form-control" id="feedback" name="feedback" rows="5">{{ assignment.feedback or '' }}</textarea>
+                            <div class="form-text">Provide constructive feedback to help the intern improve</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('lms.view_submissions', task_id=task.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Save Grade
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Task Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Category:</strong> {{ task.category }}</p>
+                    <p><strong>Priority:</strong> 
+                        <span class="badge bg-{{ 'danger' if task.priority == 'high' else 'warning' if task.priority == 'medium' else 'secondary' }}">
+                            {{ task.priority|upper }}
+                        </span>
+                    </p>
+                    {% if task.due_date %}
+                    <p><strong>Due Date:</strong><br>{{ task.due_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if assignment.grade is not none %}
+            <div class="card shadow mt-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Previous Grade</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="mb-2">{{ assignment.grade }}%</h3>
+                    {% if assignment.feedback %}
+                    <p class="small"><strong>Feedback:</strong> {{ assignment.feedback }}</p>
+                    {% endif %}
+                    <p class="text-muted small mb-0">
+                        Graded: {{ assignment.graded_at.strftime('%Y-%m-%d %H:%M') if assignment.graded_at else 'N/A' }}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

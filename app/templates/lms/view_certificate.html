@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Certificate - {{ certificate.intern_name }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.certificates_list') }}">Certificates</a></li>
+        <li class="breadcrumb-item active">{{ certificate.certificate_number }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="text-end mb-3 no-print">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="bi bi-printer"></i> Print Certificate
+                </button>
+            </div>
+
+            <!-- Certificate -->
+            <div class="card shadow-lg border-success" style="border-width: 3px;">
+                <div class="card-body p-5" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                    <!-- Header -->
+                    <div class="text-center mb-5">
+                        <h1 class="display-4 mb-3" style="font-family: 'Georgia', serif; color: #2c3e50;">
+                            <i class="bi bi-award-fill text-warning"></i>
+                        </h1>
+                        <h2 class="display-5 mb-2" style="font-family: 'Georgia', serif; color: #2c3e50;">
+                            Certificate of Completion
+                        </h2>
+                        <p class="text-muted">Juba Skills Development Academy</p>
+                    </div>
+
+                    <!-- Divider -->
+                    <hr class="my-4" style="border-top: 2px solid #28a745;">
+
+                    <!-- Body -->
+                    <div class="text-center mb-5">
+                        <p class="lead mb-4">This is to certify that</p>
+                        <h2 class="display-6 mb-4" style="font-family: 'Georgia', serif; color: #2c3e50; border-bottom: 2px solid #28a745; display: inline-block; padding-bottom: 10px;">
+                            {{ certificate.intern_name }}
+                        </h2>
+                        <p class="lead mb-4">has successfully completed</p>
+                        <h4 class="mb-5" style="color: #2c3e50;">{{ certificate.program_name }}</h4>
+
+                        <!-- Achievement Details -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h3 class="text-success mb-0">{{ "%.1f"|format(certificate.final_grade) }}%</h3>
+                                        <small class="text-muted">Final Grade</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h3 class="text-info mb-0">{{ certificate.tasks_completed }}</h3>
+                                        <small class="text-muted">Tasks Completed</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h3 class="text-warning mb-0">{{ "%.0f"|format(certificate.total_hours) }}</h3>
+                                        <small class="text-muted">Training Hours</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="mb-2">Completion Date: <strong>{{ certificate.completion_date.strftime('%B %d, %Y') }}</strong></p>
+                    </div>
+
+                    <!-- Divider -->
+                    <hr class="my-4" style="border-top: 2px solid #28a745;">
+
+                    <!-- Footer -->
+                    <div class="row mt-5">
+                        <div class="col-md-6 text-center">
+                            <div style="border-top: 2px solid #333; display: inline-block; padding-top: 10px; min-width: 250px;">
+                                <strong>{{ certificate.issuer.name }} {{ certificate.issuer.surname }}</strong><br>
+                                <small class="text-muted">{{ certificate.issuer.role.title() }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <div style="border-top: 2px solid #333; display: inline-block; padding-top: 10px; min-width: 250px;">
+                                <strong>{{ certificate.issue_date.strftime('%B %d, %Y') }}</strong><br>
+                                <small class="text-muted">Date Issued</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Certificate Number -->
+                    <div class="text-center mt-5">
+                        <p class="text-muted mb-0">
+                            <small>Certificate Number: <strong>{{ certificate.certificate_number }}</strong></small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 no-print">
+                <a href="{{ url_for('lms.certificates_list') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Certificates
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    .card {
+        border: 3px solid #28a745 !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+{% endblock %}

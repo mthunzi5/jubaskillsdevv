@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Deletion History - Juba Skills LMS{% endblock %}
+
+{% block page_title %}Deletion History{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Item Type</th>
+                        <th>Deleted By</th>
+                        <th>Role</th>
+                        <th>Reason</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for deletion in history %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ deletion.deleted_item_type|title }}</span></td>
+                        <td>{{ deletion.deleter_name }}</td>
+                        <td>{{ deletion.deleter_role|title }}</td>
+                        <td>
+                            <small>{{ deletion.deletion_reason[:50] }}{% if deletion.deletion_reason|length > 50 %}...{% endif %}</small>
+                        </td>
+                        <td>{{ deletion.deletion_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if deletion.is_permanent else 'warning' }}">
+                                {{ 'Permanent' if deletion.is_permanent else 'Soft' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

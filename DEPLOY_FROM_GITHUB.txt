@@ -1,0 +1,268 @@
+╔══════════════════════════════════════════════════════════════╗
+║     JUBA LMS - PYTHONANYWHERE DEPLOYMENT FROM GITHUB         ║
+║                  Step-by-Step Guide                          ║
+╚══════════════════════════════════════════════════════════════╝
+
+📋 PREREQUISITES:
+   ✓ GitHub repo: https://github.com/mthunzi5/JubaLms
+   ✓ PythonAnywhere free account
+
+═══════════════════════════════════════════════════════════════
+
+🚀 STEP-BY-STEP DEPLOYMENT:
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 1: CREATE PYTHONANYWHERE ACCOUNT                      │
+└─────────────────────────────────────────────────────────────┘
+
+1. Go to: https://www.pythonanywhere.com/registration/register/beginner/
+2. Sign up for FREE Beginner account
+3. Choose a username (this will be in your URL)
+4. Verify your email address
+5. Login to dashboard
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 2: CLONE YOUR GITHUB REPO                             │
+└─────────────────────────────────────────────────────────────┘
+
+1. Click "Consoles" tab in dashboard
+2. Click "$ Bash" to start a new Bash console
+3. Run these commands ONE BY ONE:
+
+```bash
+git clone https://github.com/mthunzi5/JubaLms.git jubalmss
+```
+
+Wait for download to complete, then:
+
+```bash
+cd jubalmss
+ls
+```
+
+You should see all your project files.
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 3: RUN AUTOMATED SETUP                                │
+└─────────────────────────────────────────────────────────────┘
+
+In the same Bash console, run:
+
+```bash
+bash setup_pythonanywhere.sh
+```
+
+This will:
+- ✓ Create virtual environment
+- ✓ Install all dependencies
+- ✓ Create database with admin account
+- ✓ Setup directory structure
+
+Wait for "Setup Complete!" message (takes 2-3 minutes).
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 4: CREATE WEB APP                                     │
+└─────────────────────────────────────────────────────────────┘
+
+1. Click "Web" tab in dashboard
+2. Click "Add a new web app" button
+3. Click "Next" on domain confirmation
+4. Choose "Manual configuration" (Important!)
+5. Select "Python 3.10"
+6. Click "Next"
+
+You'll see "All done" message.
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 5: CONFIGURE WSGI FILE                                │
+└─────────────────────────────────────────────────────────────┘
+
+1. In "Web" tab, scroll to "Code" section
+2. Click on the WSGI configuration file link
+   (e.g., /var/www/yourusername_pythonanywhere_com_wsgi.py)
+3. Delete ALL existing content
+4. Copy and paste this (REPLACE 'yourusername' with YOUR actual username):
+
+```python
+import sys
+import os
+
+# Add your project directory to the sys.path
+project_home = '/home/yourusername/jubalmss'
+if project_home not in sys.path:
+    sys.path.insert(0, project_home)
+
+# Set environment variables
+os.environ['FLASK_ENV'] = 'production'
+os.environ['SECRET_KEY'] = 'juba-lms-secret-key-2025-change-in-production'
+
+# Import Flask app
+from run import app as application
+
+# For debugging (remove in production)
+application.debug = False
+```
+
+5. Click "Save" button (top right)
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 6: SET VIRTUAL ENVIRONMENT PATH                       │
+└─────────────────────────────────────────────────────────────┘
+
+1. In "Web" tab, scroll to "Virtualenv" section
+2. Click "Enter path to a virtualenv"
+3. Enter (replace 'yourusername'):
+   
+   /home/yourusername/jubalmss/venv
+
+4. Click checkmark to save
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 7: CONFIGURE STATIC FILES                             │
+└─────────────────────────────────────────────────────────────┘
+
+1. In "Web" tab, scroll to "Static files" section
+2. Click "Enter URL" under a new entry
+3. Enter:
+   URL: /static/
+   Directory: /home/yourusername/jubalmss/app/static/
+   
+   (replace 'yourusername')
+4. Click checkmark
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 8: RELOAD WEB APP                                     │
+└─────────────────────────────────────────────────────────────┘
+
+1. Scroll to top of "Web" tab
+2. Click the big green "Reload yourusername.pythonanywhere.com" button
+3. Wait for "Reloading..." to finish
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 9: TEST YOUR SITE                                     │
+└─────────────────────────────────────────────────────────────┘
+
+1. Click on your site URL at top of Web tab:
+   https://yourusername.pythonanywhere.com
+
+2. You should see the Juba LMS login page
+
+3. Login with:
+   Email: admin@juba.ac.za
+   Password: Admin@2025
+
+4. Test features:
+   ✓ Create a staff/intern account
+   ✓ Upload a timesheet
+   ✓ Create a task
+   ✓ Post on communication board
+
+┌─────────────────────────────────────────────────────────────┐
+│ STEP 10: CHANGE ADMIN PASSWORD                             │
+└─────────────────────────────────────────────────────────────┘
+
+1. After logging in as admin
+2. Click on "System Administrator" (top right)
+3. Go to "Change Password"
+4. Set a secure password
+5. Remember it!
+
+═══════════════════════════════════════════════════════════════
+
+🔧 TROUBLESHOOTING:
+
+❌ "Something went wrong" error page?
+   → Click "Web" tab
+   → Scroll to "Log files"
+   → Click "Error log" to see what went wrong
+   → Common fixes:
+     • Check WSGI file has correct username
+     • Verify virtualenv path is correct
+     • Make sure you ran setup script
+
+❌ Site shows but looks broken (no CSS)?
+   → Verify static files mapping in Web tab
+   → URL: /static/
+   → Directory: /home/yourusername/jubalmss/app/static/
+   → Click "Reload" button
+
+❌ "No module named 'app'" error?
+   → Check WSGI file project_home path
+   → Should be: /home/yourusername/jubalmss
+   → No trailing slash!
+
+❌ Database errors?
+   → Bash console:
+     cd ~/jubalmss
+     source venv/bin/activate
+     python
+     >>> from app import create_app, db
+     >>> app = create_app('production')
+     >>> with app.app_context():
+     ...     db.create_all()
+     >>> exit()
+
+❌ File upload not working?
+   → Bash console:
+     cd ~/jubalmss
+     chmod -R 755 app/static uploads instance
+
+═══════════════════════════════════════════════════════════════
+
+📊 VIEW LOGS (for debugging):
+
+In Bash console:
+```bash
+# Error log
+tail -n 50 /var/log/yourusername.pythonanywhere.com.error.log
+
+# Server log  
+tail -n 50 /var/log/yourusername.pythonanywhere.com.server.log
+
+# Follow errors in real-time
+tail -f /var/log/yourusername.pythonanywhere.com.error.log
+```
+
+(Press Ctrl+C to stop following)
+
+═══════════════════════════════════════════════════════════════
+
+🔄 UPDATE YOUR SITE (after making code changes):
+
+1. Push changes to GitHub from your local machine:
+   ```
+   git add .
+   git commit -m "Update description"
+   git push
+   ```
+
+2. In PythonAnywhere Bash console:
+   ```bash
+   cd ~/jubalmss
+   git pull origin main
+   ```
+
+3. Click "Reload" button in Web tab
+
+═══════════════════════════════════════════════════════════════
+
+💡 IMPORTANT REMINDERS:
+
+✓ Your site URL: https://yourusername.pythonanywhere.com
+✓ Login every 3 months to keep account active (set calendar reminder!)
+✓ Free tier: 512MB storage, enough for small-medium usage
+✓ Admin login: admin@juba.ac.za / Admin@2025 (CHANGE IT!)
+✓ Database backup: cp instance/juba_lms.db instance/backup.db
+
+═══════════════════════════════════════════════════════════════
+
+🎉 CONGRATULATIONS!
+
+Your Juba Skills LMS is now live and accessible 24/7!
+
+Share the URL with your team:
+https://yourusername.pythonanywhere.com
+
+═══════════════════════════════════════════════════════════════
+
+Need help? Check error logs first, most issues show up there!

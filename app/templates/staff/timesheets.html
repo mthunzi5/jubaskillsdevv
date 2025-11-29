@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Timesheets - Juba Skills LMS{% endblock %}
+
+{% block page_title %}Timesheets{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Timesheets</li>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+        <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center w-100 w-md-auto">
+            <select class="form-select form-select-sm" onchange="filterTimesheets()" id="monthFilter">
+                <option value="">Select Month</option>
+                {% for month in available_months %}
+                <option value="{{ month }}" {% if month == month_filter %}selected{% endif %}>{{ month }}</option>
+                {% endfor %}
+            </select>
+            
+            <select class="form-select form-select-sm" onchange="filterTimesheets()" id="typeFilter">
+                <option value="all" {% if intern_type_filter == 'all' %}selected{% endif %}>All Types</option>
+                <option value="varsity" {% if intern_type_filter == 'varsity' %}selected{% endif %}>Varsity</option>
+                <option value="tvet" {% if intern_type_filter == 'tvet' %}selected{% endif %}>TVET</option>
+            </select>
+        </div>
+        
+        {% if timesheets %}
+        <a href="{{ url_for('staff.download_month_timesheets', month=month_filter, intern_type=intern_type_filter) }}" class="btn btn-success btn-sm w-100 w-md-auto" data-bs-toggle="tooltip" title="Download filtered timesheets as a ZIP file">
+            <i class="bi bi-download"></i> Download All (ZIP)
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if timesheets %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Intern Name</th>
+                        <th>ID Number</th>
+                        <th>Type</th>
+                        <th>Filename</th>
+                        <th>Submission Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for timesheet in timesheets %}
+                    <tr>
+                        <td>{{ timesheet.intern.name }} {{ timesheet.intern.surname }}</td>
+                        <td>{{ timesheet.intern.id_number }}</td>
+                        <td><span class="badge bg-info">{{ timesheet.intern.intern_type|upper }}</span></td>
+                        <td>{{ timesheet.original_filename }}</td>
+                        <td>{{ timesheet.submission_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('staff.download_timesheet', timesheet_id=timesheet.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> No timesheets found for the selected filters.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function filterTimesheets() {
+    const month = document.getElementById('monthFilter').value;
+    const type = document.getElementById('typeFilter').value;
+    window.location.href = `{{ url_for('staff.timesheets') }}?month=${month}&intern_type=${type}`;
+}
+</script>
+{% endblock %}

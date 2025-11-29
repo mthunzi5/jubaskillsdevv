@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block title %}Create Task{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.tasks_list_v2') }}">Tasks</a></li>
+        <li class="breadcrumb-item active">Create</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Create New Task</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Progress Steps -->
+                    <div class="mb-4">
+                        <ul class="nav nav-pills justify-content-center" id="taskSteps">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="step1-tab" data-step="1">
+                                    <i class="bi bi-1-circle"></i> Basic Info
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="step2-tab" data-step="2">
+                                    <i class="bi bi-2-circle"></i> Assignment
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="step3-tab" data-step="3">
+                                    <i class="bi bi-3-circle"></i> Content
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <form method="POST" enctype="multipart/form-data" id="taskForm">
+                        <!-- Step 1: Basic Information -->
+                        <div class="step-content" id="step1">
+                            <h5 class="mb-3">Basic Task Information</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="title" class="form-label">Task Title <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="title" name="title" required>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label for="category" class="form-label">Task Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="category" name="category" required onchange="updateContentStep()">
+                                        <option value="">Select Type</option>
+                                        <option value="Assignment">Assignment</option>
+                                        <option value="Project">Project</option>
+                                        <option value="Quiz">Quiz</option>
+                                        <option value="Research">Research</option>
+                                        <option value="Practical">Practical</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+                                <div class="form-text">Provide detailed instructions and expectations</div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="due_date" class="form-label">Due Date</label>
+                                    <input type="date" class="form-control" id="due_date" name="due_date">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="priority" class="form-label">Priority</label>
+                                    <select class="form-select" id="priority" name="priority">
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{{ url_for('lms.tasks_list_v2') }}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </a>
+                                <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+                                    Next <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Assignment -->
+                        <div class="step-content d-none" id="step2">
+                            <h5 class="mb-3">Assign to Interns</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="assign_type" class="form-label">Assign To <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="assign_type" name="assign_type" required onchange="updateInternSelection()">
+                                        <option value="">Select Type</option>
+                                        <option value="all">All Interns</option>
+                                        <option value="varsity">Varsity Interns</option>
+                                        <option value="tvet">TVET Interns</option>
+                                        <option value="individual">Individual Intern(s)</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-8 mb-3" id="individual_selection" style="display: none;">
+                                    <label for="assigned_to" class="form-label">Select Intern(s) <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="assigned_to" name="assigned_to" multiple size="6">
+                                        {% for intern in interns %}
+                                        <option value="{{ intern.id }}">{{ intern.name }} {{ intern.surname }}{% if intern.intern_type %} [{{ intern.intern_type|upper }}]{% endif %}{% if intern.email %} - {{ intern.email }}{% endif %}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Hold Ctrl/Cmd to select multiple interns</div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Selected interns will receive this task and be able to work on it independently.
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-secondary" onclick="prevStep(1)">
+                                    <i class="bi bi-arrow-left"></i> Previous
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+                                    Next <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Type-Specific Content -->
+                        <div class="step-content d-none" id="step3">
+                            <h5 class="mb-3">Task Content</h5>
+
+                            <!-- Assignment Content -->
+                            <div id="assignment_content" class="type-content d-none">
+                                <div class="mb-3">
+                                    <label for="reference_file" class="form-label">Upload Assignment File (Optional)</label>
+                                    <input type="file" class="form-control" id="reference_file" name="reference_file" 
+                                           accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.xlsx,.xls">
+                                    <div class="form-text">Upload instructions, templates, or reference materials (PDF, DOC, PPT, etc.)</div>
+                                </div>
+                            </div>
+
+                            <!-- Project Content -->
+                            <div id="project_content" class="type-content d-none">
+                                <div class="mb-3">
+                                    <label for="project_file" class="form-label">Upload Project Brief (Optional)</label>
+                                    <input type="file" class="form-control" id="project_file" name="reference_file" 
+                                           accept=".pdf,.doc,.docx,.ppt,.pptx">
+                                    <div class="form-text">Upload project requirements, specifications, or guidelines</div>
+                                </div>
+                            </div>
+
+                            <!-- Quiz Content -->
+                            <div id="quiz_content" class="type-content d-none">
+                                <div class="mb-3">
+                                    <label class="form-label">Quiz Questions</label>
+                                    <div id="questions_container">
+                                        <!-- Questions will be added dynamically -->
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addQuestion()">
+                                        <i class="bi bi-plus-circle"></i> Add Question
+                                    </button>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="passing_score" class="form-label">Passing Score (%)</label>
+                                        <input type="number" class="form-control" id="passing_score" name="passing_score" 
+                                               value="70" min="0" max="100">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check mt-4">
+                                            <input class="form-check-input" type="checkbox" id="auto_grade" name="auto_grade" checked>
+                                            <label class="form-check-label" for="auto_grade">
+                                                Enable Auto-Grading
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Research Content -->
+                            <div id="research_content" class="type-content d-none">
+                                <div class="mb-3">
+                                    <label for="research_file" class="form-label">Upload Research Materials (Optional)</label>
+                                    <input type="file" class="form-control" id="research_file" name="reference_file" 
+                                           accept=".pdf,.doc,.docx">
+                                    <div class="form-text">Upload research guidelines, papers, or reference materials</div>
+                                </div>
+                            </div>
+
+                            <!-- Practical Content -->
+                            <div id="practical_content" class="type-content d-none">
+                                <div class="mb-3">
+                                    <label for="practical_file" class="form-label">Upload Practical Instructions (Optional)</label>
+                                    <input type="file" class="form-control" id="practical_file" name="reference_file" 
+                                           accept=".pdf,.doc,.docx,.ppt,.pptx">
+                                    <div class="form-text">Upload procedures, safety guidelines, or practical instructions</div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-secondary" onclick="prevStep(2)">
+                                    <i class="bi bi-arrow-left"></i> Previous
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-circle"></i> Create Task
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let questionCount = 0;
+
+function nextStep(step) {
+    // Validate current step
+    const currentStep = document.querySelector('.step-content:not(.d-none)');
+    const inputs = currentStep.querySelectorAll('[required]');
+    let valid = true;
+    
+    inputs.forEach(input => {
+        if (!input.value) {
+            input.classList.add('is-invalid');
+            valid = false;
+        } else {
+            input.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!valid) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Hide all steps
+    document.querySelectorAll('.step-content').forEach(el => el.classList.add('d-none'));
+    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+    
+    // Show target step
+    document.getElementById('step' + step).classList.remove('d-none');
+    document.getElementById('step' + step + '-tab').classList.add('active');
+}
+
+function prevStep(step) {
+    document.querySelectorAll('.step-content').forEach(el => el.classList.add('d-none'));
+    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+    
+    document.getElementById('step' + step).classList.remove('d-none');
+    document.getElementById('step' + step + '-tab').classList.add('active');
+}
+
+function updateInternSelection() {
+    const assignType = document.getElementById('assign_type').value;
+    const individualDiv = document.getElementById('individual_selection');
+    const assignedToSelect = document.getElementById('assigned_to');
+    
+    if (assignType === 'individual') {
+        individualDiv.style.display = 'block';
+        assignedToSelect.required = true;
+    } else {
+        individualDiv.style.display = 'none';
+        assignedToSelect.required = false;
+    }
+}
+
+function updateContentStep() {
+    const category = document.getElementById('category').value;
+    
+    // Hide all type-specific content
+    document.querySelectorAll('.type-content').forEach(el => el.classList.add('d-none'));
+    
+    // Show relevant content based on category
+    if (category === 'Assignment') {
+        document.getElementById('assignment_content').classList.remove('d-none');
+    } else if (category === 'Project') {
+        document.getElementById('project_content').classList.remove('d-none');
+    } else if (category === 'Quiz') {
+        document.getElementById('quiz_content').classList.remove('d-none');
+        if (questionCount === 0) {
+            addQuestion(); // Add first question automatically
+        }
+    } else if (category === 'Research') {
+        document.getElementById('research_content').classList.remove('d-none');
+    } else if (category === 'Practical') {
+        document.getElementById('practical_content').classList.remove('d-none');
+    }
+}
+
+function addQuestion() {
+    questionCount++;
+    const container = document.getElementById('questions_container');
+    
+    const questionHTML = `
+        <div class="card mb-3 question-card" id="question_${questionCount}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Question ${questionCount}</h6>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeQuestion(${questionCount})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-2">
+                    <label class="form-label">Question Type</label>
+                    <select class="form-select form-select-sm" name="question_type_${questionCount}" onchange="updateQuestionType(${questionCount})">
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="true_false">True/False</option>
+                        <option value="short_answer">Short Answer</option>
+                    </select>
+                </div>
+                
+                <div class="mb-2">
+                    <label class="form-label">Question Text</label>
+                    <textarea class="form-control form-control-sm" name="question_text_${questionCount}" rows="2" required></textarea>
+                </div>
+                
+                <div class="options-container" id="options_${questionCount}">
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Option A</label>
+                            <input type="text" class="form-control form-control-sm" name="option_a_${questionCount}">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Option B</label>
+                            <input type="text" class="form-control form-control-sm" name="option_b_${questionCount}">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Option C</label>
+                            <input type="text" class="form-control form-control-sm" name="option_c_${questionCount}">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Option D</label>
+                            <input type="text" class="form-control form-control-sm" name="option_d_${questionCount}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Correct Answer</label>
+                        <select class="form-select form-select-sm" name="correct_answer_${questionCount}" id="correct_answer_${questionCount}">
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Points</label>
+                        <input type="number" class="form-control form-control-sm" name="points_${questionCount}" value="1" min="0.5" step="0.5">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', questionHTML);
+}
+
+function removeQuestion(id) {
+    document.getElementById('question_' + id).remove();
+}
+
+function updateQuestionType(id) {
+    const type = document.querySelector(`select[name="question_type_${id}"]`).value;
+    const optionsContainer = document.getElementById(`options_${id}`);
+    const correctAnswerSelect = document.getElementById(`correct_answer_${id}`);
+    
+    if (type === 'true_false') {
+        optionsContainer.innerHTML = '';
+        correctAnswerSelect.innerHTML = '<option value="True">True</option><option value="False">False</option>';
+    } else if (type === 'short_answer') {
+        optionsContainer.innerHTML = '';
+        correctAnswerSelect.outerHTML = `<input type="text" class="form-control form-control-sm" name="correct_answer_${id}" id="correct_answer_${id}" placeholder="Expected answer or keywords">`;
+    } else {
+        // Restore multiple choice options if needed
+        if (optionsContainer.children.length === 0) {
+            location.reload(); // Simple way to reset
+        }
+    }
+}
+
+// Store question count in hidden input before submit
+document.getElementById('taskForm').addEventListener('submit', function() {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'question_count';
+    input.value = questionCount;
+    this.appendChild(input);
+});
+</script>
+
+<style>
+.nav-pills .nav-link {
+    color: #666;
+    cursor: default;
+}
+.nav-pills .nav-link.active {
+    background-color: #0d6efd;
+    color: white;
+}
+.question-card {
+    border-left: 4px solid #0d6efd;
+}
+</style>
+{% endblock %}

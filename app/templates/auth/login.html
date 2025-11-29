@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Juba Skills LMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Remove default padding/margin from body */
+    body {
+        overflow-x: hidden;
+    }
+    
+    /* Full height container */
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .login-main {
+        flex: 1;
+        display: flex;
+    }
+    
+    /* Left side - Landing page */
+    .landing-side {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .landing-side::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 15s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 0.8; }
+    }
+    
+    .landing-content {
+        position: relative;
+        z-index: 1;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .logo-main {
+        max-width: 200px;
+        margin-bottom: 30px;
+    }
+    
+    .landing-side h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        line-height: 1.2;
+    }
+    
+    .landing-side .lead {
+        font-size: 1.25rem;
+        margin-bottom: 40px;
+        opacity: 0.95;
+    }
+    
+    .features-list {
+        list-style: none;
+        padding: 0;
+        margin-top: 40px;
+    }
+    
+    .features-list li {
+        padding: 15px 0;
+        font-size: 1.1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+    }
+    
+    .features-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .features-list i {
+        margin-right: 15px;
+        font-size: 1.5rem;
+        color: #ffd700;
+    }
+    
+    /* Right side - Login form */
+    .login-side {
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+    
+    .login-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        padding: 50px 40px;
+        width: 100%;
+        max-width: 450px;
+    }
+    
+    .login-card h4 {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 30px;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    }
+    
+    .btn-login {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Footer */
+    .login-footer {
+        background: #2d3748;
+        color: white;
+        padding: 30px 40px;
+        text-align: center;
+    }
+    
+    .footer-logo {
+        max-width: 120px;
+        margin-bottom: 15px;
+        opacity: 0.8;
+    }
+    
+    .footer-links {
+        margin: 20px 0;
+    }
+    
+    .footer-links a {
+        color: white;
+        text-decoration: none;
+        margin: 0 15px;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+    }
+    
+    .footer-links a:hover {
+        opacity: 1;
+    }
+    
+    /* Responsive */
+    @media (max-width: 991px) {
+        .login-main {
+            flex-direction: column;
+        }
+        
+        .landing-side {
+            padding: 40px 30px;
+        }
+        
+        .landing-side h1 {
+            font-size: 2rem;
+        }
+        
+        .login-card {
+            padding: 40px 30px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .landing-side h1 {
+            font-size: 1.75rem;
+        }
+        
+        .landing-side .lead {
+            font-size: 1rem;
+        }
+        
+        .login-card {
+            padding: 30px 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-main">
+        <!-- Left Side - Landing Page -->
+        <div class="col-lg-7 landing-side">
+            <div class="landing-content">
+                <!-- Logo - Replace with your image path -->
+                <img src="{{ url_for('static', filename='images/logo-main.png') }}" alt="Juba Logo" class="logo-main">
+                
+                <h1>Transform Your Future with Juba Skills Development</h1>
+                <p class="lead">Empowering the next generation of professionals through world-class training and mentorship.</p>
+                
+                <ul class="features-list">
+                    <li>
+                        <i class="bi bi-book-fill"></i>
+                        <span>Comprehensive Training Materials & Resources</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-clipboard-check-fill"></i>
+                        <span>Interactive Assignments & Real-World Projects</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span>Track Your Progress & Achievements</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-award-fill"></i>
+                        <span>Earn Industry-Recognized Certificates</span>
+                    </li>
+                    <li>
+                        <i class="bi bi-people-fill"></i>
+                        <span>Expert Mentorship & Career Guidance</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Right Side - Login Form -->
+        <div class="col-lg-5 login-side">
+            <div class="login-card">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold text-dark">Welcome Back!</h2>
+                    <p class="text-muted">Sign in to continue your learning journey</p>
+                </div>
+                
+                <h4 class="text-center">Login to Your Account</h4>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="email_or_id" class="form-label fw-semibold">Email or ID Number</label>
+                        <input type="text" class="form-control" id="email_or_id" name="email_or_id" required autofocus>
+                        <small class="text-muted">Interns: use your 13-digit ID number</small>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-semibold">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                        <small class="text-muted">Default intern password: JubaFuture2025</small>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg btn-login">Login</button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none" style="color: #667eea;">
+                        <small><i class="bi bi-key"></i> Forgot your password?</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="login-footer">
+        <div class="container">
+            <!-- Footer Logo - Replace with your image path -->
+            <img src="{{ url_for('static', filename='images/logo-footer.png') }}" alt="Juba Logo" class="footer-logo">
+            
+            <div class="footer-links">
+                <a href="#about">About Us</a>
+                <a href="#programs">Programs</a>
+                <a href="#contact">Contact</a>
+                <a href="#support">Support</a>
+            </div>
+            
+            <div class="mt-3">
+                <p class="mb-1">&copy; 2025 Juba Skills Development Academy. All rights reserved.</p>
+                <p class="mb-0 small opacity-75">Empowering South Africa's Future Workforce</p>
+            </div>
+            
+            <div class="mt-3">
+                <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
+                <a href="#" class="text-white me-3"><i class="bi bi-twitter"></i></a>
+                <a href="#" class="text-white me-3"><i class="bi bi-linkedin"></i></a>
+                <a href="#" class="text-white"><i class="bi bi-instagram"></i></a>
+            </div>
+        </div>
+    </footer>
+</div>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Juba Skills LMS{% endblock %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 col-sm-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_users }}</h3>
+                    <p class="mb-0">Total Users</p>
+                </div>
+                <i class="bi bi-people fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_interns }}</h3>
+                    <p class="mb-0">Interns</p>
+                </div>
+                <i class="bi bi-person-badge fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3 mb-3 mb-lg-0">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_staff }}</h3>
+                    <p class="mb-0">Staff Members</p>
+                </div>
+                <i class="bi bi-person-workspace fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ pending_approvals }}</h3>
+                    <p class="mb-0">Pending Approvals</p>
+                </div>
+                <i class="bi bi-exclamation-triangle fs-1"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-6 mb-3 mb-lg-0">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
+                        <i class="bi bi-person-plus"></i> Add New User
+                    </a>
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-people"></i> Manage Users
+                    </a>
+                    <a href="{{ url_for('admin.pending_deletions') }}" class="btn btn-outline-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Review Pending Deletions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Recent Deletions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_deletions %}
+                <div class="list-group list-group-flush">
+                    {% for deletion in recent_deletions %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ deletion.deleted_item_type|title }}</strong>
+                                <small class="text-muted d-block">
+                                    by {{ deletion.deleter_name }} - {{ deletion.deletion_date.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            </div>
+                            <span class="badge bg-{{ 'danger' if deletion.is_permanent else 'warning' }}">
+                                {{ 'Permanent' if deletion.is_permanent else 'Soft' }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <a href="{{ url_for('admin.deletion_history') }}" class="btn btn-sm btn-link">View All History</a>
+                {% else %}
+                <p class="text-muted">No recent deletions</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

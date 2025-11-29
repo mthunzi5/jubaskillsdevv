@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Create User - Juba Skills LMS{% endblock %}
+
+{% block page_title %}Create New User{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">Users</a></li>
+<li class="breadcrumb-item active" aria-current="page">Create</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" id="createUserForm">
+                    <div class="mb-3">
+                        <label for="role" class="form-label">User Role *</label>
+                        <select class="form-select" id="role" name="role" required onchange="toggleFields()">
+                            <option value="">Select Role</option>
+                            <option value="admin">Admin</option>
+                            <option value="staff">Staff</option>
+                            <option value="intern">Intern</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Admin/Staff Fields -->
+                    <div id="adminStaffFields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="name" name="name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password *</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                        </div>
+                    </div>
+                    
+                    <!-- Intern Fields -->
+                    <div id="internFields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="id_number" class="form-label">ID Number (13 digits) *</label>
+                            <input type="text" class="form-control" id="id_number" name="id_number" maxlength="13" pattern="[0-9]{13}">
+                            <small class="text-muted">Default password will be: JubaFuture2025</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="intern_type" class="form-label">Intern Type *</label>
+                            <select class="form-select" id="intern_type" name="intern_type">
+                                <option value="">Select Type</option>
+                                <option value="varsity">Varsity</option>
+                                <option value="tvet">TVET</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Create User</button>
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    const role = document.getElementById('role').value;
+    const adminStaffFields = document.getElementById('adminStaffFields');
+    const internFields = document.getElementById('internFields');
+    
+    if (role === 'admin' || role === 'staff') {
+        adminStaffFields.style.display = 'block';
+        internFields.style.display = 'none';
+        document.getElementById('email').required = true;
+        document.getElementById('name').required = true;
+        document.getElementById('password').required = true;
+        document.getElementById('id_number').required = false;
+        document.getElementById('intern_type').required = false;
+    } else if (role === 'intern') {
+        adminStaffFields.style.display = 'none';
+        internFields.style.display = 'block';
+        document.getElementById('email').required = false;
+        document.getElementById('name').required = false;
+        document.getElementById('password').required = false;
+        document.getElementById('id_number').required = true;
+        document.getElementById('intern_type').required = true;
+    } else {
+        adminStaffFields.style.display = 'none';
+        internFields.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

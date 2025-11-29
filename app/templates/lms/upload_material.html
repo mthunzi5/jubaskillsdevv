@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Training Material{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.materials_list') }}">Training Materials</a></li>
+        <li class="breadcrumb-item active">Upload</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-cloud-upload"></i> Upload Training Material</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                            <div class="form-text">Provide a brief description of the training material</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="Technical Skills">Technical Skills</option>
+                                <option value="Soft Skills">Soft Skills</option>
+                                <option value="Safety & Compliance">Safety & Compliance</option>
+                                <option value="Industry Knowledge">Industry Knowledge</option>
+                                <option value="Professional Development">Professional Development</option>
+                                <option value="Tools & Software">Tools & Software</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="file" class="form-label">File <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="file" name="file" required 
+                                   accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.xlsx,.xls,.zip">
+                            <div class="form-text">
+                                Allowed formats: PDF, DOC, DOCX, PPT, PPTX, TXT, XLSX, XLS, ZIP (Max 16MB)
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> This material will be accessible to all interns after upload.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('lms.materials_list') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload"></i> Upload Material
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading overlay -->
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+});
+</script>
+{% endblock %}

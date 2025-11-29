@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Juba Skills LMS{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --bg-color: #f8f9fa;
+            --text-color: #212529;
+            --card-bg: #ffffff;
+            --sidebar-bg: #2c3e50;
+            --border-color: #dee2e6;
+        }
+        
+        /* Dark mode colors */
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --card-bg: #2d2d2d;
+            --sidebar-bg: #1a1a1a;
+            --border-color: #404040;
+            --primary-color: #1a1a1a;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 14px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1001;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+        
+        .theme-toggle i {
+            transition: transform 0.3s ease;
+        }
+        
+        .theme-toggle:hover i {
+            transform: rotate(20deg);
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: var(--sidebar-bg);
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease-in-out, background-color 0.3s ease;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        [data-theme="dark"] .sidebar {
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+        .card {
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        [data-theme="dark"] .card {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .table {
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .table {
+            --bs-table-bg: var(--card-bg);
+            --bs-table-striped-bg: #252525;
+            --bs-table-hover-bg: #333333;
+        }
+        
+        .form-control, .form-select {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border-color: var(--border-color);
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+        
+        .modal-header, .modal-footer {
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .text-muted {
+            color: #999 !important;
+        }
+        
+        [data-theme="dark"] .bg-light {
+            background-color: #2d2d2d !important;
+        }
+        
+        [data-theme="dark"] .border {
+            border-color: var(--border-color) !important;
+        }
+        .stat-card {
+            padding: 20px;
+            border-radius: 8px;
+            color: white;
+            min-height: 120px;
+        }
+        .stat-card.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .stat-card.success { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .stat-card.info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .stat-card.warning { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .table-actions {
+            white-space: nowrap;
+        }
+        
+        /* Mobile Navigation */
+        .mobile-nav {
+            display: none;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1001;
+        }
+        .mobile-nav .navbar-toggler {
+            border-color: rgba(255,255,255,0.5);
+            color: white;
+        }
+        .mobile-nav .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                font-size: 13px;
+            }
+            .sidebar {
+                transform: translateX(-100%);
+                width: 250px !important;
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .mobile-nav {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .col-md-10.ms-sm-auto {
+                margin-left: 0 !important;
+                padding-top: 70px;
+            }
+            .stat-card {
+                margin-bottom: 15px;
+                min-height: 100px;
+                padding: 15px;
+            }
+            .stat-card h3 {
+                font-size: 1.5rem;
+            }
+            .stat-card p {
+                font-size: 0.875rem;
+            }
+            .stat-card i {
+                font-size: 2rem !important;
+            }
+            .table {
+                font-size: 0.875rem;
+            }
+            .card-body {
+                padding: 1rem;
+            }
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+            h1.h2 {
+                font-size: 1.5rem;
+            }
+            .d-grid.gap-2.d-md-flex {
+                display: grid !important;
+                gap: 0.5rem;
+            }
+        }
+        
+        /* Tablet Responsive */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            body {
+                font-size: 14px;
+            }
+            .stat-card {
+                padding: 18px;
+                min-height: 110px;
+            }
+            .sidebar {
+                width: 200px;
+            }
+        }
+        
+        /* Overlay for mobile menu */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
+        
+        /* Make tables scroll horizontally on mobile */
+        @media (max-width: 768px) {
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .table-responsive table {
+                min-width: 600px;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            .sidebar, .mobile-nav, .sidebar-overlay,
+            .btn, button, .breadcrumb,
+            .alert, nav, .no-print {
+                display: none !important;
+            }
+            .col-md-10 {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            body {
+                background: white !important;
+            }
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                page-break-inside: avoid;
+            }
+            .table {
+                border: 1px solid #000 !important;
+            }
+            .table th, .table td {
+                border: 1px solid #000 !important;
+                padding: 8px !important;
+            }
+            h1, h2, h3 {
+                page-break-after: avoid;
+            }
+            /* Add print header */
+            @page {
+                margin: 1.5cm;
+            }
+            .print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #000;
+            }
+        }
+        
+        .print-header {
+            display: none;
+        }
+        
+        /* Loading Spinner Overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-overlay.show {
+            display: flex;
+        }
+        .loading-spinner {
+            text-align: center;
+            color: white;
+        }
+        .loading-spinner .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Processing...</p>
+        </div>
+    </div>
+    
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+        <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+    </button>
+    
+    {% if current_user.is_authenticated and current_user.is_profile_complete %}
+    <!-- Mobile Navigation Bar -->
+    <nav class="mobile-nav d-md-none">
+        <button class="navbar-toggler" type="button" onclick="toggleSidebar()">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <h5 class="mb-0">Juba Skills LMS</h5>
+        <div style="width: 40px;"></div>
+    </nav>
+    
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 d-md-block sidebar px-0" id="sidebar">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h5 class="navbar-brand">Juba Skills LMS</h5>
+                        <p class="small mb-0">{{ current_user.name }} {{ current_user.surname }}</p>
+                        <p class="small text-white-50">{{ current_user.role|title }}</p>
+                        {% if current_user.last_login %}
+                        <p class="small text-white-50" style="font-size: 0.7rem;" data-bs-toggle="tooltip" title="Your last login time">
+                            <i class="bi bi-clock"></i> Last: {{ current_user.last_login.strftime('%m/%d %H:%M') }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <ul class="nav flex-column">
+                        {% if current_user.is_admin() %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'users' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.users') }}">
+                                <i class="bi bi-people"></i> Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin.deletion_history' %}active{% endif %}" href="{{ url_for('admin.deletion_history') }}">
+                                <i class="bi bi-clock-history"></i> Deletion History
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin.pending_deletions' %}active{% endif %}" href="{{ url_for('admin.pending_deletions') }}">
+                                <i class="bi bi-exclamation-triangle"></i> Pending Approvals
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'lms.material_deletion_requests' %}active{% endif %}" href="{{ url_for('lms.material_deletion_requests') }}">
+                                <i class="bi bi-file-earmark-x"></i> Material Deletions
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'lms.material_deletion_history' %}active{% endif %}" href="{{ url_for('lms.material_deletion_history') }}">
+                                <i class="bi bi-archive"></i> Material History
+                            </a>
+                        </li>
+                        <li class="nav-item mt-3">
+                            <h6 class="sidebar-heading px-3 mt-4 mb-1 text-white-50">
+                                <span>Learning Management</span>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.materials' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
+                                <i class="bi bi-book"></i> Training Materials
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.tasks' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
+                                <i class="bi bi-list-task"></i> Tasks
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.progress' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
+                                <i class="bi bi-graph-up"></i> Progress Tracking
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'lms.material_deletion_requests' %}active{% endif %}" href="{{ url_for('lms.material_deletion_requests') }}">
+                                <i class="bi bi-file-earmark-x"></i> My Deletion Requests
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
+                                <i class="bi bi-clipboard-check"></i> Evaluations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
+                                <i class="bi bi-clipboard-check"></i> Evaluations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
+                                <i class="bi bi-chat-square-text"></i> Communication Board
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.task_deletion_requests' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.task_deletion_requests') }}">
+                                <i class="bi bi-exclamation-triangle"></i> Task Deletion Requests
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.task_deletion_history' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.task_deletion_history') }}">
+                                <i class="bi bi-clock-history"></i> Task Deletion History
+                            </a>
+                        </li>
+                        {% elif current_user.is_staff() %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'staff.dashboard' %}active{% endif %}" href="{{ url_for('staff.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'timesheets' in request.endpoint %}active{% endif %}" href="{{ url_for('staff.timesheets') }}">
+                                <i class="bi bi-file-earmark-text"></i> Timesheets
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'interns' in request.endpoint %}active{% endif %}" href="{{ url_for('staff.interns') }}">
+                                <i class="bi bi-people"></i> Interns
+                            </a>
+                        </li>
+                        <li class="nav-item mt-3">
+                            <h6 class="sidebar-heading px-3 mt-4 mb-1 text-white-50">
+                                <span>Learning Management</span>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.materials' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
+                                <i class="bi bi-book"></i> Training Materials
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.tasks' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
+                                <i class="bi bi-list-task"></i> Tasks
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.progress' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
+                                <i class="bi bi-graph-up"></i> Progress Tracking
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.certificates' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
+                                <i class="bi bi-award"></i> Certificates
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
+                                <i class="bi bi-clipboard-check"></i> Evaluations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
+                                <i class="bi bi-chat-square-text"></i> Communication Board
+                            </a>
+                        </li>
+                        {% elif current_user.is_intern() %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'intern.dashboard' %}active{% endif %}" href="{{ url_for('intern.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'timesheets' in request.endpoint %}active{% endif %}" href="{{ url_for('intern.timesheets') }}">
+                                <i class="bi bi-file-earmark-text"></i> My Timesheets
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'intern.profile' %}active{% endif %}" href="{{ url_for('intern.profile') }}">
+                                <i class="bi bi-person"></i> Profile
+                            </a>
+                        </li>
+                        <li class="nav-item mt-3">
+                            <h6 class="sidebar-heading px-3 mt-4 mb-1 text-white-50">
+                                <span>Learning Management</span>
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.materials' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
+                                <i class="bi bi-book"></i> Training Materials
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.tasks' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
+                                <i class="bi bi-list-task"></i> My Tasks
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.progress' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
+                                <i class="bi bi-graph-up"></i> My Progress
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.certificates' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
+                                <i class="bi bi-award"></i> My Certificates
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
+                                <i class="bi bi-clipboard-check"></i> Evaluations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
+                                <i class="bi bi-chat-square-text"></i> Communication Board
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item mt-3">
+                            <a class="nav-link" href="{{ url_for('auth.change_password') }}">
+                                <i class="bi bi-key"></i> Change Password
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-10 ms-sm-auto px-md-4">
+                <!-- Print Header (hidden on screen, visible on print) -->
+                <div class="print-header">
+                    <h2>Juba Skills Development Academy and Training</h2>
+                    <p>Learning Management System</p>
+                    <p><small>Printed on: {{ current_user.name }} {{ current_user.surname }} - {{ "now"|datetime }}</small></p>
+                </div>
+                
+                <!-- Breadcrumbs -->
+                {% block breadcrumbs %}
+                <nav aria-label="breadcrumb" class="pt-3 no-print">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}"><i class="bi bi-house-door"></i> Home</a></li>
+                        {% block breadcrumb_items %}{% endblock %}
+                    </ol>
+                </nav>
+                {% endblock %}
+                
+                <div class="pt-2 pb-2 mb-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h1 class="h2">{% block page_title %}Dashboard{% endblock %}</h1>
+                    <button onclick="window.print()" class="btn btn-outline-secondary btn-sm no-print" data-bs-toggle="tooltip" title="Print this page">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                </div>
+
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    {% else %}
+    <!-- Content for non-authenticated users or incomplete profiles -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">Juba Skills LMS</a>
+        </div>
+    </nav>
+    <main class="container mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {{ self.content() }}
+    </main>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+        
+        // Mobile sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
+            }
+        }
+        
+        // Close sidebar when clicking a link on mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar .nav-link');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        toggleSidebar();
+                    }
+                });
+            });
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (window.innerWidth >= 768 && sidebar && overlay) {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            }
+        });
+        
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
+        }
+        
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
+        
+        // Show loading on file upload forms
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileUploadForms = document.querySelectorAll('form[enctype="multipart/form-data"]');
+            fileUploadForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const fileInput = form.querySelector('input[type="file"]');
+                    if (fileInput && fileInput.files.length > 0) {
+                        showLoading();
+                    }
+                });
+            });
+            
+            // Show loading on delete operations
+            const deleteForms = document.querySelectorAll('form[action*="delete"]');
+            deleteForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    showLoading();
+                });
+            });
+            
+            // Initialize theme
+            initTheme();
+        });
+        
+        // Theme toggle functionality
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+        
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                if (theme === 'dark') {
+                    icon.className = 'bi bi-sun-fill';
+                } else {
+                    icon.className = 'bi bi-moon-stars-fill';
+                }
+            }
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

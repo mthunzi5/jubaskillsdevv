@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Intern Timesheets - Juba Skills LMS{% endblock %}
+
+{% block page_title %}{{ intern.name }} {{ intern.surname }} - Timesheets{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('staff.interns') }}" class="btn btn-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back to Interns
+    </a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>ID Number:</strong> {{ intern.id_number }}
+            </div>
+            <div class="col-md-3">
+                <strong>Type:</strong> <span class="badge bg-info">{{ intern.intern_type|upper }}</span>
+            </div>
+            <div class="col-md-3">
+                <strong>Email:</strong> {{ intern.email or '-' }}
+            </div>
+            <div class="col-md-3">
+                <strong>Phone:</strong> {{ intern.phone or '-' }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if timesheets %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Month</th>
+                        <th>Submission Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for timesheet in timesheets %}
+                    <tr>
+                        <td>{{ timesheet.original_filename }}</td>
+                        <td>{{ timesheet.submission_month }}</td>
+                        <td>{{ timesheet.submission_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('staff.download_timesheet', timesheet_id=timesheet.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> No timesheets submitted yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

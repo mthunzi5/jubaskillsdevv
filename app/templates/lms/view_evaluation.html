@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Evaluation Details{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.evaluations_list') }}">Evaluations</a></li>
+        <li class="breadcrumb-item active">View</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="text-end mb-3 no-print">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="bi bi-printer"></i> Print Evaluation
+                </button>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header {% if evaluation.overall_rating >= 4 %}bg-success{% elif evaluation.overall_rating >= 3 %}bg-info{% else %}bg-warning{% endif %} text-white">
+                    <h4 class="mb-0"><i class="bi bi-clipboard-check"></i> Performance Evaluation</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Header Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong><i class="bi bi-person"></i> Intern:</strong> {{ evaluation.intern.name }} {{ evaluation.intern.surname }}</p>
+                            <p><strong><i class="bi bi-card-text"></i> Employee ID:</strong> {{ evaluation.intern.employee_id }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="bi bi-person-badge"></i> Evaluator:</strong> {{ evaluation.evaluator.name }} {{ evaluation.evaluator.surname }}</p>
+                            <p><strong><i class="bi bi-calendar"></i> Evaluation Date:</strong> {{ evaluation.evaluation_date.strftime('%Y-%m-%d') }}</p>
+                            <p><strong><i class="bi bi-clock"></i> Period:</strong> {{ evaluation.period }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Overall Rating -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Overall Rating</h5>
+                            <h1 class="display-3 mb-2 {% if evaluation.overall_rating >= 4 %}text-success{% elif evaluation.overall_rating >= 3 %}text-info{% else %}text-warning{% endif %}">
+                                {{ "%.2f"|format(evaluation.overall_rating) }}/5
+                            </h1>
+                            <div>
+                                {% for i in range(5) %}
+                                    {% if i < evaluation.overall_rating|int %}
+                                        <i class="bi bi-star-fill text-warning" style="font-size: 2rem;"></i>
+                                    {% elif i < evaluation.overall_rating %}
+                                        <i class="bi bi-star-half text-warning" style="font-size: 2rem;"></i>
+                                    {% else %}
+                                        <i class="bi bi-star text-muted" style="font-size: 2rem;"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skills Ratings -->
+                    <h5 class="mb-3"><i class="bi bi-bar-chart"></i> Skills Assessment</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Technical Skills</label>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar {% if evaluation.technical_skills >= 4 %}bg-success{% elif evaluation.technical_skills >= 3 %}bg-info{% else %}bg-warning{% endif %}" 
+                                     role="progressbar" style="width: {{ evaluation.technical_skills * 20 }}%">
+                                    {{ evaluation.technical_skills }}/5
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Communication</label>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar {% if evaluation.communication >= 4 %}bg-success{% elif evaluation.communication >= 3 %}bg-info{% else %}bg-warning{% endif %}" 
+                                     role="progressbar" style="width: {{ evaluation.communication * 20 }}%">
+                                    {{ evaluation.communication }}/5
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teamwork</label>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar {% if evaluation.teamwork >= 4 %}bg-success{% elif evaluation.teamwork >= 3 %}bg-info{% else %}bg-warning{% endif %}" 
+                                     role="progressbar" style="width: {{ evaluation.teamwork * 20 }}%">
+                                    {{ evaluation.teamwork }}/5
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Problem Solving</label>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar {% if evaluation.problem_solving >= 4 %}bg-success{% elif evaluation.problem_solving >= 3 %}bg-info{% else %}bg-warning{% endif %}" 
+                                     role="progressbar" style="width: {{ evaluation.problem_solving * 20 }}%">
+                                    {{ evaluation.problem_solving }}/5
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Punctuality</label>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar {% if evaluation.punctuality >= 4 %}bg-success{% elif evaluation.punctuality >= 3 %}bg-info{% else %}bg-warning{% endif %}" 
+                                     role="progressbar" style="width: {{ evaluation.punctuality * 20 }}%">
+                                    {{ evaluation.punctuality }}/5
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Initiative</label>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar {% if evaluation.initiative >= 4 %}bg-success{% elif evaluation.initiative >= 3 %}bg-info{% else %}bg-warning{% endif %}" 
+                                     role="progressbar" style="width: {{ evaluation.initiative * 20 }}%">
+                                    {{ evaluation.initiative }}/5
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Professionalism</label>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar {% if evaluation.professionalism >= 4 %}bg-success{% elif evaluation.professionalism >= 3 %}bg-info{% else %}bg-warning{% endif %}" 
+                                     role="progressbar" style="width: {{ evaluation.professionalism * 20 }}%">
+                                    {{ evaluation.professionalism }}/5
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Qualitative Feedback -->
+                    <h5 class="mb-3"><i class="bi bi-chat-left-text"></i> Feedback</h5>
+                    
+                    {% if evaluation.strengths %}
+                    <div class="mb-3">
+                        <h6 class="text-success"><i class="bi bi-check-circle"></i> Strengths</h6>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                {{ evaluation.strengths | nl2br | safe }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if evaluation.areas_for_improvement %}
+                    <div class="mb-3">
+                        <h6 class="text-warning"><i class="bi bi-exclamation-triangle"></i> Areas for Improvement</h6>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                {{ evaluation.areas_for_improvement | nl2br | safe }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if evaluation.additional_comments %}
+                    <div class="mb-3">
+                        <h6 class="text-info"><i class="bi bi-chat-dots"></i> Additional Comments</h6>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                {{ evaluation.additional_comments | nl2br | safe }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if evaluation.recommendations %}
+                    <div class="mb-3">
+                        <h6 class="text-primary"><i class="bi bi-lightbulb"></i> Recommendations</h6>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                {{ evaluation.recommendations | nl2br | safe }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="text-center mt-4 no-print">
+                        <a href="{{ url_for('lms.evaluations_list') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Evaluations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
