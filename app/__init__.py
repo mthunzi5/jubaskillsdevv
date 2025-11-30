@@ -54,6 +54,22 @@ def create_app(config_name='default'):
     app.register_blueprint(lms.lms_bp)
     app.register_blueprint(board.bp)
     
+    # Register error handlers
+    from flask import render_template
+    
+    @app.errorhandler(403)
+    def forbidden_error(error):
+        return render_template('errors/403.html'), 403
+    
+    @app.errorhandler(404)
+    def not_found_error(error):
+        return render_template('errors/404.html'), 404
+    
+    @app.errorhandler(500)
+    def internal_error(error):
+        db.session.rollback()
+        return render_template('errors/500.html'), 500
+    
     # Create tables
     with app.app_context():
         db.create_all()

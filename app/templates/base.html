@@ -72,6 +72,9 @@
         }
         .sidebar {
             min-height: 100vh;
+            max-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
             background-color: var(--sidebar-bg);
             color: white;
             position: fixed;
@@ -80,6 +83,25 @@
             z-index: 1000;
             transition: transform 0.3s ease-in-out, background-color 0.3s ease;
             border-right: 1px solid var(--border-color);
+            padding-bottom: 80px;
+        }
+        
+        /* Custom scrollbar for sidebar */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.5);
         }
         
         [data-theme="dark"] .sidebar {
