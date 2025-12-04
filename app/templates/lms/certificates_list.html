@@ -39,6 +39,12 @@
                     <p class="card-text"><strong>Program:</strong> {{ cert.program_name }}</p>
                     <p class="card-text"><strong>Certificate #:</strong> <code>{{ cert.certificate_number }}</code></p>
                     
+                    {% if cert.is_approved %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Approved</span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pending Approval</span>
+                    {% endif %}
+                    
                     <hr>
                     
                     <div class="row text-center mb-3">

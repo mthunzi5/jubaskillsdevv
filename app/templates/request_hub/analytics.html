@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Request Hub Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-graph-up"></i> Request Hub Analytics</h2>
+        <a href="{{ url_for('request_hub.staff_index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Requests
+        </a>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Requests</h6>
+                            <h2 class="mb-0">{{ total_requests }}</h2>
+                            <small>{{ active_requests }} active</small>
+                        </div>
+                        <i class="bi bi-inbox-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Submissions</h6>
+                            <h2 class="mb-0">{{ total_submissions }}</h2>
+                            <small>{{ approved_submissions }} approved</small>
+                        </div>
+                        <i class="bi bi-check-circle-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Avg Completion</h6>
+                            <h2 class="mb-0">{{ "%.1f"|format(avg_completion_rate) }}%</h2>
+                            <small>across all requests</small>
+                        </div>
+                        <i class="bi bi-bar-chart-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Overdue</h6>
+                            <h2 class="mb-0">{{ overdue_count }}</h2>
+                            <small>missing submissions</small>
+                        </div>
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-clock-history"></i> Avg Response Time</h6>
+                    <h3>{{ "%.1f"|format(avg_response_time) }} hours</h3>
+                    <small class="text-muted">From request creation to submission</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-calendar-check"></i> Recent Activity (7 days)</h6>
+                    <p class="mb-1"><strong>{{ recent_requests }}</strong> requests created</p>
+                    <p class="mb-0"><strong>{{ recent_submissions }}</strong> submissions received</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-clipboard-data"></i> Submission Status</h6>
+                    <p class="mb-1"><span class="badge bg-warning text-dark">{{ pending_submissions }}</span> Pending Review</p>
+                    <p class="mb-1"><span class="badge bg-success">{{ approved_submissions }}</span> Approved</p>
+                    <p class="mb-0"><span class="badge bg-danger">{{ rejected_submissions }}</span> Rejected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Document Types Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Most Requested Document Types</h5>
+                </div>
+                <div class="card-body">
+                    {% if document_type_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Document Type</th>
+                                    <th>Count</th>
+                                    <th>Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for type, count in document_type_stats %}
+                                <tr>
+                                    <td>{{ type.replace('_', ' ').title() }}</td>
+                                    <td><strong>{{ count }}</strong></td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                                 style="width: {{ (count / total_requests * 100) if total_requests > 0 else 0 }}%">
+                                                {{ "%.0f"|format((count / total_requests * 100) if total_requests > 0 else 0) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Requests -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Overdue Requests</h5>
+                </div>
+                <div class="card-body">
+                    {% if overdue_requests %}
+                    <div class="list-group">
+                        {% for item in overdue_requests %}
+                        <a href="{{ url_for('request_hub.view_request', request_id=item.request.id) }}" 
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ item.request.title }}</h6>
+                                <small class="text-danger">{{ item.missing }} missing</small>
+                            </div>
+                            <small class="text-muted">
+                                Deadline: {{ item.request.deadline.strftime('%d %b %Y, %H:%M') }}
+                            </small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">No overdue requests!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Submitters -->
+        <div class="col-lg-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-trophy"></i> Top Submitters</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_submitters %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Intern</th>
+                                    <th>Submissions</th>
+                                    <th>Badge</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user_id, name, surname, count in top_submitters %}
+                                <tr>
+                                    <td>
+                                        {% if loop.index == 1 %}
+                                            <i class="bi bi-trophy-fill text-warning"></i>
+                                        {% elif loop.index == 2 %}
+                                            <i class="bi bi-trophy-fill text-secondary"></i>
+                                        {% elif loop.index == 3 %}
+                                            <i class="bi bi-trophy-fill" style="color: #cd7f32;"></i>
+                                        {% else %}
+                                            {{ loop.index }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ name }} {{ surname }}</td>
+                                    <td><strong>{{ count }}</strong> submissions</td>
+                                    <td>
+                                        {% if count >= 10 %}
+                                            <span class="badge bg-success">Excellent</span>
+                                        {% elif count >= 5 %}
+                                            <span class="badge bg-primary">Great</span>
+                                        {% else %}
+                                            <span class="badge bg-info">Good</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No submissions yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

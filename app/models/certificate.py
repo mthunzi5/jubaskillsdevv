@@ -24,6 +24,13 @@ class Certificate(db.Model):
     # Issuer
     issued_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
+    # Admin Approval and Signing
+    is_approved = db.Column(db.Boolean, default=False)
+    approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    approved_at = db.Column(db.DateTime, nullable=True)
+    admin_signature = db.Column(db.String(200), nullable=True)  # Admin's name for signature
+    admin_notes = db.Column(db.Text, nullable=True)  # Optional notes from admin
+    
     # Metadata
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
@@ -31,6 +38,7 @@ class Certificate(db.Model):
     # Relationships
     intern = db.relationship('User', foreign_keys=[intern_id], backref='certificates')
     issuer = db.relationship('User', foreign_keys=[issued_by], backref='issued_certificates')
+    approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_certificates')
     
     def __repr__(self):
         return f'<Certificate {self.certificate_number}>'

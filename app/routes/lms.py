@@ -486,6 +486,115 @@ def view_certificate(cert_id):
     
     return render_template('lms/view_certificate.html', certificate=certificate)
 
+@lms_bp.route('/certificates/<int:cert_id>/approve', methods=['POST'])
+@login_required
+def approve_certificate(cert_id):
+    """Admin approves and signs certificate"""
+    from app.utils.decorators import admin_required
+    
+    if current_user.role != 'admin':
+        flash('Only administrators can approve certificates', 'danger')
+        return redirect(url_for('lms.certificates_list'))
+    
+    certificate = Certificate.query.get_or_404(cert_id)
+    
+    if certificate.is_approved:
+        flash('Certificate is already approved', 'info')
+        return redirect(url_for('lms.view_certificate', cert_id=cert_id))
+    
+    # Approve and sign the certificate
+    certificate.is_approved = True
+    certificate.approved_by = current_user.id
+    certificate.approved_at = datetime.utcnow()
+    certificate.admin_signature = f"{current_user.name} {current_user.surname}"
+    certificate.admin_notes = request.form.get('admin_notes', '')
+    
+    db.session.commit()
+    
+    flash('Certificate approved and signed successfully!', 'success')
+    return redirect(url_for('lms.view_certificate', cert_id=cert_id))
+
+@lms_bp.route('/certificates/<int:cert_id>/reject', methods=['POST'])
+@login_required
+def reject_certificate(cert_id):
+    """Admin rejects certificate"""
+    if current_user.role != 'admin':
+        flash('Only administrators can reject certificates', 'danger')
+        return redirect(url_for('lms.certificates_list'))
+    
+    certificate = Certificate.query.get_or_404(cert_id)
+    
+    if certificate.is_approved:
+        flash('Cannot reject an already approved certificate', 'warning')
+        return redirect(url_for('lms.view_certificate', cert_id=cert_id))
+    
+    # Deactivate the certificate
+    certificate.is_active = False
+    certificate.admin_notes = request.form.get('rejection_reason', 'Certificate rejected by admin')
+    
+    db.session.commit()
+    
+    flash('Certificate rejected', 'success')
+    return redirect(url_for('lms.certificates_list'))
+
+@lms_bp.route('/certificates/award/<int:intern_id>', methods=['GET', 'POST'])
+@login_required
+def award_certificate_direct(intern_id):
+    """Admin awards certificate directly without completion check"""
+    if current_user.role != 'admin':
+        flash('Only administrators can directly award certificates', 'danger')
+        return redirect(url_for('lms.progress_dashboard'))
+    
+    intern = User.query.get_or_404(intern_id)
+    
+    if intern.role != 'intern':
+        flash('Can only award certificates to interns', 'warning')
+        return redirect(url_for('lms.progress_dashboard'))
+    
+    if request.method == 'POST':
+        # Get form data
+        program_name = request.form.get('program_name', 'Skills Development Program')
+        total_hours = float(request.form.get('total_hours', 0))
+        final_grade = float(request.form.get('final_grade', 0))
+        tasks_completed = int(request.form.get('tasks_completed', 0))
+        admin_notes = request.form.get('admin_notes', '')
+        
+        # Generate certificate number
+        cert_number = Certificate.generate_certificate_number()
+        
+        # Create certificate
+        certificate = Certificate(
+            certificate_number=cert_number,
+            intern_id=intern_id,
+            intern_name=f"{intern.name} {intern.surname}",
+            program_name=program_name,
+            total_hours=total_hours,
+            final_grade=final_grade,
+            tasks_completed=tasks_completed,
+            issued_by=current_user.id,
+            is_approved=True,  # Auto-approved since admin is awarding directly
+            approved_by=current_user.id,
+            approved_at=datetime.utcnow(),
+            admin_signature=f"{current_user.name} {current_user.surname}",
+            admin_notes=admin_notes
+        )
+        
+        db.session.add(certificate)
+        
+        # Update progress if exists
+        progress = Progress.query.filter_by(intern_id=intern_id).first()
+        if progress:
+            progress.certificate_issued = True
+        
+        db.session.commit()
+        
+        flash(f'Certificate awarded successfully! Certificate Number: {cert_number}', 'success')
+        return redirect(url_for('lms.view_certificate', cert_id=certificate.id))
+    
+    # GET request - show form
+    progress = Progress.query.filter_by(intern_id=intern_id).first()
+    return render_template('lms/award_certificate.html', intern=intern, progress=progress)
+
 # ============= EVALUATIONS =============
 
 @lms_bp.route('/evaluations')

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Award Certificate - {{ intern.name }} {{ intern.surname }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.progress_dashboard') }}">Progress Dashboard</a></li>
+        <li class="breadcrumb-item active">Award Certificate</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-award"></i> Award Certificate Directly
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> <strong>Admin Privilege:</strong> You can award a certificate directly to this intern, bypassing normal completion requirements.
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Intern Information</h5>
+                        <p class="mb-1"><strong>Name:</strong> {{ intern.name }} {{ intern.surname }}</p>
+                        <p class="mb-1"><strong>Email:</strong> {{ intern.email }}</p>
+                        <p class="mb-1"><strong>ID Number:</strong> {{ intern.id_number }}</p>
+                        
+                        {% if progress %}
+                        <hr>
+                        <h6>Current Progress:</h6>
+                        <p class="mb-1">Tasks Completed: {{ progress.completed_tasks }}</p>
+                        <p class="mb-1">Hours Logged: {{ "%.1f"|format(progress.total_hours_logged) }}</p>
+                        <p class="mb-1">Average Grade: {{ "%.1f"|format(progress.average_grade) }}%</p>
+                        {% endif %}
+                    </div>
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="program_name" class="form-label">Program Name</label>
+                            <input type="text" class="form-control" id="program_name" name="program_name" 
+                                   value="Skills Development Program" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="total_hours" class="form-label">Total Hours</label>
+                                <input type="number" class="form-control" id="total_hours" name="total_hours" 
+                                       step="0.1" value="{{ progress.total_hours_logged if progress else 0 }}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="final_grade" class="form-label">Final Grade (%)</label>
+                                <input type="number" class="form-control" id="final_grade" name="final_grade" 
+                                       step="0.1" min="0" max="100" value="{{ progress.average_grade if progress else 0 }}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="tasks_completed" class="form-label">Tasks Completed</label>
+                                <input type="number" class="form-control" id="tasks_completed" name="tasks_completed" 
+                                       value="{{ progress.completed_tasks if progress else 0 }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="admin_notes" class="form-label">Admin Notes</label>
+                            <textarea class="form-control" id="admin_notes" name="admin_notes" rows="3" 
+                                      placeholder="Add any notes about this certificate award (e.g., reason for direct award, special circumstances)"></textarea>
+                            <small class="text-muted">These notes will be saved with the certificate but won't appear on the printed version.</small>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> <strong>Note:</strong> This certificate will be automatically approved and signed by you upon creation.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('lms.progress_dashboard') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-award-fill"></i> Award Certificate
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}{{ request.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{{ url_for('request_hub.staff_index') }}" class="btn btn-sm btn-outline-secondary mb-2">
+                <i class="bi bi-arrow-left"></i> Back to Requests
+            </a>
+            <h2>{{ request.title }}</h2>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            {% if submission_data|selectattr('has_submitted')|list|length > 0 %}
+            <a href="{{ url_for('request_hub.download_all_submissions', request_id=request.id) }}" 
+               class="btn btn-primary">
+                <i class="bi bi-download"></i> Download All Submissions
+            </a>
+            {% endif %}
+            {% if request.is_active %}
+            <span class="badge bg-success">Active</span>
+            {% else %}
+            <span class="badge bg-secondary">Inactive</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Request Details -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Request Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Description:</strong>
+                        <p class="mb-0">{{ request.description }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Type:</strong>
+                        <p class="mb-0">{{ request.request_type.replace('_', ' ').title() }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Target Audience:</strong>
+                        <p class="mb-0">
+                            {% if request.target_type == 'specific' %}
+                                {{ request.target_user.name }} {{ request.target_user.surname }}
+                            {% elif request.target_type == 'all' %}
+                                All Interns
+                            {% elif request.target_type == 'varsity' %}
+                                Varsity Interns
+                            {% elif request.target_type == 'tvet' %}
+                                TVET Interns
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    {% if request.deadline %}
+                    <div class="mb-3">
+                        <strong>Deadline:</strong>
+                        <p class="mb-0">{{ request.deadline.strftime('%d %B %Y, %H:%M') }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <strong>Documents Required:</strong>
+                        <p class="mb-0">
+                            {% if request.requires_documents %}
+                                Yes (Max: {{ request.max_documents }})
+                            {% else %}
+                                No
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    {% if request.requires_text %}
+                    <div class="mb-3">
+                        <strong>Text Field:</strong>
+                        <p class="mb-0">{{ request.text_field_label or 'Required' }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-0">
+                        <strong>Created:</strong>
+                        <p class="mb-0">{{ request.created_at.strftime('%d %b %Y, %H:%M') }}</p>
+                        <small class="text-muted">by {{ request.created_by.name }} {{ request.created_by.surname }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submissions -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark-check"></i> Submissions</h5>
+                    <span class="badge bg-primary">
+                        {{ submission_data|selectattr('has_submitted')|list|length }} / {{ submission_data|length }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% if submission_data %}
+                    <!-- Filter tabs -->
+                    <ul class="nav nav-tabs mb-3" id="submissionTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#all" type="button">
+                                All ({{ submission_data|length }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="submitted-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#submitted" type="button">
+                                Submitted ({{ submission_data|selectattr('has_submitted')|list|length }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pending-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#pending" type="button">
+                                Pending ({{ submission_data|rejectattr('has_submitted')|list|length }})
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab content -->
+                    <div class="tab-content" id="submissionTabsContent">
+                        <!-- All -->
+                        <div class="tab-pane fade show active" id="all">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Intern</th>
+                                            <th>Status</th>
+                                            <th>Documents</th>
+                                            <th>Submitted</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for data in submission_data %}
+                                        <tr>
+                                            <td>
+                                                {{ data.user.name }} {{ data.user.surname }}<br>
+                                                <small class="text-muted">{{ data.user.email }}</small>
+                                            </td>
+                                            <td>
+                                                {% if data.has_submitted %}
+                                                    {% if data.submission.status == 'approved' %}
+                                                        <span class="badge bg-success">Approved</span>
+                                                    {% elif data.submission.status == 'rejected' %}
+                                                        <span class="badge bg-danger">Rejected</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning text-dark">Pending Review</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Not Submitted</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if data.has_submitted %}
+                                                    <i class="bi bi-file-earmark"></i> {{ data.document_count }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if data.has_submitted %}
+                                                    {{ data.submission.submitted_at.strftime('%d %b %Y, %H:%M') }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if data.has_submitted %}
+                                                    <a href="{{ url_for('request_hub.view_submission', submission_id=data.submission.id) }}" 
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-eye"></i> View
+                                                    </a>
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Submitted -->
+                        <div class="tab-pane fade" id="submitted">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Intern</th>
+                                            <th>Status</th>
+                                            <th>Documents</th>
+                                            <th>Submitted</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for data in submission_data if data.has_submitted %}
+                                        <tr>
+                                            <td>
+                                                {{ data.user.name }} {{ data.user.surname }}<br>
+                                                <small class="text-muted">{{ data.user.email }}</small>
+                                            </td>
+                                            <td>
+                                                {% if data.submission.status == 'approved' %}
+                                                    <span class="badge bg-success">Approved</span>
+                                                {% elif data.submission.status == 'rejected' %}
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark">Pending Review</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <i class="bi bi-file-earmark"></i> {{ data.document_count }}
+                                            </td>
+                                            <td>
+                                                {{ data.submission.submitted_at.strftime('%d %b %Y, %H:%M') }}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ url_for('request_hub.view_submission', submission_id=data.submission.id) }}" 
+                                                       class="btn btn-outline-primary">
+                                                        <i class="bi bi-eye"></i> View
+                                                    </a>
+                                                    <a href="{{ url_for('request_hub.download_receipt', submission_id=data.submission.id) }}" 
+                                                       class="btn btn-outline-secondary" title="Download Receipt">
+                                                        <i class="bi bi-file-earmark-pdf"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No submissions yet</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Pending -->
+                        <div class="tab-pane fade" id="pending">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Intern</th>
+                                            <th>Email</th>
+                                            <th>Type</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for data in submission_data if not data.has_submitted %}
+                                        <tr>
+                                            <td>{{ data.user.name }} {{ data.user.surname }}</td>
+                                            <td>{{ data.user.email }}</td>
+                                            <td>{{ data.user.intern_type|capitalize if data.user.intern_type else 'N/A' }}</td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">All interns have submitted</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <p class="text-muted mt-3">No target users found</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

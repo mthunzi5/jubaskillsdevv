@@ -10,3 +10,5 @@ PyPDF2==3.0.1
 email-validator==2.1.0
 gunicorn==21.2.0
 psycopg2-binary==2.9.9
+reportlab==4.0.7
+python-dateutil==2.8.2

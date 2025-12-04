@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Create Recurring Request{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-arrow-repeat"></i> Create Recurring Request</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Recurring requests automatically create new requests based on your schedule (daily, weekly, monthly, or quarterly).
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('request_hub.create_recurring_request') }}">
+                        <!-- Basic Information -->
+                        <h5 class="mb-3">Request Template</h5>
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Request Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required 
+                                   placeholder="e.g., Monthly Timesheets">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required
+                                      placeholder="Instructions for this recurring request..."></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="request_type" class="form-label">Request Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="request_type" name="request_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="timesheet">Timesheet</option>
+                                    <option value="id_document">ID Document</option>
+                                    <option value="proof_of_registration">Proof of Registration</option>
+                                    <option value="certificate">Certificate</option>
+                                    <option value="report">Report</option>
+                                    <option value="proof_of_residence">Proof of Residence</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="target_type" class="form-label">Target Audience <span class="text-danger">*</span></label>
+                                <select class="form-select" id="target_type" name="target_type" required>
+                                    <option value="">Select Target</option>
+                                    <option value="all">All Interns</option>
+                                    <option value="varsity">Varsity Interns Only</option>
+                                    <option value="tvet">TVET Interns Only</option>
+                                    <option value="specific">Specific Intern</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="specific_user_div" style="display: none;">
+                            <label for="target_user_id" class="form-label">Select Intern</label>
+                            <select class="form-select" id="target_user_id" name="target_user_id">
+                                <option value="">Select an intern</option>
+                                {% for intern in interns %}
+                                <option value="{{ intern.id }}">
+                                    {{ intern.name }} {{ intern.surname }} - {{ intern.email }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Recurrence Settings -->
+                        <h5 class="mb-3">Recurrence Schedule</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="recurrence_pattern" class="form-label">Frequency <span class="text-danger">*</span></label>
+                                <select class="form-select" id="recurrence_pattern" name="recurrence_pattern" required>
+                                    <option value="">Select Frequency</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="quarterly">Quarterly (Every 3 Months)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3" id="recurrence_day_div" style="display: none;">
+                                <label for="recurrence_day" class="form-label">Day of Month</label>
+                                <input type="number" class="form-control" id="recurrence_day" name="recurrence_day" min="1" max="31"
+                                       placeholder="e.g., 1 for first day of month">
+                                <small class="form-text text-muted">For monthly/quarterly recurrence</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="deadline_days_after" class="form-label">Deadline (Days After Creation)</label>
+                                <input type="number" class="form-control" id="deadline_days_after" name="deadline_days_after" 
+                                       min="1" max="90" value="7">
+                                <small class="form-text text-muted">Request deadline will be set X days after creation</small>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Document Settings -->
+                        <h5 class="mb-3">Response Settings</h5>
+
+                        <div class="mb-3 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="requires_documents" 
+                                   name="requires_documents" checked>
+                            <label class="form-check-label" for="requires_documents">
+                                Require Document Upload
+                            </label>
+                        </div>
+
+                        <div class="mb-3" id="max_documents_div">
+                            <label for="max_documents" class="form-label">Maximum Number of Documents</label>
+                            <input type="number" class="form-control" id="max_documents" name="max_documents" 
+                                   min="1" max="25" value="5">
+                        </div>
+
+                        <div class="mb-3 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="requires_text" name="requires_text">
+                            <label class="form-check-label" for="requires_text">
+                                Include Text Field
+                            </label>
+                        </div>
+
+                        <div class="mb-3" id="text_field_label_div" style="display: none;">
+                            <label for="text_field_label" class="form-label">Text Field Label</label>
+                            <input type="text" class="form-control" id="text_field_label" name="text_field_label" 
+                                   placeholder="e.g., Additional Comments">
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Create Recurring Request
+                            </button>
+                            <a href="{{ url_for('request_hub.recurring_requests') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show/hide specific user selection
+document.getElementById('target_type').addEventListener('change', function() {
+    const specificDiv = document.getElementById('specific_user_div');
+    const userSelect = document.getElementById('target_user_id');
+    
+    if (this.value === 'specific') {
+        specificDiv.style.display = 'block';
+        userSelect.required = true;
+    } else {
+        specificDiv.style.display = 'none';
+        userSelect.required = false;
+        userSelect.value = '';
+    }
+});
+
+// Show/hide recurrence day for monthly/quarterly
+document.getElementById('recurrence_pattern').addEventListener('change', function() {
+    const dayDiv = document.getElementById('recurrence_day_div');
+    
+    if (this.value === 'monthly' || this.value === 'quarterly') {
+        dayDiv.style.display = 'block';
+    } else {
+        dayDiv.style.display = 'none';
+        document.getElementById('recurrence_day').value = '';
+    }
+});
+
+// Show/hide max documents field
+document.getElementById('requires_documents').addEventListener('change', function() {
+    const maxDocsDiv = document.getElementById('max_documents_div');
+    maxDocsDiv.style.display = this.checked ? 'block' : 'none';
+});
+
+// Show/hide text field label
+document.getElementById('requires_text').addEventListener('change', function() {
+    const labelDiv = document.getElementById('text_field_label_div');
+    
+    if (this.checked) {
+        labelDiv.style.display = 'block';
+    } else {
+        labelDiv.style.display = 'none';
+        document.getElementById('text_field_label').value = '';
+    }
+});
+</script>
+{% endblock %}

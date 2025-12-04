@@ -31,6 +31,11 @@ def create_app(config_name='default'):
             return value
         return value.replace('\n', '<br>\n')
     
+    # Add template context processor to make datetime.utcnow available as 'now'
+    @app.context_processor
+    def inject_now():
+        return {'now': datetime.utcnow}
+    
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
@@ -45,7 +50,7 @@ def create_app(config_name='default'):
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
     # Register blueprints
-    from app.routes import auth, admin, staff, intern, main, lms, board
+    from app.routes import auth, admin, staff, intern, main, lms, board, request_hub
     app.register_blueprint(auth.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(staff.bp)
@@ -53,6 +58,7 @@ def create_app(config_name='default'):
     app.register_blueprint(main.bp)
     app.register_blueprint(lms.lms_bp)
     app.register_blueprint(board.bp)
+    app.register_blueprint(request_hub.request_hub_bp)
     
     # Register error handlers
     from flask import render_template

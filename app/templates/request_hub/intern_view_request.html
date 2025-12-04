@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}{{ request.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <a href="{{ url_for('request_hub.intern_index') }}" class="btn btn-sm btn-outline-secondary mb-3">
+                <i class="bi bi-arrow-left"></i> Back to My Requests
+            </a>
+
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{{ request.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Request Details -->
+                    <div class="mb-4">
+                        <h5>Request Details</h5>
+                        <p>{{ request.description }}</p>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <strong>Type:</strong>
+                                <p class="mb-0">{{ request.request_type.replace('_', ' ').title() }}</p>
+                            </div>
+                            {% if request.deadline %}
+                            <div class="col-md-6">
+                                <strong>Deadline:</strong>
+                                <p class="mb-0 {% if request.deadline < now() %}text-danger{% endif %}">
+                                    {{ request.deadline.strftime('%d %B %Y, %H:%M') }}
+                                    {% if request.deadline < now() %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% endif %}
+                            <div class="col-md-6">
+                                <strong>Documents Required:</strong>
+                                <p class="mb-0">
+                                    {% if request.requires_documents %}
+                                        Yes (Up to {{ request.max_documents }})
+                                    {% else %}
+                                        No
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Created By:</strong>
+                                <p class="mb-0">{{ request.created_by.name }} {{ request.created_by.surname }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Submission Status -->
+                    {% if submission %}
+                    <div class="alert {% if submission.status == 'approved' %}alert-success{% elif submission.status == 'rejected' %}alert-danger{% else %}alert-info{% endif %} mb-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="alert-heading">
+                                    <i class="bi bi-info-circle"></i> Submission Status: 
+                                    {% if submission.status == 'approved' %}
+                                        Approved
+                                    {% elif submission.status == 'rejected' %}
+                                        Rejected
+                                    {% else %}
+                                        Pending Review
+                                    {% endif %}
+                                </h5>
+                                <p class="mb-0">Submitted on: {{ submission.submitted_at.strftime('%d %B %Y, %H:%M') }}</p>
+                                {% if submission.reviewed_at %}
+                                <p class="mb-0">Reviewed on: {{ submission.reviewed_at.strftime('%d %B %Y, %H:%M') }} by {{ submission.reviewed_by.name }} {{ submission.reviewed_by.surname }}</p>
+                                {% endif %}
+                                {% if submission.review_notes %}
+                                <hr>
+                                <p class="mb-0"><strong>Staff Feedback:</strong></p>
+                                <p class="mb-0">{{ submission.review_notes|nl2br|safe }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <a href="{{ url_for('request_hub.download_receipt', submission_id=submission.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-file-earmark-pdf"></i> Download Receipt
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- View Existing Submission -->
+                    <div class="mb-4">
+                        <h5>Your Submission</h5>
+                        
+                        {% if submission.text_content %}
+                        <div class="mb-3">
+                            <strong>{{ request.text_field_label or 'Additional Information' }}:</strong>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    {{ submission.text_content|nl2br|safe }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if documents %}
+                        <div class="mb-3">
+                            <strong>Uploaded Documents ({{ documents|length }}):</strong>
+                            <div class="list-group mt-2">
+                                {% for doc in documents %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">
+                                                <i class="bi {{ doc.get_file_icon() }}"></i>
+                                                {{ doc.document_name or doc.original_filename }}
+                                            </h6>
+                                            <small class="text-muted">
+                                                {{ doc.original_filename }} - {{ doc.get_file_size_formatted() }}
+                                            </small>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ url_for('request_hub.download_document', document_id=doc.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                            {% if not request.deadline or now() < request.deadline %}
+                                            <form method="POST" action="{{ url_for('request_hub.delete_document', document_id=doc.id) }}" 
+                                                  onsubmit="return confirm('Delete this document?');" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Update Submission Form (if deadline not passed) -->
+                    {% if not request.deadline or now() < request.deadline %}
+                    <div class="mb-4">
+                        <h5>Update Submission</h5>
+                        <form method="POST" action="{{ url_for('request_hub.submit_request', request_id=request.id) }}" 
+                              enctype="multipart/form-data" id="submissionForm">
+                            
+                            {% if request.requires_text %}
+                            <div class="mb-3">
+                                <label for="text_content" class="form-label">{{ request.text_field_label or 'Additional Information' }}</label>
+                                <textarea class="form-control" id="text_content" name="text_content" rows="4"
+                                          placeholder="Enter your response...">{{ submission.text_content if submission else '' }}</textarea>
+                            </div>
+                            {% endif %}
+
+                            {% if request.requires_documents %}
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Add More Documents 
+                                    <small class="text-muted">
+                                        ({{ documents|length if documents else 0 }}/{{ request.max_documents }} uploaded)
+                                    </small>
+                                </label>
+                                <div id="fileInputs">
+                                    <!-- File inputs will be added here -->
+                                </div>
+                                {% if (documents|length if documents else 0) < request.max_documents %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addFileInput()">
+                                    <i class="bi bi-plus-circle"></i> Add File
+                                </button>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Update Submission
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> The deadline has passed. You can no longer update your submission.
+                    </div>
+                    {% endif %}
+
+                    {% else %}
+                    <!-- New Submission Form -->
+                    <div class="mb-4">
+                        <h5>Submit Your Response</h5>
+                        
+                        {% if request.deadline and request.deadline < now() %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> The deadline has passed. You can no longer submit.
+                        </div>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('request_hub.submit_request', request_id=request.id) }}" 
+                              enctype="multipart/form-data" id="submissionForm">
+                            
+                            {% if request.requires_text %}
+                            <div class="mb-3">
+                                <label for="text_content" class="form-label">
+                                    {{ request.text_field_label or 'Additional Information' }} <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="text_content" name="text_content" rows="4" required
+                                          placeholder="Enter your response..."></textarea>
+                            </div>
+                            {% endif %}
+
+                            {% if request.requires_documents %}
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Upload Documents <span class="text-danger">*</span>
+                                    <small class="text-muted">(Up to {{ request.max_documents }} files)</small>
+                                </label>
+                                <div id="fileInputs">
+                                    <!-- File inputs will be added here -->
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addFileInput()">
+                                    <i class="bi bi-plus-circle"></i> Add File
+                                </button>
+                                <small class="form-text text-muted d-block mt-2">
+                                    You can name each document for easy identification.
+                                </small>
+                            </div>
+                            {% endif %}
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload"></i> Submit
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let fileInputCount = 0;
+const maxFiles = {{ request.max_documents }};
+const currentFiles = {{ documents|length if documents else 0 }};
+
+function addFileInput() {
+    if (fileInputCount + currentFiles >= maxFiles) {
+        alert('You can only upload up to ' + maxFiles + ' documents.');
+        return;
+    }
+
+    const container = document.getElementById('fileInputs');
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-2';
+    inputGroup.innerHTML = `
+        <input type="file" class="form-control" name="documents" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls" required>
+        <input type="text" class="form-control" name="document_names" placeholder="Document name (optional)" style="max-width: 200px;">
+        <button type="button" class="btn btn-outline-danger" onclick="removeFileInput(this)">
+            <i class="bi bi-trash"></i>
+        </button>
+    `;
+    
+    container.appendChild(inputGroup);
+    fileInputCount++;
+}
+
+function removeFileInput(button) {
+    button.parentElement.remove();
+    fileInputCount--;
+}
+
+// Add one file input by default for new submissions
+{% if not submission %}
+document.addEventListener('DOMContentLoaded', function() {
+    addFileInput();
+});
+{% endif %}
+
+// Get current time
+const now = () => new Date();
+</script>
+{% endblock %}

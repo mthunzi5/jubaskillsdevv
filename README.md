@@ -1,7 +1,12 @@
 # Juba Skills Development Academy - Learning Management System
 
 ## Overview
-This is a comprehensive Learning Management System built for Juba Skills Development Academy and Training. The system facilitates communication and workflow management between Admins (Managers), Staff, and Interns.
+A comprehensive Flask-based Learning Management System designed for Juba Skills Development Academy and Training. This platform streamlines workflows between Admins, Staff, and Interns with features for timesheet management, task assignments, training materials, certificate management, and a sophisticated request hub system.
+
+## 🚀 Quick Links
+- **Deployment Guide**: [PYTHONANYWHERE.md](PYTHONANYWHERE.md)
+- **Pre-Deployment Report**: [PRE_DEPLOYMENT_REPORT.md](PRE_DEPLOYMENT_REPORT.md)
+- **Detailed Deployment Info**: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## Features
 
@@ -165,11 +170,13 @@ jubalmss/
 ```
 
 ## Technology Stack
-- **Backend**: Flask (Python web framework)
-- **Database**: SQLite with SQLAlchemy ORM
+- **Backend**: Flask 3.0.0 (Python web framework)
+- **Database**: SQLite with Flask-SQLAlchemy ORM & Flask-Migrate
 - **Authentication**: Flask-Login + Flask-JWT-Extended
-- **Frontend**: Bootstrap 5 + Bootstrap Icons
+- **Frontend**: Bootstrap 5 + Bootstrap Icons + Jinja2 templates
 - **File Handling**: Werkzeug for secure uploads
+- **PDF Generation**: ReportLab 4.0.7 for submission receipts
+- **Additional**: python-dateutil, Flask-WTF for forms
 
 ## Development
 
@@ -207,12 +214,42 @@ Delete `juba_lms.db` to reset the database (WARNING: This will delete all data).
 - In production, set `DEBUG = False` in config
 - Use HTTPS in production environments
 
+## Deployment
+
+### PythonAnywhere Production Deployment
+
+For detailed PythonAnywhere deployment instructions, see **[PYTHONANYWHERE.md](PYTHONANYWHERE.md)**
+
+**Quick Summary**:
+1. Clone repository to PythonAnywhere
+2. Create virtual environment with Python 3.10
+3. Install dependencies from `requirements.txt`
+4. Configure `.env` with production settings
+5. Update `wsgi.py` with your username
+6. Set up static files mapping
+7. Run `flask db upgrade`
+8. Reload web app
+
+**WSGI Configuration** (wsgi.py included in repository):
+```python
+project_home = '/home/yourusername/jubaskillsdevv'  # Update username
+sys.path = [project_home] + sys.path
+from app import create_app
+application = create_app()
+```
+
+**Static Files Mapping**:
+- URL: `/static/`
+- Directory: `/home/yourusername/jubaskillsdevv/app/static/`
+
 ## Support
-For issues or questions, contact the system administrator.
+- GitHub Issues: [https://github.com/mthunzi5/jubaskillsdevv/issues](https://github.com/mthunzi5/jubaskillsdevv/issues)
+- Contact: System Administrator
 
 ## License
 Proprietary - Juba Skills Development Academy and Training
 
 ---
 **Version**: 1.0.0  
-**Last Updated**: November 2025
+**Last Updated**: December 2025  
+**Repository**: https://github.com/mthunzi5/jubaskillsdevv

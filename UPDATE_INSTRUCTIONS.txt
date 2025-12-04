@@ -1,0 +1,36 @@
+╔══════════════════════════════════════════════════════════════╗
+║           UPDATE INSTRUCTIONS FOR PYTHONANYWHERE             ║
+╚══════════════════════════════════════════════════════════════╝
+
+Changes pushed to GitHub:
+✓ Fixed sidebar scrolling (can now see all menu items and logout)
+✓ Added custom error pages (403, 404, 500)
+
+═══════════════════════════════════════════════════════════════
+
+TO APPLY THESE CHANGES TO YOUR LIVE SITE:
+
+1. Go to PythonAnywhere dashboard
+2. Click "Consoles" tab
+3. Open a Bash console (or use existing one)
+4. Run these commands:
+
+   cd ~/jubalmss
+   git pull origin main
+
+5. Go to "Web" tab
+6. Click the green "Reload JubaSkills.pythonanywhere.com" button
+7. Wait for reload to complete
+
+DONE! Your site now has:
+- Scrollable sidebar with all menu items visible
+- Professional error pages instead of ugly server errors
+
+═══════════════════════════════════════════════════════════════
+
+Test the fixes:
+✓ Check sidebar - should scroll and show logout button
+✓ Try accessing a page you don't have permission for (403 error)
+✓ Visit a non-existent page like /nonexistent (404 error)
+
+═══════════════════════════════════════════════════════════════

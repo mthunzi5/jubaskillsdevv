@@ -425,6 +425,14 @@
                             <i class="bi bi-clock"></i> Last: {{ current_user.last_login.strftime('%m/%d %H:%M') }}
                         </p>
                         {% endif %}
+                        <div class="mt-2">
+                            <a href="{{ url_for('request_hub.notifications') }}" class="btn btn-sm btn-outline-light position-relative">
+                                <i class="bi bi-bell"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge" style="display: none;">
+                                    0
+                                </span>
+                            </a>
+                        </div>
                     </div>
                     <ul class="nav flex-column">
                         {% if current_user.is_admin() %}
@@ -479,6 +487,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if 'lms.certificates' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
+                                <i class="bi bi-award"></i> Certificates
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'lms.material_deletion_requests' %}active{% endif %}" href="{{ url_for('lms.material_deletion_requests') }}">
                                 <i class="bi bi-file-earmark-x"></i> My Deletion Requests
                             </a>
@@ -489,13 +502,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
-                                <i class="bi bi-clipboard-check"></i> Evaluations
+                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
+                                <i class="bi bi-chat-square-text"></i> Communication Board
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
-                                <i class="bi bi-chat-square-text"></i> Communication Board
+                            <a class="nav-link {% if 'request_hub' in request.endpoint %}active{% endif %}" href="{{ url_for('request_hub.staff_index') }}">
+                                <i class="bi bi-folder"></i> Request Hub
                             </a>
                         </li>
                         <li class="nav-item">
@@ -559,6 +572,11 @@
                                 <i class="bi bi-chat-square-text"></i> Communication Board
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'request_hub' in request.endpoint %}active{% endif %}" href="{{ url_for('request_hub.staff_index') }}">
+                                <i class="bi bi-inbox"></i> Request Hub
+                            </a>
+                        </li>
                         {% elif current_user.is_intern() %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'intern.dashboard' %}active{% endif %}" href="{{ url_for('intern.dashboard') }}">
@@ -608,6 +626,11 @@
                         <li class="nav-item">
                             <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
                                 <i class="bi bi-chat-square-text"></i> Communication Board
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'request_hub' in request.endpoint %}active{% endif %}" href="{{ url_for('request_hub.intern_index') }}">
+                                <i class="bi bi-inbox-fill"></i> My Requests
                             </a>
                         </li>
                         {% endif %}
@@ -763,7 +786,27 @@
             
             // Initialize theme
             initTheme();
+            
+            // Initialize notification polling
+            updateNotificationCount();
+            setInterval(updateNotificationCount, 30000); // Update every 30 seconds
         });
+        
+        // Notification count functionality
+        function updateNotificationCount() {
+            fetch('{{ url_for("request_hub.unread_notification_count") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notificationBadge');
+                    if (badge && data.count > 0) {
+                        badge.textContent = data.count > 99 ? '99+' : data.count;
+                        badge.style.display = 'inline-block';
+                    } else if (badge) {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.log('Error fetching notification count:', error));
+        }
         
         // Theme toggle functionality
         function initTheme() {

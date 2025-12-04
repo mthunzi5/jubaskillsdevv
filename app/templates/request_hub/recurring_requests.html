@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Recurring Requests{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-arrow-repeat"></i> Recurring Requests</h2>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('request_hub.staff_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <a href="{{ url_for('request_hub.create_recurring_request') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create Recurring Request
+            </a>
+        </div>
+    </div>
+
+    {% if recurring_requests %}
+    <div class="row">
+        {% for recurring in recurring_requests %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title mb-0">{{ recurring.title }}</h5>
+                        {% if recurring.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="card-text text-muted small">{{ recurring.description[:100] }}{% if recurring.description|length > 100 %}...{% endif %}</p>
+                    
+                    <div class="mb-3">
+                        <div class="row g-2 small">
+                            <div class="col-12">
+                                <i class="bi bi-arrow-repeat"></i> <strong>{{ recurring.recurrence_pattern.title() }}</strong>
+                                {% if recurring.recurrence_pattern == 'monthly' and recurring.recurrence_day %}
+                                    (Day {{ recurring.recurrence_day }})
+                                {% endif %}
+                            </div>
+                            <div class="col-12">
+                                <i class="bi bi-calendar-check"></i> Deadline: {{ recurring.deadline_days_after }} days after creation
+                            </div>
+                            <div class="col-12">
+                                <i class="bi bi-people"></i> 
+                                {% if recurring.target_type == 'specific' %}
+                                    {{ recurring.target_user.name }} {{ recurring.target_user.surname }}
+                                {% elif recurring.target_type == 'all' %}
+                                    All Interns
+                                {% elif recurring.target_type == 'varsity' %}
+                                    Varsity Interns
+                                {% elif recurring.target_type == 'tvet' %}
+                                    TVET Interns
+                                {% endif %}
+                            </div>
+                            {% if recurring.last_created_at %}
+                            <div class="col-12">
+                                <i class="bi bi-clock-history"></i> Last: {{ recurring.last_created_at.strftime('%d %b %Y') }}
+                            </div>
+                            {% endif %}
+                            {% if recurring.next_creation_at %}
+                            <div class="col-12 text-primary">
+                                <i class="bi bi-clock"></i> Next: {{ recurring.next_creation_at.strftime('%d %b %Y, %H:%M') }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2 flex-wrap">
+                        <form method="POST" action="{{ url_for('request_hub.create_from_recurring_now', recurring_id=recurring.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-success" title="Create now">
+                                <i class="bi bi-play-fill"></i> Create Now
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('request_hub.toggle_recurring_request', recurring_id=recurring.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" 
+                                    title="{% if recurring.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                <i class="bi bi-{% if recurring.is_active %}pause{% else %}play{% endif %}-circle"></i>
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#deleteModal{{ recurring.id }}"
+                                title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteModal{{ recurring.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete the recurring request "<strong>{{ recurring.title }}</strong>"?</p>
+                        <p class="text-muted"><i class="bi bi-info-circle"></i> This will only delete the template. Already created requests will not be affected.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form method="POST" action="{{ url_for('request_hub.delete_recurring_request', recurring_id=recurring.id) }}">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-arrow-repeat display-1 text-muted"></i>
+        <p class="lead text-muted mt-3">No recurring requests created yet</p>
+        <p class="text-muted">Create recurring requests to automatically generate requests on a schedule (daily, weekly, monthly, quarterly)</p>
+        <a href="{{ url_for('request_hub.create_recurring_request') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create Your First Recurring Request
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -11,9 +11,13 @@ from app.models.task_deletion import TaskDeletionRequest, TaskDeletionHistory
 from app.models.task_assignment import TaskV2, TaskAssignment, QuizQuestion, QuizAnswer
 from app.models.material_deletion import MaterialDeletionRequest, MaterialDeletionHistory
 from app.models.communication import CommunicationPost, PostAttachment
+from app.models.request_hub import Request, RequestSubmission, RequestDocument
+from app.models.notification import Notification
+from app.models.recurring_request import RecurringRequest
 
 __all__ = ['User', 'Timesheet', 'DeletionHistory', 'SoftDelete', 
            'TrainingMaterial', 'Task', 'Progress', 'Certificate', 'Evaluation',
            'TaskDeletionRequest', 'TaskDeletionHistory',
            'TaskV2', 'TaskAssignment', 'QuizQuestion', 'QuizAnswer',
-           'CommunicationPost', 'PostAttachment']
+           'CommunicationPost', 'PostAttachment',
+           'Request', 'RequestSubmission', 'RequestDocument', 'Notification', 'RecurringRequest']
