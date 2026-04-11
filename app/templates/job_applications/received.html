@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Application Received - Juba Consultants{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            
+            <!-- Success Message -->
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill"></i>
+                <strong>Application Submitted Successfully!</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Confirmation Card -->
+            <div class="card shadow-lg mb-5">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle" style="font-size: 4rem; color: #27ae60;"></i>
+                    </div>
+                    <h2 class="card-title mb-3">Thank You for Your Application!</h2>
+                    <p class="text-muted mb-3">Your application has been received and is being processed.</p>
+                </div>
+            </div>
+
+            <!-- Application Details -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Application Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Application ID:</strong>
+                            <p>{{ application.id }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Submission Date:</strong>
+                            <p>{{ application.submitted_at.strftime('%d %B %Y at %H:%M') }}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Full Name:</strong>
+                            <p>{{ application.full_name }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Email:</strong>
+                            <p>{{ application.email }}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Phone Number:</strong>
+                            <p>{{ application.phone_number }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Status:</strong>
+                            <p>
+                                <span class="badge bg-info">{{ application.status.replace('_', ' ').title() }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Status -->
+            <div class="card mb-5">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark"></i> Documents Uploaded</h5>
+                </div>
+                <div class="card-body">
+                    {% if application.documents.filter_by(is_deleted=False).count() > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Document Type</th>
+                                        <th>Filename</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for doc in application.documents.filter_by(is_deleted=False).all() %}
+                                    <tr>
+                                        <td>{{ doc.get_human_readable_type() }}</td>
+                                        <td>{{ doc.original_filename }}</td>
+                                        <td>
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle"></i> Uploaded
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No documents uploaded yet.</p>
+                    {% endif %}
+
+                    {% if missing_docs %}
+                    <div class="alert alert-warning mt-3">
+                        <strong><i class="bi bi-exclamation-triangle"></i> Missing Documents:</strong>
+                        <p class="mb-0 mt-2">The following required documents are still missing:</p>
+                        <ul class="mt-2 mb-0">
+                            {% for doc_type, doc_name in missing_docs.items() %}
+                            <li>{{ doc_name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i> <strong>Complete!</strong> All required documents have been uploaded.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="card mb-5">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-arrow-right-circle"></i> What Happens Next?</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item mb-3">
+                            <div class="d-flex">
+                                <div class="timeline-marker me-3">
+                                    <span class="badge bg-success rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-check-lg"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6>Application Received</h6>
+                                    <p class="text-muted small">Your application has been successfully received and logged.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item mb-3">
+                            <div class="d-flex">
+                                <div class="timeline-marker me-3">
+                                    <span class="badge bg-secondary rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        2
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6>Document Verification</h6>
+                                    <p class="text-muted small">Our team will review and verify all submitted documents. (2-3 business days)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item mb-3">
+                            <div class="d-flex">
+                                <div class="timeline-marker me-3">
+                                    <span class="badge bg-secondary rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        3
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6>Initial Review</h6>
+                                    <p class="text-muted small">Your qualifications and experience will be evaluated.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <div class="d-flex">
+                                <div class="timeline-marker me-3">
+                                    <span class="badge bg-secondary rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        4
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6>Shortlist Decision</h6>
+                                    <p class="text-muted small">Qualified candidates will be shortlisted for interviews. You'll receive communication via email or phone.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Information -->
+            <div class="card mb-5">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Important Information</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-3">
+                            <strong><i class="bi bi-envelope"></i> Keep Your Application ID</strong>
+                            <p class="text-muted mb-0">Your application ID is <strong>{{ application.id }}</strong>. Please save it for reference.</p>
+                        </li>
+                        <li class="mb-3">
+                            <strong><i class="bi bi-envelope-fill"></i> Check Your Email</strong>
+                            <p class="text-muted mb-0">Check your email regularly for updates. We will contact you at <strong>{{ application.email }}</strong>.</p>
+                        </li>
+                        <li class="mb-3">
+                            <strong><i class="bi bi-telephone"></i> Contact Information</strong>
+                            <p class="text-muted mb-0">Ensure your phone number is correct: <strong>{{ application.phone_number }}</strong></p>
+                        </li>
+                        <li>
+                            <strong><i class="bi bi-shield-check"></i> Data Protection</strong>
+                            <p class="text-muted mb-0">Your personal information is secure and will only be used for this internship opportunity.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-house"></i> Return to Home
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-item {
+    padding-left: 0;
+}
+
+.timeline-marker {
+    min-width: 50px;
+}
+
+.card {
+    border: none;
+    border-radius: 8px;
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0;
+}
+</style>
+{% endblock %}

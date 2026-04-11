@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Job Application - Juba Consultants Internship{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Header -->
+            <div class="mb-5 text-center">
+                <h1 class="display-4 fw-bold mb-3">Juba Consultants Internship</h1>
+                <p class="lead text-muted">Apply for an exciting opportunity to gain practical experience</p>
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle"></i> Please fill out the form below and upload all required documents.
+                </div>
+            </div>
+
+            <!-- Application Form -->
+            <form method="POST" enctype="multipart/form-data" class="needs-validation">
+                
+                <!-- Personal Information Section -->
+                <h3 class="mb-4">
+                    <i class="bi bi-person-fill"></i> Personal Information
+                </h3>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" required
+                            placeholder="Enter your full name" value="{{ request.form.get('full_name', '') }}">
+                        <small class="form-text text-muted">First and Last Name</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="national_id" class="form-label">National ID Number</label>
+                        <input type="text" class="form-control" id="national_id" name="national_id"
+                            placeholder="e.g., 123456789" value="{{ request.form.get('national_id', '') }}">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" required
+                            placeholder="your.email@example.com" value="{{ request.form.get('email', '') }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="phone_number" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="phone_number" name="phone_number" required
+                            placeholder="+27 71 234 5678" value="{{ request.form.get('phone_number', '') }}">
+                    </div>
+                </div>
+
+                <!-- Education & Experience Section -->
+                <h3 class="mb-4 mt-5">
+                    <i class="bi bi-book-fill"></i> Education & Experience
+                </h3>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="qualification_level" class="form-label">Highest Qualification Level</label>
+                        <select class="form-select" id="qualification_level" name="qualification_level">
+                            <option value="">Select your qualification level</option>
+                            <option value="High School" {% if request.form.get('qualification_level') == 'High School' %}selected{% endif %}>High School Diploma</option>
+                            <option value="Diploma" {% if request.form.get('qualification_level') == 'Diploma' %}selected{% endif %}>Diploma</option>
+                            <option value="Bachelors" {% if request.form.get('qualification_level') == 'Bachelors' %}selected{% endif %}>Bachelor's Degree</option>
+                            <option value="Masters" {% if request.form.get('qualification_level') == 'Masters' %}selected{% endif %}>Master's Degree</option>
+                            <option value="Other" {% if request.form.get('qualification_level') == 'Other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="skills" class="form-label">Skills (comma-separated)</label>
+                    <textarea class="form-control" id="skills" name="skills" rows="2"
+                        placeholder="e.g., Python, Excel, Project Management, Communication...">{{ request.form.get('skills', '') }}</textarea>
+                    <small class="form-text text-muted">List your key skills separated by commas</small>
+                </div>
+
+                <!-- Application Statement Section -->
+                <h3 class="mb-4 mt-5">
+                    <i class="bi bi-pencil-square"></i> Application Statement
+                </h3>
+
+                <div class="mb-3">
+                    <label for="motivation" class="form-label">Why are you interested in this internship? <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="motivation" name="motivation" rows="4" required
+                        placeholder="Tell us why you're interested in joining our team...">{{ request.form.get('motivation', '') }}</textarea>
+                    <small class="form-text text-muted">Maximum 500 characters</small>
+                </div>
+
+                <!-- Document Upload Section -->
+                <h3 class="mb-4 mt-5">
+                    <i class="bi bi-file-earmark-pdf"></i> Required Documents
+                </h3>
+
+                <div class="alert alert-warning" role="alert">
+                    <strong>All of the following documents are required:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>ID Copy (National ID or Passport)</li>
+                        <li>Recently Certified Qualifications</li>
+                        <li>Curriculum Vitae (CV)</li>
+                        <li>Affidavit stating you are not under any SETA program</li>
+                    </ul>
+                </div>
+
+                <!-- ID Copy -->
+                <div class="mb-4">
+                    <label for="id_copy" class="form-label">ID Copy <span class="text-danger">*</span></label>
+                    <div class="mb-2">
+                        <small class="text-muted">Upload a copy of your national ID or passport (PDF, DOC, DOCX, JPG, PNG)</small>
+                    </div>
+                    <input type="file" class="form-control" id="id_copy" name="id_copy" required
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="updateFileInfo(this)">
+                    <small class="form-text text-muted" id="id_copy_info"></small>
+                </div>
+
+                <!-- Qualifications -->
+                <div class="mb-4">
+                    <label for="qualification" class="form-label">Recently Certified Qualifications <span class="text-danger">*</span></label>
+                    <div class="mb-2">
+                        <small class="text-muted">Upload certified copies of your qualifications (PDF, DOC, DOCX, JPG, PNG)</small>
+                    </div>
+                    <input type="file" class="form-control" id="qualification" name="qualification" required
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="updateFileInfo(this)">
+                    <small class="form-text text-muted" id="qualification_info"></small>
+                </div>
+
+                <!-- CV -->
+                <div class="mb-4">
+                    <label for="cv" class="form-label">Curriculum Vitae (CV) <span class="text-danger">*</span></label>
+                    <div class="mb-2">
+                        <small class="text-muted">Upload your CV (PDF, DOC, DOCX)</small>
+                    </div>
+                    <input type="file" class="form-control" id="cv" name="cv" required
+                        accept=".pdf,.doc,.docx" onchange="updateFileInfo(this)">
+                    <small class="form-text text-muted" id="cv_info"></small>
+                </div>
+
+                <!-- Affidavit -->
+                <div class="mb-4">
+                    <label for="affidavit" class="form-label">Affidavit - SETA Declaration <span class="text-danger">*</span></label>
+                    <div class="mb-2">
+                        <small class="text-muted">Upload an affidavit from the police station (Commission of Oath) stating that you are not under any SETA program</small>
+                    </div>
+                    <input type="file" class="form-control" id="affidavit" name="affidavit" required
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="updateFileInfo(this)">
+                    <small class="form-text text-muted" id="affidavit_info"></small>
+                    <div class="alert alert-info mt-2">
+                        <small><strong>Guidance:</strong> Visit your nearest police station to obtain a Commission of Oath affidavit declaring that you are not enrolled in any SETA (Sector Education and Training Authority) program.</small>
+                    </div>
+                </div>
+
+                <!-- Optional Documents -->
+                <div class="mb-4">
+                    <label for="other_documents" class="form-label">Other Supporting Documents (Optional)</label>
+                    <div class="mb-2">
+                        <small class="text-muted">Upload any additional relevant documents (certificates, awards, etc.)</small>
+                    </div>
+                    <input type="file" class="form-control" id="other_documents" name="other_documents" multiple
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt">
+                    <small class="form-text text-muted">You can select multiple files</small>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-grid gap-2 mt-5">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-circle"></i> Submit Application
+                    </button>
+                </div>
+
+                <div class="text-center mt-3">
+                    <p class="text-muted">
+                        <small>By submitting this form, you agree to the terms and conditions of our internship program.</small>
+                    </p>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function updateFileInfo(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const fileSize = (file.size / 1024).toFixed(2); // KB
+        const info = `${file.name} (${fileSize} KB)`;
+        document.getElementById(input.id + '_info').textContent = '✓ ' + info;
+    }
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    }, false);
+});
+</script>
+
+<style>
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+h3 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 0.5rem;
+}
+
+.alert-info {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-color: #3498db;
+}
+
+.text-danger {
+    color: #e74c3c;
+}
+</style>
+{% endblock %}

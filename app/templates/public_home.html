@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}Juba Consultants Internship Program - Home{% endblock %}
+
+{% block content %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 80px 20px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 15s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 0.8; }
+    }
+
+    .hero-section h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        z-index: 1;
+        position: relative;
+    }
+
+    .hero-section p {
+        font-size: 1.3rem;
+        margin-bottom: 40px;
+        z-index: 1;
+        position: relative;
+    }
+
+    .hero-section .btn {
+        font-size: 1.1rem;
+        padding: 12px 40px;
+        z-index: 1;
+        position: relative;
+    }
+
+    .feature-card {
+        padding: 30px;
+        text-align: center;
+        border-radius: 10px;
+        background: #f8f9fa;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .feature-card i {
+        font-size: 3rem;
+        color: #667eea;
+        margin-bottom: 20px;
+    }
+
+    .feature-card h4 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .feature-card p {
+        color: #7f8c8d;
+        line-height: 1.6;
+    }
+
+    .application-section {
+        background: #f8f9fa;
+        padding: 60px 20px;
+    }
+
+    .application-box {
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        text-align: center;
+    }
+
+    .application-box h2 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+
+    .application-box p {
+        color: #555;
+        font-size: 1.05rem;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    .requirements-list {
+        text-align: left;
+        background: #f0f0f0;
+        padding: 30px;
+        border-radius: 8px;
+        margin: 30px 0;
+    }
+
+    .requirements-list h5 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+
+    .requirements-list ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .requirements-list li {
+        padding: 10px 0;
+        color: #555;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .requirements-list li:before {
+        content: "✓ ";
+        color: #27ae60;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+
+    .requirements-list li:last-child {
+        border-bottom: none;
+    }
+
+    .about-section {
+        padding: 60px 20px;
+        background: white;
+    }
+
+    .about-content h3 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+
+    .about-content p {
+        color: #555;
+        line-height: 1.8;
+        font-size: 1.05rem;
+        margin-bottom: 20px;
+    }
+
+    .cta-button {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 50px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .cta-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .footer-section {
+        background: #2c3e50;
+        color: white;
+        padding: 40px 20px;
+        text-align: center;
+    }
+
+    .footer-section p {
+        margin: 0;
+        color: #bdc3c7;
+    }
+
+    .stats {
+        display: flex;
+        justify-content: space-around;
+        margin: 40px 0;
+        text-align: center;
+    }
+
+    .stat-item h3 {
+        font-size: 2.5rem;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+
+    .stat-item p {
+        color: #555;
+        font-size: 1.1rem;
+    }
+</style>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
+            <i class="bi bi-briefcase-fill" style="color: #667eea;"></i> Juba Consultants
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#about">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Program</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#apply">Apply Now</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.login') }}">Staff Login</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1>Juba Consultants Internship Program</h1>
+        <p>Join our team and gain valuable practical experience in a dynamic professional environment</p>
+        <a href="#apply" class="cta-button">
+            <i class="bi bi-arrow-right"></i> Apply Now
+        </a>
+    </div>
+</section>
+
+<!-- Program Features -->
+<section id="features" class="py-5" style="background: white;">
+    <div class="container">
+        <h2 class="text-center mb-5" style="color: #2c3e50; font-weight: 700;">What You'll Gain</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <i class="bi bi-briefcase"></i>
+                    <h4>Professional Experience</h4>
+                    <p>Work with industry professionals and gain real-world experience in your field of study or interest.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <i class="bi bi-people"></i>
+                    <h4>Networking Opportunities</h4>
+                    <p>Build connections with experienced professionals and create a strong network for your career.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <i class="bi bi-book"></i>
+                    <h4>Skills Development</h4>
+                    <p>Develop practical skills that complement your academic knowledge and enhance employability.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <i class="bi bi-award"></i>
+                    <h4>Certificate</h4>
+                    <p>Receive a certificate of completion recognizing your participation in the program.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <i class="bi bi-graph-up"></i>
+                    <h4>Career Growth</h4>
+                    <p>Internship experience that boosts your resume and increases job prospects.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-card">
+                    <i class="bi bi-clock"></i>
+                    <h4>Flexible Schedule</h4>
+                    <p>Work arrangement that accommodates your study schedule and commitments.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="about-section">
+    <div class="container">
+        <h2 class="text-center mb-5" style="color: #2c3e50; font-weight: 700;">About the Program</h2>
+        <div class="row">
+            <div class="col-md-6 about-content">
+                <h3>Why Join Juba Consultants?</h3>
+                <p>Juba Consultants is a leading professional services firm committed to developing the next generation of talented professionals. Our internship program is designed to provide meaningful experience and mentorship to high-potential individuals.</p>
+                <p>We believe in investing in talent and creating an inclusive, supportive environment where interns can learn, grow, and contribute to real projects that make an impact.</p>
+            </div>
+            <div class="col-md-6 about-content">
+                <h3>Program Duration</h3>
+                <p><strong>Duration:</strong> 3-6 months (Flexible)</p>
+                <p><strong>Time Commitment:</strong> Full-time or part-time options available</p>
+                <p><strong>Benefits:</strong> Competitive stipend, mentorship, and certificate of completion</p>
+                <p class="mt-4"><strong>Application Status:</strong> Currently accepting applications for the 2024-2025 intake cycle.</p>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <h3>50+</h3>
+                <p>Interns Trained</p>
+            </div>
+            <div class="stat-item">
+                <h3>95%</h3>
+                <p>Satisfaction Rate</p>
+            </div>
+            <div class="stat-item">
+                <h3>80%</h3>
+                <p>Job Placement</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Application Section -->
+<section id="apply" class="application-section">
+    <div class="container">
+        <div class="application-box">
+            <h2><i class="bi bi-clipboard-check"></i> Ready to Apply?</h2>
+            <p>We're looking for talented and motivated individuals to join our internship program. If you meet the requirements and are passionate about professional development, we'd love to hear from you!</p>
+
+            <div class="requirements-list">
+                <h5><i class="bi bi-clipboard-list"></i> What We're Looking For</h5>
+                <ul>
+                    <li>Currently enrolled in or recently completed a tertiary qualification (University or TVET)</li>
+                    <li>Strong communication and problem-solving skills</li>
+                    <li>Professionalism and reliability</li>
+                    <li>Willingness to learn and take on challenges</li>
+                    <li>Not currently enrolled in any SETA (Sector Education and Training Authority) program</li>
+                </ul>
+            </div>
+
+            <div class="requirements-list">
+                <h5><i class="bi bi-file-earmark"></i> Required Documents</h5>
+                <ul>
+                    <li>Copy of National ID or Passport</li>
+                    <li>Recently certified qualifications (certificates, transcripts)</li>
+                    <li>Curriculum Vitae (CV)</li>
+                    <li>Affidavit from police station (Commission of Oath) stating you are not under any SETA program</li>
+                    <li>Any other supporting documents (optional)</li>
+                </ul>
+            </div>
+
+            <p style="color: #555; margin-top: 30px;"><strong>The application process is simple and takes about 15 minutes to complete.</strong></p>
+
+            <a href="{{ url_for('job_applications.start_application') }}" class="cta-button" style="margin-top: 20px;">
+                <i class="bi bi-arrow-right-circle"></i> Start Your Application Now
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer-section">
+    <div class="container">
+        <p>&copy; 2024 Juba Consultants. All rights reserved.</p>
+        <p style="margin-top: 10px; font-size: 0.9rem;">Transforming talent into excellence</p>
+    </div>
+</footer>
+
+{% endblock %}

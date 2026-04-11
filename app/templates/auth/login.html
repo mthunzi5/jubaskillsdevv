@@ -98,6 +98,29 @@
         color: #ffd700;
     }
     
+    /* Job Application Button */
+    .job-application-btn {
+        background: rgba(255, 255, 255, 0.95) !important;
+        color: #667eea !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        transition: all 0.3s ease !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+    
+    .job-application-btn:hover {
+        background: white !important;
+        color: #667eea !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+        border-color: white !important;
+    }
+    
+    .job-application-btn i {
+        font-size: 1.1rem !important;
+    }
+    
     /* Right side - Login form */
     .login-side {
         background: #f8f9fa;
@@ -249,6 +272,19 @@
                         <span>Expert Mentorship & Career Guidance</span>
                     </li>
                 </ul>
+                
+                <!-- Job Application Shortcut -->
+                <div class="mt-4">
+                    <a href="{{ url_for('job_applications.start_application') }}" class="btn btn-lg px-4 py-3 fw-bold job-application-btn" style="border-radius: 50px; text-decoration: none; display: inline-block;">
+                        <i class="bi bi-briefcase-fill me-2"></i>
+                        Apply for Internship
+                        <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+                    <p class="text-white-50 mt-2 mb-0 small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Join our internship program and kickstart your career
+                    </p>
+                </div>
             </div>
         </div>
         
@@ -271,7 +307,7 @@
                     <div class="mb-4">
                         <label for="password" class="form-label fw-semibold">Password</label>
                         <input type="password" class="form-control" id="password" name="password" required>
-                        <small class="text-muted">Default intern password: JubaFuture2025</small>
+                        <small class="text-muted">JUBASKILLS</small>
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-lg btn-login">Login</button>

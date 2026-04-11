@@ -50,7 +50,7 @@ def create_app(config_name='default'):
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
     # Register blueprints
-    from app.routes import auth, admin, staff, intern, main, lms, board, request_hub
+    from app.routes import auth, admin, staff, intern, main, lms, board, request_hub, job_applications
     app.register_blueprint(auth.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(staff.bp)
@@ -59,6 +59,7 @@ def create_app(config_name='default'):
     app.register_blueprint(lms.lms_bp)
     app.register_blueprint(board.bp)
     app.register_blueprint(request_hub.request_hub_bp)
+    app.register_blueprint(job_applications.bp)
     
     # Register error handlers
     from flask import render_template

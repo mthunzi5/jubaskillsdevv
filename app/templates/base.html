@@ -457,6 +457,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if 'job_applications.staff' in request.endpoint %}active{% endif %}" href="{{ url_for('job_applications.staff_dashboard') }}">
+                                <i class="bi bi-briefcase"></i> Job Applications
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'lms.material_deletion_requests' %}active{% endif %}" href="{{ url_for('lms.material_deletion_requests') }}">
                                 <i class="bi bi-file-earmark-x"></i> Material Deletions
                             </a>

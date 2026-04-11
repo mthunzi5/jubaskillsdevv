@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Job Applications Dashboard - Staff{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h3 mb-3">
+                <i class="bi bi-briefcase"></i> Job Applications Dashboard
+            </h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <form method="POST" action="{{ url_for('job_applications.export_applications') }}" class="d-inline">
+                <select name="status" class="form-select d-inline" style="width: auto;">
+                    <option value="all">All Statuses</option>
+                    <option value="submitted">Submitted</option>
+                    <option value="under_review">Under Review</option>
+                    <option value="shortlisted">Shortlisted</option>
+                    <option value="accepted">Accepted</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <button type="submit" class="btn btn-success ms-2">
+                    <i class="bi bi-download"></i> Export CSV
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Applications</h6>
+                            <h3 class="mb-0">{{ total_applications }}</h3>
+                        </div>
+                        <i class="bi bi-inboxes" style="font-size: 2rem; color: #3498db; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Submitted</h6>
+                            <h3 class="mb-0" style="color: #f39c12;">{{ submitted }}</h3>
+                        </div>
+                        <i class="bi bi-file-text" style="font-size: 2rem; color: #f39c12; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Under Review</h6>
+                            <h3 class="mb-0" style="color: #9b59b6;">{{ under_review }}</h3>
+                        </div>
+                        <i class="bi bi-search" style="font-size: 2rem; color: #9b59b6; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Shortlisted</h6>
+                            <h3 class="mb-0" style="color: #3498db;">{{ shortlisted }}</h3>
+                        </div>
+                        <i class="bi bi-star" style="font-size: 2rem; color: #3498db; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Accepted</h6>
+                            <h3 class="mb-0" style="color: #27ae60;">{{ accepted }}</h3>
+                        </div>
+                        <i class="bi bi-check-circle" style="font-size: 2rem; color: #27ae60; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Rejected</h6>
+                            <h3 class="mb-0" style="color: #e74c3c;">{{ rejected }}</h3>
+                        </div>
+                        <i class="bi bi-x-circle" style="font-size: 2rem; color: #e74c3c; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View All Applications Button -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{{ url_for('job_applications.staff_list_applications') }}" class="btn btn-primary">
+                <i class="bi bi-list-ul"></i> View All Applications
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Applications -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-clock-history"></i> Recent Applications
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if recent_applications %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Applicant Name</th>
+                            <th>Email</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th>Documents</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in recent_applications %}
+                        <tr>
+                            <td><strong>#{{ app.id }}</strong></td>
+                            <td>{{ app.full_name }}</td>
+                            <td><small>{{ app.email }}</small></td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ app.submitted_at.strftime('%d %b %Y') }}
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'warning' if app.status == 'submitted' else 'info' if app.status == 'under_review' else 'success' if app.status in ['shortlisted', 'accepted'] else 'danger' }}">
+                                    {{ app.status.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if app.has_all_required_documents() %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Complete
+                                </span>
+                                {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-exclamation-circle"></i> Incomplete
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('job_applications.staff_view_application', app_id=app.id) }}" class="btn btn-sm btn-outline-primary">
+                                    View <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-4 text-center text-muted">
+                <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                <p class="mt-2">No applications yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<style>
+.card {
+    border-radius: 8px;
+}
+
+h3 {
+    color: #2c3e50;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}
