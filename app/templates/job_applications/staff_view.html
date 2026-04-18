@@ -216,47 +216,92 @@
             <!-- Status Card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Application Status</h5>
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Application Review</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('job_applications.update_application_status', app_id=application.id) }}">
-                        <div class="mb-3">
-                            <label for="status" class="form-label fw-bold">Current Status</label>
-                            <select class="form-select" id="status" name="status" required>
-                                <option value="submitted" {% if application.status == 'submitted' %}selected{% endif %}>Submitted</option>
-                                <option value="under_review" {% if application.status == 'under_review' %}selected{% endif %}>Under Review</option>
-                                <option value="shortlisted" {% if application.status == 'shortlisted' %}selected{% endif %}>Shortlisted</option>
-                                <option value="accepted" {% if application.status == 'accepted' %}selected{% endif %}>Accepted</option>
-                                <option value="rejected" {% if application.status == 'rejected' %}selected{% endif %}>Rejected</option>
-                            </select>
+                    <ul class="nav nav-tabs mb-3" id="reviewFeedbackTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="review-tab" data-bs-toggle="tab" data-bs-target="#review-pane" type="button" role="tab" aria-controls="review-pane" aria-selected="true">
+                                <i class="bi bi-clipboard-check"></i> Review
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="feedback-tab" data-bs-toggle="tab" data-bs-target="#feedback-pane" type="button" role="tab" aria-controls="feedback-pane" aria-selected="false">
+                                <i class="bi bi-envelope"></i> Feedback
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="reviewFeedbackTabsContent">
+                        <div class="tab-pane fade show active" id="review-pane" role="tabpanel" aria-labelledby="review-tab">
+                            <form method="POST" action="{{ url_for('job_applications.update_application_status', app_id=application.id) }}">
+                                <div class="mb-3">
+                                    <label for="status" class="form-label fw-bold">Current Status</label>
+                                    <select class="form-select" id="status" name="status" required>
+                                        <option value="submitted" {% if application.status == 'submitted' %}selected{% endif %}>Submitted</option>
+                                        <option value="under_review" {% if application.status == 'under_review' %}selected{% endif %}>Under Review</option>
+                                        <option value="shortlisted" {% if application.status == 'shortlisted' %}selected{% endif %}>Shortlisted</option>
+                                        <option value="accepted" {% if application.status == 'accepted' %}selected{% endif %}>Accepted</option>
+                                        <option value="rejected" {% if application.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="rating" class="form-label fw-bold">Rating</label>
+                                    <div class="d-flex gap-1">
+                                        {% for i in range(1, 6) %}
+                                        <label class="form-check">
+                                            <input class="form-check-input" type="radio" name="rating" value="{{ i }}"
+                                                {% if application.rating == i %}checked{% endif %}>
+                                            <i class="bi bi-star-fill" style="color: #f39c12; cursor: pointer;"></i>
+                                        </label>
+                                        {% endfor %}
+                                        {% if not application.rating %}
+                                        <span class="text-muted ms-2"><small>Not rated</small></span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="review_notes" class="form-label fw-bold">Review Notes</label>
+                                    <textarea class="form-control" id="review_notes" name="review_notes" rows="4"
+                                        placeholder="Add your review notes...">{{ application.review_notes or '' }}</textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-save"></i> Update Status
+                                </button>
+                            </form>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="rating" class="form-label fw-bold">Rating</label>
-                            <div class="d-flex gap-1">
-                                {% for i in range(1, 6) %}
-                                <label class="form-check">
-                                    <input class="form-check-input" type="radio" name="rating" value="{{ i }}"
-                                        {% if application.rating == i %}checked{% endif %}>
-                                    <i class="bi bi-star-fill" style="color: #f39c12; cursor: pointer;"></i>
-                                </label>
-                                {% endfor %}
-                                {% if not application.rating %}
-                                <span class="text-muted ms-2"><small>Not rated</small></span>
-                                {% endif %}
-                            </div>
-                        </div>
+                        <div class="tab-pane fade" id="feedback-pane" role="tabpanel" aria-labelledby="feedback-tab">
+                            <form method="POST" action="{{ url_for('job_applications.send_application_feedback', app_id=application.id) }}">
+                                <div class="mb-3">
+                                    <label for="feedback_subject" class="form-label fw-bold">Email Subject</label>
+                                    <input type="text" class="form-control" id="feedback_subject" name="feedback_subject"
+                                        value="Update on your application #{{ application.id }}" maxlength="200">
+                                </div>
 
-                        <div class="mb-3">
-                            <label for="review_notes" class="form-label fw-bold">Review Notes</label>
-                            <textarea class="form-control" id="review_notes" name="review_notes" rows="4"
-                                placeholder="Add your review notes...">{{ application.review_notes or '' }}</textarea>
-                        </div>
+                                <div class="mb-3">
+                                    <label for="feedback_message" class="form-label fw-bold">Feedback Message</label>
+                                    <textarea class="form-control" id="feedback_message" name="feedback_message" rows="6"
+                                        placeholder="Write feedback for {{ application.full_name }}..." required></textarea>
+                                    <div class="form-text">This feedback is saved to review notes. You can also email it to the applicant.</div>
+                                </div>
 
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-save"></i> Update Status
-                        </button>
-                    </form>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" value="on" id="send_email" name="send_email">
+                                    <label class="form-check-label" for="send_email">
+                                        Send feedback email to {{ application.email }}
+                                    </label>
+                                </div>
+
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-send"></i> Save Feedback
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
 
