@@ -9,6 +9,7 @@ from datetime import datetime
 import os
 import smtplib
 from email.message import EmailMessage
+from email.utils import formataddr
 from config import Config
 
 bp = Blueprint('job_applications', __name__, url_prefix='/job-applications')
@@ -45,6 +46,7 @@ def send_feedback_email(app_obj, subject, message):
     mail_username = Config.SMTP_USERNAME or Config.MAIL_USERNAME
     mail_password = Config.SMTP_PASSWORD or Config.MAIL_PASSWORD
     mail_sender = Config.SMTP_FROM_EMAIL or Config.MAIL_DEFAULT_SENDER
+    mail_sender_name = getattr(Config, 'SMTP_FROM_NAME', None) or 'Juba Consultants'
     use_tls = Config.SMTP_USE_TLS if hasattr(Config, 'SMTP_USE_TLS') else Config.MAIL_USE_TLS
 
     # Gmail app passwords are often copied with spaces, normalize before login.
@@ -59,7 +61,7 @@ def send_feedback_email(app_obj, subject, message):
 
     email_message = EmailMessage()
     email_message['Subject'] = subject
-    email_message['From'] = mail_sender
+    email_message['From'] = formataddr((mail_sender_name, mail_sender))
     email_message['To'] = app_obj.email
     email_message.set_content(message)
 
@@ -86,13 +88,17 @@ def build_status_email_content(app_obj, status, custom_message=None, subject_ove
         subject = subject_override or 'Application Update: You Have Been Shortlisted'
         body = f"""Dear {applicant_name},
 
-We are pleased to inform you that your application has been shortlisted.
+Juba Consultants is pleased to inform you that your application has been shortlisted.
 
 To confirm your continued interest, please contact us on WhatsApp at 068 382 5733 as soon as possible and include the following details:
 - Full Name and Surname
 - Qualification Name
 
 For your convenience, we have your current qualification listed as: {qualification}.
+
+You can also visit our website for more information: https://www.jubaconsultants.co.za/
+
+WhatsApp Contact: 068 382 5733
 
 We appreciate your interest and look forward to hearing from you.
 
