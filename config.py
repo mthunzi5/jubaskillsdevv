@@ -32,6 +32,7 @@ class Config:
     SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD')
     SMTP_USE_TLS = os.environ.get('SMTP_USE_TLS', 'true').lower() == 'true'
     SMTP_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', 'm48209921@gmail.com')
+    SMTP_FROM_NAME = os.environ.get('SMTP_FROM_NAME', 'Juba Consultants')
 
     # Backward-compatible names
     MAIL_SERVER = os.environ.get('MAIL_SERVER')
