@@ -131,3 +131,15 @@ class JobApplicationDocument(db.Model):
         self.verified_at = datetime.utcnow()
         if notes:
             self.verification_notes = notes
+
+
+class JobApplicationSettings(db.Model):
+    """System settings for job application portal availability."""
+    __tablename__ = 'job_application_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+    applications_open = db.Column(db.Boolean, default=True, nullable=False)
+    updated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    updater = db.relationship('User', backref='job_application_settings_updates')

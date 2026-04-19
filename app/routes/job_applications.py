@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
-from app.models.job_application import JobApplication, JobApplicationDocument
+from app.models.job_application import JobApplication, JobApplicationDocument, JobApplicationSettings
 from app.models.user import User
 from app.utils.decorators import staff_required
 from datetime import datetime
@@ -19,6 +19,16 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'txt'}
+
+
+def get_job_application_settings():
+    """Get or create singleton settings for job applications portal."""
+    settings = JobApplicationSettings.query.first()
+    if not settings:
+        settings = JobApplicationSettings(applications_open=True)
+        db.session.add(settings)
+        db.session.commit()
+    return settings
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
@@ -174,12 +184,20 @@ Juba Consultants"""
 @bp.route('/')
 def list_applications():
     """Public job applications page - info and apply button"""
-    return render_template('job_applications/apply.html')
+    settings = get_job_application_settings()
+    return render_template('job_applications/apply.html', applications_open=settings.applications_open)
 
 
 @bp.route('/apply', methods=['GET', 'POST'])
 def start_application():
     """Start job application process"""
+    settings = get_job_application_settings()
+
+    if not settings.applications_open:
+        if request.method == 'POST':
+            flash('Applications are currently closed. Please check back later.', 'warning')
+        return render_template('job_applications/apply.html', applications_open=False)
+
     if request.method == 'POST':
         # Get form data
         full_name = request.form.get('full_name')
@@ -193,13 +211,13 @@ def start_application():
         # Validate required fields
         if not all([full_name, email, phone_number, motivation]):
             flash('Please fill in all required fields.', 'danger')
-            return render_template('job_applications/apply.html')
+            return render_template('job_applications/apply.html', applications_open=True)
         
         # Check if email has already submitted an application
         existing_application = JobApplication.query.filter_by(email=email, is_deleted=False).first()
         if existing_application:
             flash('An application has already been submitted with this email address.', 'warning')
-            return render_template('job_applications/apply.html')
+            return render_template('job_applications/apply.html', applications_open=True)
         
         try:
             # Create application
@@ -270,9 +288,9 @@ def start_application():
         except Exception as e:
             db.session.rollback()
             flash(f'Error submitting application: {str(e)}', 'danger')
-            return render_template('job_applications/apply.html')
+            return render_template('job_applications/apply.html', applications_open=True)
     
-    return render_template('job_applications/apply.html')
+    return render_template('job_applications/apply.html', applications_open=True)
 
 
 @bp.route('/received/<int:app_id>')
@@ -288,6 +306,8 @@ def application_received(app_id):
 @staff_required
 def staff_dashboard():
     """Staff dashboard for viewing applications"""
+    settings = get_job_application_settings()
+
     # Get statistics
     total_applications = JobApplication.query.filter_by(is_deleted=False).count()
     submitted = JobApplication.query.filter_by(status='submitted', is_deleted=False).count()
@@ -308,7 +328,33 @@ def staff_dashboard():
                          shortlisted=shortlisted,
                          rejected=rejected,
                          accepted=accepted,
-                         recent_applications=recent_applications)
+                         recent_applications=recent_applications,
+                         applications_open=settings.applications_open,
+                         portal_settings=settings)
+
+
+@bp.route('/staff/toggle-application-portal', methods=['POST'])
+@login_required
+@staff_required
+def toggle_application_portal():
+    """Open or close public job applications portal."""
+    settings = get_job_application_settings()
+    next_state = request.form.get('applications_open') == 'true'
+
+    try:
+        settings.applications_open = next_state
+        settings.updated_by = current_user.id
+        settings.updated_at = datetime.utcnow()
+        db.session.commit()
+        if next_state:
+            flash('Job applications have been opened for applicants.', 'success')
+        else:
+            flash('Job applications have been closed. Applicants can no longer submit.', 'warning')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Failed to update application portal status: {str(e)}', 'danger')
+
+    return redirect(url_for('job_applications.staff_dashboard'))
 
 
 @bp.route('/staff/list')

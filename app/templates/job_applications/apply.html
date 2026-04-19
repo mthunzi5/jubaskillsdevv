@@ -10,12 +10,20 @@
             <div class="mb-5 text-center">
                 <h1 class="display-4 fw-bold mb-3">Juba Consultants Internship</h1>
                 <p class="lead text-muted">Apply for an exciting opportunity to gain practical experience</p>
+                {% if not applications_open %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-slash-circle"></i>
+                    Applications are currently closed. Please check again later for reopening updates.
+                </div>
+                {% else %}
                 <div class="alert alert-info" role="alert">
                     <i class="bi bi-info-circle"></i> Please fill out the form below and upload all required documents.
                 </div>
+                {% endif %}
             </div>
 
             <!-- Application Form -->
+            {% if applications_open %}
             <form method="POST" enctype="multipart/form-data" class="needs-validation">
                 
                 <!-- Personal Information Section -->
@@ -175,6 +183,15 @@
                 </div>
 
             </form>
+            {% else %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-hourglass-split text-muted" style="font-size: 2.5rem;"></i>
+                    <h4 class="mt-3">Applications Closed</h4>
+                    <p class="text-muted mb-0">The recruitment team has temporarily closed applications. Please return later.</p>
+                </div>
+            </div>
+            {% endif %}
 
         </div>
     </div>
@@ -193,6 +210,9 @@ function updateFileInfo(input) {
 // Form validation
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('.needs-validation');
+    if (!form) {
+        return;
+    }
     form.addEventListener('submit', function(e) {
         if (!form.checkValidity()) {
             e.preventDefault();
