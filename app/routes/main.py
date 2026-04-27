@@ -20,5 +20,7 @@ def dashboard():
         return redirect(url_for('staff.dashboard'))
     elif current_user.is_intern():
         return redirect(url_for('intern.dashboard'))
+    elif current_user.is_host_company():
+        return redirect(url_for('host_company.dashboard'))
     else:
         return redirect(url_for('auth.login'))

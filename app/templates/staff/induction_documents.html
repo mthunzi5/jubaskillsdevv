@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Induction Documents - Staff{% endblock %}
+
+{% block page_title %}Induction Documents{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('staff.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">Induction Documents</li>
+{% endblock %}
+
+{% block content %}
+<!-- Cohort Filter Section -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Filter by Cohort</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('staff.induction_documents') }}" class="d-flex gap-2">
+            <select name="cohort_id" class="form-select" style="max-width: 300px;">
+                <option value="">All Cohorts</option>
+                {% for cohort in cohorts %}
+                <option value="{{ cohort.id }}" {% if selected_cohort_id == cohort.id %}selected{% endif %}>
+                    {{ cohort.name }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{{ url_for('staff.induction_documents') }}" class="btn btn-outline-secondary">Clear</a>
+        </form>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="row mb-4">
+    <div class="col-12 col-md-6 col-lg-4 mb-3 mb-lg-0">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_interns }}</h3>
+                    <p class="mb-0">Total Interns</p>
+                </div>
+                <i class="bi bi-people fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4 mb-3 mb-lg-0">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ complete_count }}</h3>
+                    <p class="mb-0">Complete Submissions</p>
+                </div>
+                <i class="bi bi-patch-check fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_interns - complete_count }}</h3>
+                    <p class="mb-0">Pending Submissions</p>
+                </div>
+                <i class="bi bi-hourglass-split fs-1"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Download ZIP by Document Type</h5>
+        <form method="POST" action="{{ url_for('staff.send_induction_reminders', cohort_id=selected_cohort_id) }}" class="mb-0">
+            <button type="submit" class="btn btn-outline-info btn-sm">
+                <i class="bi bi-bell"></i> Send Reminders
+            </button>
+        </form>
+    </div>
+    <div class="card-body d-flex flex-wrap gap-2">
+        {% for doc_key, meta in doc_fields.items() %}
+        <a href="{{ url_for('staff.download_induction_zip', doc_key=doc_key, cohort_id=selected_cohort_id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-zip"></i> {{ meta.label }} ZIP
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Intern Submission Status</h5>
+    </div>
+    <div class="card-body">
+        {% if rows %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Intern</th>
+                        <th>ID Number</th>
+                        <th>Status</th>
+                        <th>Lock Status</th>
+                        {% for doc_key, meta in doc_fields.items() %}
+                        <th>{{ meta.label }}</th>
+                        {% endfor %}
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td>{{ row.intern.name }} {{ row.intern.surname }}</td>
+                        <td>{{ row.intern.id_number or '-' }}</td>
+                        <td>
+                            {% if row.is_complete %}
+                            <span class="badge bg-success">Complete</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.submission and row.submission.is_locked %}
+                            <span class="badge bg-danger">Locked</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Unlocked</span>
+                            {% endif %}
+                        </td>
+                        {% for doc_key, meta in doc_fields.items() %}
+                        {% set path_value = row.submission|attr(meta.path_attr) if row.submission else None %}
+                        <td>
+                            {% if path_value %}
+                            <a href="{{ url_for('staff.view_induction_document', submission_id=row.submission.id, doc_key=doc_key) }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('staff.download_induction_document', submission_id=row.submission.id, doc_key=doc_key) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td>
+                            {% if current_user.is_admin() and row.submission and row.submission.is_locked %}
+                            <form method="POST" action="{{ url_for('staff.unlock_induction_submission', submission_id=row.submission.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('Unlock this submission for edits?')">
+                                    <i class="bi bi-unlock"></i> Unlock
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No interns found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

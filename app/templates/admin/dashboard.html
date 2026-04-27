@@ -5,6 +5,48 @@
 {% block page_title %}Admin Dashboard{% endblock %}
 
 {% block content %}
+<div class="alert alert-primary d-flex justify-content-between align-items-center mb-4" role="alert">
+    <div>
+        <strong>Admin Dashboard v2 (Operations Unified)</strong>
+        <div class="small mb-0">This view includes internship operations, host placements, and job application pipeline stats.</div>
+    </div>
+    <span class="badge bg-dark">Updated 2026-04-26</span>
+</div>
+
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Latest Operations Overview</h5>
+    </div>
+    <div class="card-body py-3">
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <div class="p-2 border rounded text-center">
+                    <div class="small text-muted">Active Cohorts</div>
+                    <div class="h4 mb-0">{{ total_cohorts }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 border rounded text-center">
+                    <div class="small text-muted">Host Companies</div>
+                    <div class="h4 mb-0">{{ total_hosts }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 border rounded text-center">
+                    <div class="small text-muted">Active Placements</div>
+                    <div class="h4 mb-0">{{ total_active_placements }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-2 border rounded text-center">
+                    <div class="small text-muted">Unassigned Interns</div>
+                    <div class="h4 mb-0 text-danger">{{ unassigned_interns }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row mb-4">
     <div class="col-12 col-sm-6 col-lg-3 mb-3 mb-lg-0">
         <div class="stat-card primary">
@@ -52,6 +94,86 @@
     </div>
 </div>
 
+<div class="row mb-4">
+    <div class="col-12 col-sm-4 mb-3 mb-sm-0">
+        <div class="stat-card info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_cohorts }}</h3>
+                    <p class="mb-0">Active Cohorts</p>
+                </div>
+                <i class="bi bi-collection fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-4 mb-3 mb-sm-0">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_hosts }}</h3>
+                    <p class="mb-0">Host Companies</p>
+                </div>
+                <i class="bi bi-buildings fs-1"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-4">
+        <div class="stat-card primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_active_placements }}</h3>
+                    <p class="mb-0">Active Placements</p>
+                </div>
+                <i class="bi bi-diagram-3 fs-1"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12 col-md-4 mb-3 mb-md-0">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Intern Type Split</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between"><span>Varsity</span><strong>{{ varsity_interns }}</strong></div>
+                <div class="d-flex justify-content-between"><span>TVET</span><strong>{{ tvet_interns }}</strong></div>
+                <div class="d-flex justify-content-between"><span>Mixed</span><strong>{{ mixed_interns }}</strong></div>
+                <hr>
+                <div class="d-flex justify-content-between text-danger"><span>Unassigned Interns</span><strong>{{ unassigned_interns }}</strong></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4 mb-3 mb-md-0">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Job Posts</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between"><span>Total Active Posts</span><strong>{{ total_job_posts }}</strong></div>
+                <div class="d-flex justify-content-between"><span>Open Posts</span><strong>{{ open_job_posts }}</strong></div>
+                <hr>
+                <a href="{{ url_for('job_applications.staff_dashboard') }}" class="btn btn-sm btn-outline-primary w-100">Manage Job Posts</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Job Applications</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between"><span>Total Applications</span><strong>{{ total_job_applications }}</strong></div>
+                <div class="d-flex justify-content-between"><span>Submitted</span><strong>{{ submitted_applications }}</strong></div>
+                <div class="d-flex justify-content-between"><span>Under Review</span><strong>{{ under_review_applications }}</strong></div>
+                <hr>
+                <a href="{{ url_for('job_applications.staff_list_applications') }}" class="btn btn-sm btn-outline-primary w-100">View Applications</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-12 col-lg-6 mb-3 mb-lg-0">
         <div class="card">
@@ -62,6 +184,18 @@
                 <div class="d-grid gap-2">
                     <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
                         <i class="bi bi-person-plus"></i> Add New User
+                    </a>
+                    <a href="{{ url_for('intern_management.dashboard') }}" class="btn btn-primary">
+                        <i class="bi bi-buildings"></i> Add Host Company
+                    </a>
+                    <a href="{{ url_for('intern_management.dashboard') }}#cohorts" class="btn btn-outline-primary">
+                        <i class="bi bi-collection"></i> Add Cohort
+                    </a>
+                    <a href="{{ url_for('admin.users', role='intern') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-person-gear"></i> Edit Intern Profiles
+                    </a>
+                    <a href="{{ url_for('intern_management.dashboard') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-diagram-3"></i> Assign Interns to Cohorts and Hosts
                     </a>
                     <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">
                         <i class="bi bi-people"></i> Manage Users

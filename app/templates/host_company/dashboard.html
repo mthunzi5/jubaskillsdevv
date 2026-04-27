@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Host Company Dashboard{% endblock %}
+{% block page_title %}Host Company Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if host %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1">{{ host.company_name }}</h4>
+                        <p class="text-muted mb-0">Manage interns assigned to your company by cohort.</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('host_company.submit_timesheets') }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-upload"></i> Submit Timesheets
+                        </a>
+                        <a href="{{ url_for('host_company.view_timesheets') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-file-text"></i> View Submitted
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-warning mb-0">Your login is not linked to an active host company profile yet. Please contact Juba staff.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if host and cohorts_data %}
+{% for cohort_id, cohort_info in cohorts_data.items() %}
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <strong>{{ cohort_info.cohort.name }}</strong>
+        <span class="badge bg-info float-end">{{ cohort_info.interns|length }} Intern{{ 's' if cohort_info.interns|length != 1 else '' }}</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>ID/Email</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Assigned At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for placement in cohort_info.interns %}
+                    <tr>
+                        <td>{{ placement.intern.name }} {{ placement.intern.surname }}</td>
+                        <td>{{ placement.intern.id_number or placement.intern.email or '-' }}</td>
+                        <td><span class="badge bg-secondary">{{ placement.intern.intern_type|upper if placement.intern.intern_type else 'MIXED' }}</span></td>
+                        <td><span class="badge bg-success">Active</span></td>
+                        <td>{{ placement.assigned_at.strftime('%Y-%m-%d') if placement.assigned_at else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% elif host %}
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> No interns assigned yet.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

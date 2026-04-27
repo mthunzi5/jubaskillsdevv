@@ -152,11 +152,9 @@
                                         </div>
                                     </div>
                                     <div class="btn-group btn-group-sm ms-2">
-                                        {% if attachment.file_type == 'image' %}
-                                        <a href="{{ attachment.file_path }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ url_for('board.view_attachment', attachment_id=attachment.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        {% endif %}
                                         <a href="{{ url_for('board.download_attachment', attachment_id=attachment.id) }}" 
                                            class="btn btn-sm btn-outline-success">
                                             <i class="bi bi-download"></i>

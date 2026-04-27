@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Induction Export Audit Logs - Admin{% endblock %}
+
+{% block page_title %}Induction Export Audit Logs{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">Induction Export Audit Logs</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Export Activity Log</h5>
+    </div>
+    <div class="card-body">
+        {% if logs.items %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Staff Member</th>
+                        <th>Document Type</th>
+                        <th>Cohort</th>
+                        <th>Files Exported</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs.items %}
+                    <tr>
+                        <td>{{ log.exported_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            {{ log.user.name }} {{ log.user.surname }}
+                            <br>
+                            <small class="text-muted">{{ log.user.email }}</small>
+                        </td>
+                        <td>
+                            {% set doc_labels = {
+                                'id_copy': 'ID Copy',
+                                'qualification': 'Certificate/Qualification',
+                                'affidavit': 'Affidavit',
+                                'additional_1': 'Additional 1',
+                                'additional_2': 'Additional 2'
+                            } %}
+                            <span class="badge bg-primary">
+                                {{ doc_labels.get(log.export_type, log.export_type) }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if log.cohort %}
+                            {{ log.cohort.name }}
+                            {% else %}
+                            <span class="text-muted">All Cohorts</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ log.file_count }} file(s)</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if logs.pages > 1 %}
+        <nav aria-label="Pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if logs.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.induction_audit_logs', page=logs.prev_num) }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+                {% endif %}
+
+                {% for page_num in logs.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num == logs.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.induction_audit_logs', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if logs.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.induction_audit_logs', page=logs.next_num) }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        <div class="alert alert-info mt-4">
+            <strong>Information:</strong> This audit log tracks all ZIP file exports of induction documents by staff members. Each record shows who exported which documents, for which cohort, and how many files were included.
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No export logs found yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

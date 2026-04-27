@@ -14,7 +14,24 @@
     <div class="col-12 col-lg-8 mb-3 mb-lg-0">
         <div class="card">
             <div class="card-body">
+                {% if existing_current_month %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    A timesheet for {{ current_month }} is already submitted
+                    {% if existing_current_month.host_company %}
+                    by host: <strong>{{ existing_current_month.host_company.company_name }}</strong>
+                    {% else %}
+                    by learner.
+                    {% endif %}
+                    You cannot submit another one for this month.
+                </div>
+                {% endif %}
                 <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="submission_month" class="form-label">Submission Month *</label>
+                        <input type="month" class="form-control" id="submission_month" name="submission_month" value="{{ current_month }}" required>
+                    </div>
+
                     <div class="mb-4">
                         <label for="timesheet_file" class="form-label">Select PDF Timesheet *</label>
                         <input type="file" class="form-control" id="timesheet_file" name="timesheet_file" accept=".pdf" required>

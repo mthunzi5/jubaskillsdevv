@@ -35,19 +35,51 @@ def admin_required(f):
     return decorated_function
 
 def staff_required(f):
-    """Decorator to require staff role"""
+    """Decorator to require staff or admin role"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('auth.login'))
         
-        if not current_user.is_staff():
-            flash('Staff access required.', 'danger')
+        if not (current_user.is_staff() or current_user.is_admin()):
+            flash('Staff or admin access required.', 'danger')
             abort(403)
         
         return f(*args, **kwargs)
     return decorated_function
+
+def host_company_required(f):
+    """Decorator to require host company role"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('auth.login'))
+
+        if not current_user.is_host_company():
+            flash('Host company access required.', 'danger')
+            abort(403)
+
+        return f(*args, **kwargs)
+    return decorated_function
+
+def permission_required(permission):
+    """Decorator to require a specific permission."""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                flash('Please log in to access this page.', 'warning')
+                return redirect(url_for('auth.login'))
+
+            if not current_user.has_permission(permission):
+                flash('You do not have permission to perform this action.', 'danger')
+                abort(403)
+
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 def intern_required(f):
     """Decorator to require intern role"""

@@ -46,10 +46,13 @@
                 <tbody>
                     {% for timesheet in timesheets %}
                     <tr>
-                        <td>{{ timesheet.original_filename }}</td>
-                        <td>{{ timesheet.submission_month }}</td>
-                        <td>{{ timesheet.submission_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ timesheet.original_filename or '-' }}</td>
+                        <td>{{ timesheet.submission_month or '-' }}</td>
+                        <td>{{ timesheet.submission_date.strftime('%Y-%m-%d %H:%M') if timesheet.submission_date else '-' }}</td>
                         <td>
+                            <a href="/staff/timesheets/{{ timesheet.id }}/view" class="btn btn-sm btn-outline-secondary" target="_blank">
+                                <i class="bi bi-eye"></i> View
+                            </a>
                             <a href="{{ url_for('staff.download_timesheet', timesheet_id=timesheet.id) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-download"></i> Download
                             </a>

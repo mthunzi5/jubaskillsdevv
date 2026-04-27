@@ -16,12 +16,44 @@
             <a href="{{ url_for('admin.users', role='admin') }}" class="btn btn-sm btn-{{ 'primary' if role_filter == 'admin' else 'outline-primary' }}">Admins</a>
             <a href="{{ url_for('admin.users', role='staff') }}" class="btn btn-sm btn-{{ 'primary' if role_filter == 'staff' else 'outline-primary' }}">Staff</a>
             <a href="{{ url_for('admin.users', role='intern') }}" class="btn btn-sm btn-{{ 'primary' if role_filter == 'intern' else 'outline-primary' }}">Interns</a>
+            <a href="{{ url_for('admin.users', role='host_company') }}" class="btn btn-sm btn-{{ 'primary' if role_filter == 'host_company' else 'outline-primary' }}">Host Companies</a>
         </div>
         <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary" data-bs-toggle="tooltip" title="Create a new user account">
             <i class="bi bi-plus-circle"></i> Add User
         </a>
     </div>
 </div>
+
+{% if role_filter == 'intern' %}
+<div class="mb-3 d-flex flex-column flex-md-row gap-2">
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('admin.users', role='intern', intern_type='all', assignment=assignment_filter) }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'all' else 'outline-primary' }}">All Types</a>
+        <a href="{{ url_for('admin.users', role='intern', intern_type='varsity', assignment=assignment_filter) }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'varsity' else 'outline-primary' }}">Varsity</a>
+        <a href="{{ url_for('admin.users', role='intern', intern_type='tvet', assignment=assignment_filter) }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'tvet' else 'outline-primary' }}">TVET</a>
+        <a href="{{ url_for('admin.users', role='intern', intern_type='mixed', assignment=assignment_filter) }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'mixed' else 'outline-primary' }}">Mixed</a>
+    </div>
+    <div class="btn-group" role="group">
+        <a href="{{ url_for('admin.users', role='intern', intern_type=intern_type_filter, assignment='all', host_company_id=host_filter) }}" class="btn btn-sm btn-{{ 'primary' if assignment_filter == 'all' else 'outline-primary' }}">All Assignments</a>
+        <a href="{{ url_for('admin.users', role='intern', intern_type=intern_type_filter, assignment='assigned', host_company_id=host_filter) }}" class="btn btn-sm btn-{{ 'primary' if assignment_filter == 'assigned' else 'outline-primary' }}">Assigned</a>
+        <a href="{{ url_for('admin.users', role='intern', intern_type=intern_type_filter, assignment='unassigned', host_company_id=host_filter) }}" class="btn btn-sm btn-{{ 'primary' if assignment_filter == 'unassigned' else 'outline-primary' }}">Unassigned</a>
+    </div>
+    <form method="GET" action="{{ url_for('admin.users') }}" class="d-flex align-items-center gap-2">
+        <input type="hidden" name="role" value="intern">
+        <input type="hidden" name="intern_type" value="{{ intern_type_filter }}">
+        <input type="hidden" name="assignment" value="{{ assignment_filter }}">
+        <select class="form-select form-select-sm" name="host_company_id" onchange="this.form.submit()">
+            <option value="all" {% if host_filter == 'all' %}selected{% endif %}>All Host Companies</option>
+            <option value="unassigned" {% if host_filter == 'unassigned' %}selected{% endif %}>No Host Assignment</option>
+            {% for host in hosts %}
+            <option value="{{ host.id }}" {% if host_filter|int == host.id %}selected{% endif %}>{{ host.company_name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    <a href="{{ url_for('intern_management.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-diagram-3"></i> Open Intern Operations
+    </a>
+</div>
+{% endif %}
 
 <div class="card">
     <div class="card-body">
@@ -33,22 +65,62 @@
                         <th>Name</th>
                         <th>Role</th>
                         <th>Type</th>
+                        <th>Cohort</th>
+                        <th>Host</th>
                         <th>Created</th>
+                        <th>Last Login</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in users %}
+                    {% set context = intern_context.get(user.id, {}) %}
+                    {% set membership = context.get('latest_membership') %}
+                    {% set placement = context.get('active_placement') %}
+                    {% set linked_host = context.get('linked_host_company') %}
                     <tr>
                         <td>{{ user.email or user.id_number }}</td>
                         <td>{{ user.name }} {{ user.surname }}</td>
                         <td><span class="badge bg-{{ 'primary' if user.role == 'admin' else 'info' if user.role == 'staff' else 'success' }}">{{ user.role|title }}</span></td>
-                        <td>{% if user.role == 'intern' %}{{ user.intern_type|upper }}{% else %}-{% endif %}</td>
+                        <td>
+                            {% if user.role == 'intern' %}
+                            <span class="badge bg-secondary">{{ (user.intern_type or 'mixed')|upper }}</span>
+                            {% elif user.role == 'host_company' and linked_host %}
+                            <small class="text-muted">Host Account</small>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.role == 'intern' %}
+                                {{ membership.cohort.name if membership and membership.cohort else '-' }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.role == 'intern' %}
+                                {{ placement.host_company.company_name if placement and placement.host_company else '-' }}
+                            {% elif user.role == 'host_company' and linked_host %}
+                                {{ linked_host.company_name }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}</td>
+                        <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else '-' }}</td>
                         <td class="table-actions">
                             <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil"></i>
                             </a>
+                            {% if user.role == 'intern' %}
+                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="collapse" data-bs-target="#internInfoForm{{ user.id }}" aria-expanded="false" title="Edit intern details">
+                                <i class="bi bi-person-gear"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="collapse" data-bs-target="#assignmentForm{{ user.id }}" aria-expanded="false">
+                                <i class="bi bi-diagram-3"></i>
+                            </button>
+                            {% endif %}
                             {% if user.id != current_user.id %}
                             <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">
                                 <i class="bi bi-trash"></i>
@@ -56,6 +128,88 @@
                             {% endif %}
                         </td>
                     </tr>
+
+                    {% if user.role == 'intern' %}
+                    <tr class="collapse" id="internInfoForm{{ user.id }}">
+                        <td colspan="9">
+                            <form method="POST" action="{{ url_for('admin.update_intern_info', user_id=user.id) }}" class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1">First Name</label>
+                                    <input type="text" class="form-control form-control-sm" name="name" value="{{ user.name or '' }}" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1">Surname</label>
+                                    <input type="text" class="form-control form-control-sm" name="surname" value="{{ user.surname or '' }}" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1">ID Number</label>
+                                    <input type="text" class="form-control form-control-sm" name="id_number" value="{{ user.id_number or '' }}" minlength="13" maxlength="13" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1">Phone</label>
+                                    <input type="text" class="form-control form-control-sm" name="phone" value="{{ user.phone or '' }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label mb-1">Intern Type</label>
+                                    <select class="form-select form-select-sm" name="intern_type" required>
+                                        <option value="varsity" {% if (user.intern_type or 'mixed') == 'varsity' %}selected{% endif %}>Varsity</option>
+                                        <option value="tvet" {% if (user.intern_type or 'mixed') == 'tvet' %}selected{% endif %}>TVET</option>
+                                        <option value="mixed" {% if (user.intern_type or 'mixed') == 'mixed' %}selected{% endif %}>Mixed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-sm btn-info" type="submit">
+                                        <i class="bi bi-check-circle"></i> Save Info
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+
+                    <tr class="collapse" id="assignmentForm{{ user.id }}">
+                        <td colspan="9">
+                            <form method="POST" action="{{ url_for('admin.update_intern_assignments', user_id=user.id) }}" class="row g-2 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label mb-1">Group</label>
+                                    <select class="form-select form-select-sm intern-group-select" name="group_id" data-user-id="{{ user.id }}">
+                                        <option value="">Clear Group</option>
+                                        {% for group in groups %}
+                                        {% set current_group_id = membership.cohort.group_id if membership and membership.cohort else None %}
+                                        <option value="{{ group.id }}" {% if current_group_id == group.id %}selected{% endif %}>
+                                            {{ group.name }} - {{ group.education_type|upper }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label mb-1">Cohort</label>
+                                    <select class="form-select form-select-sm intern-cohort-select" name="cohort_id" data-user-id="{{ user.id }}">
+                                        <option value="">Clear Cohort</option>
+                                        {% for cohort in cohorts %}
+                                        <option value="{{ cohort.id }}" data-group-id="{{ cohort.group_id }}" {% if membership and membership.cohort_id == cohort.id %}selected{% endif %}>
+                                            {{ cohort.name }} - {{ cohort.group.education_type|upper if cohort.group else 'MIXED' }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label mb-1">Host Company</label>
+                                    <select class="form-select form-select-sm" name="host_company_id">
+                                        <option value="">Clear Host Assignment</option>
+                                        {% for host in hosts %}
+                                        <option value="{{ host.id }}" {% if placement and placement.host_company_id == host.id %}selected{% endif %}>{{ host.company_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <button class="btn btn-sm btn-success" type="submit">
+                                        <i class="bi bi-check-circle"></i> Save Assignment
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endif %}
                     
                     <!-- Delete Modal -->
                     <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1">
@@ -87,4 +241,47 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function filterCohortsForUser(userId) {
+        var groupSelect = document.querySelector('.intern-group-select[data-user-id="' + userId + '"]');
+        var cohortSelect = document.querySelector('.intern-cohort-select[data-user-id="' + userId + '"]');
+        if (!groupSelect || !cohortSelect) {
+            return;
+        }
+
+        var selectedGroup = groupSelect.value;
+        Array.from(cohortSelect.options).forEach(function (option) {
+            if (!option.value) {
+                option.hidden = false;
+                return;
+            }
+
+            if (!selectedGroup) {
+                option.hidden = false;
+                return;
+            }
+
+            option.hidden = option.dataset.groupId !== selectedGroup;
+        });
+
+        if (cohortSelect.selectedOptions.length && cohortSelect.selectedOptions[0].hidden) {
+            cohortSelect.value = '';
+        }
+    }
+
+    var groupSelectors = document.querySelectorAll('.intern-group-select');
+    groupSelectors.forEach(function (groupSelect) {
+        var userId = groupSelect.dataset.userId;
+        filterCohortsForUser(userId);
+        groupSelect.addEventListener('change', function () {
+            filterCohortsForUser(userId);
+        });
+    });
+});
+</script>
 {% endblock %}

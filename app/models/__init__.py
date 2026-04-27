@@ -14,10 +14,18 @@ from app.models.communication import CommunicationPost, PostAttachment
 from app.models.request_hub import Request, RequestSubmission, RequestDocument
 from app.models.notification import Notification
 from app.models.recurring_request import RecurringRequest
+from app.models.job_application import JobApplication, JobApplicationDocument, JobApplicationSettings, JobPost, JobPostRequiredDocument
+from app.models.intern_management import InternGroup, Cohort, CohortMember, HostCompany, InternPlacement
+from app.models.permission import RolePermission
+from app.models.audit_log import OperationAuditLog
+from app.models.induction import InductionSubmission, InductionPortalSettings, InductionExportAuditLog
 
 __all__ = ['User', 'Timesheet', 'DeletionHistory', 'SoftDelete', 
            'TrainingMaterial', 'Task', 'Progress', 'Certificate', 'Evaluation',
            'TaskDeletionRequest', 'TaskDeletionHistory',
            'TaskV2', 'TaskAssignment', 'QuizQuestion', 'QuizAnswer',
            'CommunicationPost', 'PostAttachment',
-           'Request', 'RequestSubmission', 'RequestDocument', 'Notification', 'RecurringRequest']
+           'Request', 'RequestSubmission', 'RequestDocument', 'Notification', 'RecurringRequest',
+           'JobApplication', 'JobApplicationDocument', 'JobApplicationSettings', 'JobPost', 'JobPostRequiredDocument',
+           'InternGroup', 'Cohort', 'CohortMember', 'HostCompany', 'InternPlacement',
+           'RolePermission', 'OperationAuditLog', 'InductionSubmission', 'InductionPortalSettings', 'InductionExportAuditLog']

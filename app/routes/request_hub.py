@@ -386,6 +386,26 @@ def download_document(document_id):
                     download_name=document.original_filename)
 
 
+@request_hub_bp.route('/view/<int:document_id>')
+@login_required
+def view_document(document_id):
+    """Preview a request document in browser."""
+    document = RequestDocument.query.get_or_404(document_id)
+    submission = document.submission
+
+    if current_user.role == 'intern' and submission.user_id != current_user.id:
+        flash('You do not have permission to view this file.', 'danger')
+        return redirect(url_for('request_hub.intern_index'))
+
+    if not os.path.exists(document.file_path):
+        flash('File not found.', 'danger')
+        return redirect(request.referrer or url_for('request_hub.intern_index'))
+
+    return send_file(document.file_path,
+                    as_attachment=False,
+                    download_name=document.original_filename)
+
+
 # Notification Routes
 @request_hub_bp.route('/notifications')
 @login_required

@@ -1,9 +1,20 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from urllib.parse import urlparse
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db
 from app.models.user import User
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+
+def _is_safe_next_url(target):
+    """Allow redirects only to local URLs."""
+    if not target:
+        return False
+
+    current_host = urlparse(request.host_url)
+    target_url = urlparse(target)
+    return target_url.scheme in ('', current_host.scheme) and target_url.netloc in ('', current_host.netloc)
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -39,9 +50,13 @@ def login():
         if user.is_deleted:
             flash('Your account has been deactivated. Contact administrator.', 'danger')
             return redirect(url_for('auth.login'))
+
+        # Drop any stale session state before creating a fresh login session.
+        session.clear()
         
         # Login successful
-        login_user(user)
+        login_user(user, fresh=True)
+        session.permanent = True
         
         # Update last login time
         user.update_last_login()
@@ -58,7 +73,9 @@ def login():
         
         flash(f'Welcome back, {user.name or "User"}!', 'success')
         next_page = request.args.get('next')
-        return redirect(next_page) if next_page else redirect(url_for('main.dashboard'))
+        if next_page and _is_safe_next_url(next_page):
+            return redirect(next_page)
+        return redirect(url_for('main.dashboard'))
     
     return render_template('auth/login.html')
 
@@ -66,9 +83,12 @@ def login():
 @login_required
 def logout():
     """Logout user"""
+    session.clear()
     logout_user()
+    response = redirect(url_for('auth.login'))
+    response.delete_cookie(current_app.config.get('REMEMBER_COOKIE_NAME', 'remember_token'))
     flash('You have been logged out successfully.', 'info')
-    return redirect(url_for('auth.login'))
+    return response
 
 @bp.route('/complete-profile', methods=['GET', 'POST'])
 @login_required

@@ -7,6 +7,7 @@ class Timesheet(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     intern_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    cohort_id = db.Column(db.Integer, db.ForeignKey('cohorts.id'), nullable=True)
     filename = db.Column(db.String(255), nullable=False)
     original_filename = db.Column(db.String(255), nullable=False)
     file_path = db.Column(db.String(500), nullable=False)
@@ -16,6 +17,10 @@ class Timesheet(db.Model):
     submission_month = db.Column(db.String(7), nullable=False)  # Format: YYYY-MM
     submission_year = db.Column(db.Integer, nullable=False)
     submission_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Host company submission tracking
+    submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # host user who submitted
+    host_company_id = db.Column(db.Integer, db.ForeignKey('host_companies.id'), nullable=True)
     
     # Soft delete
     is_deleted = db.Column(db.Boolean, default=False)
@@ -30,6 +35,9 @@ class Timesheet(db.Model):
     
     # Relationships - intern relationship is defined in User model with backref
     deleter = db.relationship('User', foreign_keys=[deleted_by])
+    cohort = db.relationship('Cohort', backref='timesheets')
+    submitter = db.relationship('User', foreign_keys=[submitted_by], backref='submitted_timesheets')
+    host_company = db.relationship('HostCompany', backref='timesheets')
     
     def to_dict(self):
         """Convert timesheet to dictionary"""
@@ -38,6 +46,10 @@ class Timesheet(db.Model):
             'intern_id': self.intern_id,
             'intern_name': f"{self.intern.name} {self.intern.surname}" if self.intern else "Unknown",
             'intern_type': self.intern.intern_type if self.intern else None,
+            'cohort_id': self.cohort_id,
+            'cohort_name': self.cohort.name if self.cohort else None,
+            'host_company_id': self.host_company_id,
+            'host_company_name': self.host_company.company_name if self.host_company else None,
             'filename': self.original_filename,
             'file_size': self.file_size,
             'submission_month': self.submission_month,

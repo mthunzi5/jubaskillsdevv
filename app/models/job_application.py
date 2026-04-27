@@ -2,11 +2,69 @@ from app import db
 from datetime import datetime
 import os
 
+
+class JobPost(db.Model):
+    """Job posting created by authorized users."""
+    __tablename__ = 'job_posts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    summary = db.Column(db.Text, nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    image_path = db.Column(db.String(500), nullable=True)
+    is_open = db.Column(db.Boolean, default=True, nullable=False)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
+    application_deadline = db.Column(db.DateTime, nullable=True)
+
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    closed_at = db.Column(db.DateTime, nullable=True)
+    archived_at = db.Column(db.DateTime, nullable=True)
+
+    required_documents = db.relationship(
+        'JobPostRequiredDocument',
+        backref='job_post',
+        lazy='dynamic',
+        cascade='all, delete-orphan',
+        order_by='JobPostRequiredDocument.sort_order.asc()'
+    )
+    applications = db.relationship('JobApplication', backref='job_post', lazy='dynamic')
+
+    creator = db.relationship('User', backref='created_job_posts', foreign_keys=[created_by])
+
+    def __repr__(self):
+        return f'<JobPost {self.title} ({"open" if self.is_open else "closed"})>'
+
+
+class JobPostRequiredDocument(db.Model):
+    """Configurable list of required/optional documents for a job post."""
+    __tablename__ = 'job_post_required_documents'
+
+    id = db.Column(db.Integer, primary_key=True)
+    job_post_id = db.Column(db.Integer, db.ForeignKey('job_posts.id'), nullable=False)
+    document_code = db.Column(db.String(50), nullable=False)
+    label = db.Column(db.String(150), nullable=False)
+    is_required = db.Column(db.Boolean, default=True, nullable=False)
+    help_text = db.Column(db.String(255), nullable=True)
+    allowed_extensions = db.Column(db.String(100), nullable=True)
+    sort_order = db.Column(db.Integer, default=0, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('job_post_id', 'document_code', name='uq_job_post_document_code'),
+    )
+
+    def __repr__(self):
+        return f'<JobPostRequiredDocument {self.document_code}>'
+
 class JobApplication(db.Model):
     """Job Application model for Juba Consultants opportunities"""
     __tablename__ = 'job_applications'
     
     id = db.Column(db.Integer, primary_key=True)
+
+    # Job post the user applied for
+    job_post_id = db.Column(db.Integer, db.ForeignKey('job_posts.id'), nullable=True)
     
     # Applicant information
     full_name = db.Column(db.String(150), nullable=False)
@@ -20,6 +78,7 @@ class JobApplication(db.Model):
     # Application content
     motivation = db.Column(db.Text, nullable=False)
     skills = db.Column(db.String(500), nullable=True)  # comma-separated
+    applicant_image_path = db.Column(db.String(500), nullable=True)
     
     # Status tracking
     status = db.Column(db.String(50), default='submitted')  # submitted, under_review, shortlisted, rejected, accepted
@@ -49,7 +108,13 @@ class JobApplication(db.Model):
     
     def has_all_required_documents(self):
         """Check if application has all required documents"""
-        required_types = ['id_copy', 'qualification', 'cv', 'affidavit']
+        if self.job_post_id and self.job_post:
+            required_types = [
+                item.document_code for item in self.job_post.required_documents.filter_by(is_required=True).all()
+            ]
+        else:
+            required_types = ['id_copy', 'qualification', 'cv', 'affidavit']
+
         uploaded_types = [doc.document_type for doc in self.documents.filter_by(is_deleted=False)]
         return all(req_type in uploaded_types for req_type in required_types)
     
@@ -59,12 +124,19 @@ class JobApplication(db.Model):
     
     def get_missing_documents(self):
         """Get list of missing required documents"""
-        required_types = {
-            'id_copy': 'ID Copy',
-            'qualification': 'Recently Certified Qualifications',
-            'cv': 'Curriculum Vitae (CV)',
-            'affidavit': 'Affidavit (SETA Declaration)'
-        }
+        if self.job_post_id and self.job_post:
+            required_types = {
+                item.document_code: item.label
+                for item in self.job_post.required_documents.filter_by(is_required=True).all()
+            }
+        else:
+            required_types = {
+                'id_copy': 'ID Copy',
+                'qualification': 'Recently Certified Qualifications',
+                'cv': 'Curriculum Vitae (CV)',
+                'affidavit': 'Affidavit (SETA Declaration)'
+            }
+
         uploaded_types = [doc.document_type for doc in self.documents.filter_by(is_deleted=False)]
         missing = {key: value for key, value in required_types.items() if key not in uploaded_types}
         return missing

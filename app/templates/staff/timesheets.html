@@ -27,10 +27,58 @@
         </div>
         
         {% if timesheets %}
-        <a href="{{ url_for('staff.download_month_timesheets', month=month_filter, intern_type=intern_type_filter) }}" class="btn btn-success btn-sm w-100 w-md-auto" data-bs-toggle="tooltip" title="Download filtered timesheets as a ZIP file">
-            <i class="bi bi-download"></i> Download All (ZIP)
-        </a>
+        <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
+            <a href="{{ url_for('staff.timesheet_submission_status') }}" class="btn btn-outline-dark btn-sm" data-bs-toggle="tooltip" title="Track submitted vs pending timesheets by cohort and month">
+                <i class="bi bi-clipboard-data"></i> Submission Status
+            </a>
+            <a href="{{ url_for('staff.download_month_timesheets', month=month_filter, intern_type=intern_type_filter) }}" class="btn btn-success btn-sm" data-bs-toggle="tooltip" title="Download filtered timesheets as a ZIP file">
+                <i class="bi bi-download"></i> Download (Month)
+            </a>
+        </div>
+        {% else %}
+        <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
+            <a href="{{ url_for('staff.timesheet_submission_status') }}" class="btn btn-outline-dark btn-sm" data-bs-toggle="tooltip" title="Track submitted vs pending timesheets by cohort and month">
+                <i class="bi bi-clipboard-data"></i> Submission Status
+            </a>
+        </div>
         {% endif %}
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Download by Cohort</h6>
+            </div>
+            <div class="card-body">
+                <form id="cohortDownloadForm" class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label mb-1">Select Cohort</label>
+                        <select class="form-select form-select-sm" id="cohortSelect" required>
+                            <option value="">-- Select Cohort --</option>
+                            {% for cohort in cohorts %}
+                            <option value="{{ cohort.id }}">{{ cohort.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label mb-1">Select Month</label>
+                        <select class="form-select form-select-sm" id="cohortMonthSelect" required>
+                            <option value="">-- Select Month --</option>
+                            {% for month in available_months %}
+                            <option value="{{ month }}" {% if month == month_filter %}selected{% endif %}>{{ month }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary btn-sm w-100" onclick="downloadCohortTimesheets()">
+                            <i class="bi bi-download"></i> Download Cohort Timesheets
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -44,6 +92,8 @@
                         <th>Intern Name</th>
                         <th>ID Number</th>
                         <th>Type</th>
+                        <th>Cohort</th>
+                        <th>Host Company</th>
                         <th>Filename</th>
                         <th>Submission Date</th>
                         <th>Actions</th>
@@ -55,10 +105,15 @@
                         <td>{{ timesheet.intern.name }} {{ timesheet.intern.surname }}</td>
                         <td>{{ timesheet.intern.id_number }}</td>
                         <td><span class="badge bg-info">{{ timesheet.intern.intern_type|upper }}</span></td>
+                        <td>{{ timesheet.cohort.name if timesheet.cohort else '-' }}</td>
+                        <td>{{ timesheet.host_company.company_name if timesheet.host_company else '-' }}</td>
                         <td>{{ timesheet.original_filename }}</td>
                         <td>{{ timesheet.submission_date.strftime('%Y-%m-%d %H:%M') }}</td>
                         <td>
-                            <a href="{{ url_for('staff.download_timesheet', timesheet_id=timesheet.id) }}" class="btn btn-sm btn-outline-primary">
+                            <a href="/staff/timesheets/{{ timesheet.id }}/view" class="btn btn-sm btn-outline-secondary" target="_blank">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            <a href="/staff/timesheets/{{ timesheet.id }}/download" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-download"></i> Download
                             </a>
                         </td>
@@ -81,5 +136,21 @@ function filterTimesheets() {
     const type = document.getElementById('typeFilter').value;
     window.location.href = `{{ url_for('staff.timesheets') }}?month=${month}&intern_type=${type}`;
 }
+
+function downloadCohortTimesheets() {
+    const cohortId = document.getElementById('cohortSelect').value;
+    const month = document.getElementById('cohortMonthSelect').value;
+    
+    if (!cohortId || !month) {
+        alert('Please select both cohort and month.');
+        return;
+    }
+    
+    window.location.href = `/staff/timesheets/download-cohort/${cohortId}/${month}`;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Cohorts are pre-rendered from backend with stable IDs.
+});
 </script>
 {% endblock %}

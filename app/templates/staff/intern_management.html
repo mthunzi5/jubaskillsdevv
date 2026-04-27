@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Intern Management - Juba Skills LMS{% endblock %}
+{% block page_title %}Intern Management{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <div class="btn-group w-100 w-md-auto" role="group">
+        <a href="{{ url_for('intern_management.dashboard', intern_type='all') }}" class="btn btn-sm btn-{{ 'primary' if intern_type == 'all' else 'outline-primary' }}">All</a>
+        <a href="{{ url_for('intern_management.dashboard', intern_type='varsity') }}" class="btn btn-sm btn-{{ 'primary' if intern_type == 'varsity' else 'outline-primary' }}">Varsity</a>
+        <a href="{{ url_for('intern_management.dashboard', intern_type='tvet') }}" class="btn btn-sm btn-{{ 'primary' if intern_type == 'tvet' else 'outline-primary' }}">TVET</a>
+        <a href="{{ url_for('intern_management.dashboard', intern_type='mixed') }}" class="btn btn-sm btn-{{ 'primary' if intern_type == 'mixed' else 'outline-primary' }}">Mixed</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6" id="cohorts">
+        <div class="card">
+            <div class="card-header bg-light"><strong>Create Cohort</strong></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('intern_management.create_cohort') }}">
+                    <div class="mb-2">
+                        <label class="form-label">Cohort Name *</label>
+                        <input class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Intern Type Group *</label>
+                        <select class="form-select" name="intern_type" required>
+                            <option value="">Select type</option>
+                            {% for type in intern_type_choices %}
+                            <option value="{{ type }}">{{ type|upper }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" name="start_date">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" name="end_date">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status">
+                            <option value="active">Active</option>
+                            <option value="completed">Completed</option>
+                            <option value="archived">Archived</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="2"></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-sm" type="submit">Create Cohort</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6" id="hosts">
+        <div class="card">
+            <div class="card-header bg-light"><strong>Create Host Company</strong></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('intern_management.create_host_company') }}">
+                    <div class="mb-2">
+                        <label class="form-label">Company Name *</label>
+                        <input class="form-control" name="company_name" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Contact Person</label>
+                        <input class="form-control" name="contact_person">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Login Email *</label>
+                        <input type="email" class="form-control" name="contact_email" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Contact Phone</label>
+                        <input class="form-control" name="contact_phone">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Address</label>
+                        <input class="form-control" name="address">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Initial Password</label>
+                        <input type="text" class="form-control" name="login_password" placeholder="Default: JubaHost2026!">
+                    </div>
+                    <button class="btn btn-primary btn-sm" type="submit">Create Host</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-light"><strong>Assign Intern to Cohort</strong></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('intern_management.assign_member_to_cohort') }}" class="row g-2 align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label">Intern *</label>
+                        <select class="form-select" name="intern_id" required>
+                            <option value="">Select intern</option>
+                            {% for intern in interns %}
+                            <option value="{{ intern.id }}">{{ intern.name or 'NoName' }} {{ intern.surname or '' }} ({{ intern.id_number or intern.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Cohort *</label>
+                        <select class="form-select" name="cohort_id" required>
+                            <option value="">Select cohort</option>
+                            {% for cohort in cohorts %}
+                            <option value="{{ cohort.id }}">{{ cohort.name }} - {{ cohort.group.education_type|upper if cohort.group else 'MIXED' }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-outline-primary btn-sm" type="submit">Assign to Cohort</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-light"><strong>Assign Intern to Host Company</strong></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('intern_management.assign_intern_to_host') }}" class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Intern *</label>
+                        <select class="form-select" name="intern_id" required>
+                            <option value="">Select</option>
+                            {% for intern in interns %}
+                            <option value="{{ intern.id }}">{{ intern.name or 'NoName' }} {{ intern.surname or '' }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Host *</label>
+                        <select class="form-select" name="host_company_id" required>
+                            <option value="">Select</option>
+                            {% for host in hosts %}
+                            <option value="{{ host.id }}">{{ host.company_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Cohort (Optional)</label>
+                        <select class="form-select" name="cohort_id">
+                            <option value="">Not tied to cohort</option>
+                            {% for cohort in cohorts %}
+                            <option value="{{ cohort.id }}">{{ cohort.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-outline-primary btn-sm" type="submit">Assign to Host</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-light"><strong>Intern Type Groups</strong></div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for type in intern_type_choices %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>{{ type|upper }}</span>
+                            <span class="badge bg-info">Type</span>
+                        </div>
+                        <small class="text-muted d-block mt-1">System-managed type used across cohorts and assignments.</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-light"><strong>Cohorts</strong></div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for cohort in cohorts %}
+                    <li class="list-group-item">
+                        <div class="fw-semibold">{{ cohort.name }}</div>
+                        <small class="text-muted">{{ cohort.group.education_type|upper if cohort.group else 'MIXED' }} | {{ cohort.status|title }}</small>
+                        <div><small>{{ cohort.members.count() }} interns</small></div>
+                        <div class="small mt-2 d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#editCohort{{ cohort.id }}">Edit</button>
+                            <form method="POST" action="{{ url_for('intern_management.archive_cohort', cohort_id=cohort.id) }}" onsubmit="return confirm('Archive this cohort?');">
+                                <button class="btn btn-sm btn-outline-dark" type="submit" {% if not cohort.is_active %}disabled{% endif %}>Archive</button>
+                            </form>
+                        </div>
+                        <div class="collapse mt-2" id="editCohort{{ cohort.id }}">
+                            <form method="POST" action="{{ url_for('intern_management.edit_cohort', cohort_id=cohort.id) }}" class="row g-2">
+                                <div class="col-md-4"><input class="form-control form-control-sm" name="name" value="{{ cohort.name }}" required></div>
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" name="status">
+                                        <option value="active" {% if cohort.status == 'active' %}selected{% endif %}>Active</option>
+                                        <option value="completed" {% if cohort.status == 'completed' %}selected{% endif %}>Completed</option>
+                                        <option value="archived" {% if cohort.status == 'archived' %}selected{% endif %}>Archived</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-5"><button class="btn btn-sm btn-primary" type="submit">Save</button></div>
+                                <div class="col-12"><textarea class="form-control form-control-sm" name="notes" rows="2">{{ cohort.notes or '' }}</textarea></div>
+                            </form>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted">No cohorts yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-light"><strong>Host Companies</strong></div>
+            <div class="card-body p-0 border-bottom">
+                <ul class="list-group list-group-flush">
+                    {% for host in hosts %}
+                    <li class="list-group-item">
+                        <div class="fw-semibold">{{ host.company_name }}</div>
+                        <small class="text-muted">{{ host.contact_email or '-' }}</small>
+                        <div class="small mt-2 d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#editHost{{ host.id }}">Edit</button>
+                            <form method="POST" action="{{ url_for('intern_management.archive_host_company', host_id=host.id) }}" onsubmit="return confirm('Archive this host company?');">
+                                <button class="btn btn-sm btn-outline-dark" type="submit" {% if not host.is_active %}disabled{% endif %}>Archive</button>
+                            </form>
+                        </div>
+                        <form method="POST" action="{{ url_for('intern_management.reset_host_password', host_id=host.id) }}" class="mt-2">
+                            <div class="input-group input-group-sm">
+                                <input class="form-control" name="new_password" placeholder="Reset password (optional)">
+                                <button class="btn btn-outline-warning" type="submit">Reset Password</button>
+                            </div>
+                        </form>
+                        <div class="collapse mt-2" id="editHost{{ host.id }}">
+                            <form method="POST" action="{{ url_for('intern_management.edit_host_company', host_id=host.id) }}" class="row g-2">
+                                <div class="col-12"><input class="form-control form-control-sm" name="company_name" value="{{ host.company_name }}" required></div>
+                                <div class="col-12"><input class="form-control form-control-sm" name="contact_person" value="{{ host.contact_person or '' }}" placeholder="Contact person"></div>
+                                <div class="col-12"><input class="form-control form-control-sm" name="contact_phone" value="{{ host.contact_phone or '' }}" placeholder="Contact phone"></div>
+                                <div class="col-12"><input class="form-control form-control-sm" name="address" value="{{ host.address or '' }}" placeholder="Address"></div>
+                                <div class="col-12"><button class="btn btn-sm btn-primary" type="submit">Save</button></div>
+                            </form>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted">No host companies yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="card-header bg-light"><strong>Active Host Assignments</strong></div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for placement in active_placements %}
+                    <li class="list-group-item">
+                        <div class="fw-semibold">{{ placement.intern.name }} {{ placement.intern.surname }}</div>
+                        <small class="text-muted">Host: {{ placement.host_company.company_name }}</small>
+                        {% if placement.cohort %}
+                        <div><small>Cohort: {{ placement.cohort.name }}</small></div>
+                        {% endif %}
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted">No active placements yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

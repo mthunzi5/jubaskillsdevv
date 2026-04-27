@@ -60,6 +60,42 @@
     </div>
 </div>
 
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" style="background: linear-gradient(135deg, #1f7a8c 0%, #3b8d99 100%); color: white; border: none;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-2"><i class="bi bi-diagram-3"></i> Intern Management</h5>
+                        <p class="mb-0">Create groups, cohorts, host companies, and place interns</p>
+                    </div>
+                    <a href="{{ url_for('intern_management.dashboard') }}" class="btn btn-light btn-sm">
+                        Manage Interns <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" style="background: linear-gradient(135deg, #2f5d62 0%, #5e8b7e 100%); color: white; border: none;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-2"><i class="bi bi-person-vcard"></i> Induction Documents</h5>
+                        <p class="mb-0">Review learner induction files and download grouped ZIPs by document type</p>
+                    </div>
+                    <a href="{{ url_for('staff.induction_documents') }}" class="btn btn-light btn-sm">
+                        Open Induction <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-12">
         <div class="card">
@@ -88,6 +124,9 @@
                                 <td>{{ timesheet.original_filename }}</td>
                                 <td>{{ timesheet.submission_date.strftime('%Y-%m-%d %H:%M') }}</td>
                                 <td>
+                                    <a href="{{ url_for('staff.view_timesheet', timesheet_id=timesheet.id) }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
                                     <a href="{{ url_for('staff.download_timesheet', timesheet_id=timesheet.id) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-download"></i>
                                     </a>

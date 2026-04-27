@@ -5,13 +5,13 @@ from app import db, login_manager
 import secrets
 
 class User(UserMixin, db.Model):
-    """User model for all roles: admin, staff, intern"""
+    """User model for all roles: admin, staff, intern, host_company"""
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # admin, staff, intern
+    role = db.Column(db.String(20), nullable=False)  # admin, staff, intern, host_company
     
     # Common fields
     name = db.Column(db.String(100), nullable=True)
@@ -20,7 +20,7 @@ class User(UserMixin, db.Model):
     
     # Intern specific fields
     id_number = db.Column(db.String(13), unique=True, nullable=True)  # 13 digits for interns
-    intern_type = db.Column(db.String(20), nullable=True)  # varsity or tvet
+    intern_type = db.Column(db.String(20), nullable=True)  # varsity, tvet, mixed
     
     # Profile completion
     is_profile_complete = db.Column(db.Boolean, default=False)
@@ -65,6 +65,43 @@ class User(UserMixin, db.Model):
     def is_intern(self):
         """Check if user is intern"""
         return self.role == 'intern'
+
+    def is_host_company(self):
+        """Check if user is host company portal user"""
+        return self.role == 'host_company'
+
+    def has_permission(self, permission):
+        """Check permission using role defaults and optional DB overrides."""
+        default_permissions = {
+            'admin': {
+                'manage_job_posts',
+                'manage_intern_operations',
+                'manage_host_companies',
+                'manage_assignments',
+                'view_host_dashboard',
+            },
+            'staff': {
+                'manage_job_posts',
+                'manage_intern_operations',
+                'manage_host_companies',
+                'manage_assignments',
+            },
+            'host_company': {'view_host_dashboard'},
+            'intern': set(),
+        }
+
+        allowed = permission in default_permissions.get(self.role, set())
+
+        try:
+            from app.models.permission import RolePermission
+            override = RolePermission.query.filter_by(role=self.role, permission=permission).first()
+            if override is not None:
+                return bool(override.allowed)
+        except Exception:
+            # Fallback to defaults if permission table is unavailable during bootstrap.
+            return allowed
+
+        return allowed
     
     def generate_reset_token(self):
         """Generate password reset token"""
@@ -111,4 +148,12 @@ class User(UserMixin, db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     """Load user for Flask-Login"""
-    return User.query.get(int(user_id))
+    try:
+        user = User.query.get(int(user_id))
+    except (TypeError, ValueError):
+        return None
+
+    if not user or user.is_deleted:
+        return None
+
+    return user

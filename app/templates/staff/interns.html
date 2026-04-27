@@ -10,6 +10,7 @@
         <a href="{{ url_for('staff.interns', intern_type='all') }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'all' else 'outline-primary' }}">All</a>
         <a href="{{ url_for('staff.interns', intern_type='varsity') }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'varsity' else 'outline-primary' }}">Varsity</a>
         <a href="{{ url_for('staff.interns', intern_type='tvet') }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'tvet' else 'outline-primary' }}">TVET</a>
+        <a href="{{ url_for('staff.interns', intern_type='mixed') }}" class="btn btn-sm btn-{{ 'primary' if intern_type_filter == 'mixed' else 'outline-primary' }}">Mixed</a>
     </div>
 </div>
 

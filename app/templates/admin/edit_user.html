@@ -36,6 +36,7 @@
                         <select class="form-select" id="intern_type" name="intern_type">
                             <option value="varsity" {% if user.intern_type == 'varsity' %}selected{% endif %}>Varsity</option>
                             <option value="tvet" {% if user.intern_type == 'tvet' %}selected{% endif %}>TVET</option>
+                            <option value="mixed" {% if user.intern_type == 'mixed' %}selected{% endif %}>Mixed</option>
                         </select>
                     </div>
                     {% endif %}

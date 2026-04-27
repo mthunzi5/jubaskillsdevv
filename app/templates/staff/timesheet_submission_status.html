@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Timesheet Submission Status - Juba Skills LMS{% endblock %}
+
+{% block page_title %}Timesheet Submission Status{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('staff.timesheets') }}">Timesheets</a></li>
+<li class="breadcrumb-item active" aria-current="page">Submission Status</li>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label for="cohortFilter" class="form-label">Cohort</label>
+                <select id="cohortFilter" name="cohort_id" class="form-select form-select-sm" required>
+                    <option value="">-- Select Cohort --</option>
+                    {% for cohort in cohorts %}
+                    <option value="{{ cohort.id }}" {% if selected_cohort_id == cohort.id %}selected{% endif %}>{{ cohort.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="monthFilter" class="form-label">Month</label>
+                <input id="monthFilter" type="month" name="month" class="form-control form-control-sm" value="{{ month_filter }}" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-funnel"></i> Apply
+                </button>
+            </div>
+            {% if selected_cohort %}
+            <div class="col-md-3">
+                <a class="btn btn-success btn-sm w-100" href="{{ url_for('staff.download_cohort_timesheets', cohort_id=selected_cohort.id, month=month_filter) }}">
+                    <i class="bi bi-download"></i> Download Cohort ZIP
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a class="btn btn-outline-warning btn-sm w-100" href="{{ url_for('staff.timesheet_submission_status', cohort_id=selected_cohort.id, month=month_filter, send_reminders=1) }}">
+                    <i class="bi bi-bell"></i> Send Pending Reminders
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% if selected_cohort %}
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card border-0 bg-light">
+            <div class="card-body py-2">
+                <small class="text-muted">Total Interns</small>
+                <div class="h5 mb-0">{{ total_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 bg-light">
+            <div class="card-body py-2">
+                <small class="text-muted">Submitted</small>
+                <div class="h5 mb-0 text-success">{{ submitted_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 bg-light">
+            <div class="card-body py-2">
+                <small class="text-muted">Pending</small>
+                <div class="h5 mb-0 text-danger">{{ pending_count }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if pending_count > 0 %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    Timesheet submissions are incomplete for {{ selected_cohort.name }} in {{ month_filter }}.
+    Pending learners: <strong>{{ pending_count }}</strong>.
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <strong>{{ selected_cohort.name }}</strong>
+        <span class="text-muted small">Month: {{ month_filter }}</span>
+    </div>
+    <div class="card-body p-0">
+        {% if rows %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Intern</th>
+                        <th>ID Number</th>
+                        <th>Type</th>
+                        <th>Host Company</th>
+                        <th>Status</th>
+                        <th>Submitted At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td>{{ row.intern.name }} {{ row.intern.surname }}</td>
+                        <td>{{ row.intern.id_number or '-' }}</td>
+                        <td><span class="badge bg-secondary">{{ (row.intern.intern_type or 'mixed')|upper }}</span></td>
+                        <td>{{ row.host_name }}</td>
+                        <td>
+                            {% if row.submitted %}
+                            <span class="badge bg-success">Submitted</span>
+                            {% else %}
+                            <span class="badge bg-danger">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row.timesheet.submission_date.strftime('%Y-%m-%d %H:%M') if row.timesheet else '-' }}</td>
+                        <td>
+                            {% if row.timesheet %}
+                            <a href="{{ url_for('staff.view_timesheet', timesheet_id=row.timesheet.id) }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            <a href="{{ url_for('staff.download_timesheet', timesheet_id=row.timesheet.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info m-3 mb-3">
+            <i class="bi bi-info-circle"></i> No interns found in this cohort.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info mb-0">
+    <i class="bi bi-info-circle"></i> No active cohorts available.
+</div>
+{% endif %}
+{% endblock %}

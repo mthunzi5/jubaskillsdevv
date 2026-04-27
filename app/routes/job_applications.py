@@ -2,9 +2,17 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
-from app.models.job_application import JobApplication, JobApplicationDocument, JobApplicationSettings
+from app.models.job_application import (
+    JobApplication,
+    JobApplicationDocument,
+    JobApplicationSettings,
+    JobPost,
+    JobPostRequiredDocument,
+)
 from app.models.user import User
-from app.utils.decorators import staff_required
+from app.models.notification import Notification
+from app.utils.audit import log_audit_event
+from app.utils.decorators import staff_required, permission_required
 from datetime import datetime
 import os
 import smtplib
@@ -19,6 +27,41 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'txt'}
+
+DEFAULT_REQUIRED_DOCUMENTS = [
+    {
+        'document_code': 'id_copy',
+        'label': 'ID Copy / Passport',
+        'is_required': True,
+        'help_text': 'Upload a copy of your national ID or passport.',
+        'allowed_extensions': 'pdf,doc,docx,jpg,jpeg,png',
+        'sort_order': 1,
+    },
+    {
+        'document_code': 'qualification',
+        'label': 'Recently Certified Qualifications',
+        'is_required': True,
+        'help_text': 'Upload certified copies of your qualifications.',
+        'allowed_extensions': 'pdf,doc,docx,jpg,jpeg,png',
+        'sort_order': 2,
+    },
+    {
+        'document_code': 'cv',
+        'label': 'Curriculum Vitae (CV)',
+        'is_required': True,
+        'help_text': 'Upload your CV.',
+        'allowed_extensions': 'pdf,doc,docx',
+        'sort_order': 3,
+    },
+    {
+        'document_code': 'affidavit',
+        'label': 'Affidavit (SETA Declaration)',
+        'is_required': True,
+        'help_text': 'Upload an affidavit declaring you are not under any SETA program.',
+        'allowed_extensions': 'pdf,doc,docx,jpg,jpeg,png',
+        'sort_order': 4,
+    },
+]
 
 
 def get_job_application_settings():
@@ -47,6 +90,29 @@ def get_mime_type(filename):
         'txt': 'text/plain'
     }
     return mime_types.get(ext, 'application/octet-stream')
+
+
+def normalize_document_code(value):
+    """Normalize user supplied document code to a safe key."""
+    cleaned = ''.join(ch if ch.isalnum() else '_' for ch in (value or '').strip().lower())
+    cleaned = '_'.join(part for part in cleaned.split('_') if part)
+    return cleaned[:50]
+
+
+def get_post_requirements(job_post):
+    """Return a usable requirement list for a job post."""
+    if not job_post:
+        return []
+
+    configured = job_post.required_documents.order_by(JobPostRequiredDocument.sort_order.asc()).all()
+    if configured:
+        return configured
+
+    # Fallback for older records with no configured documents.
+    fallback = []
+    for item in DEFAULT_REQUIRED_DOCUMENTS:
+        fallback.append(type('RequirementObj', (), item))
+    return fallback
 
 
 def send_feedback_email(app_obj, subject, message):
@@ -183,20 +249,52 @@ Juba Consultants"""
 
 @bp.route('/')
 def list_applications():
-    """Public job applications page - info and apply button"""
+    """Public job applications landing page."""
     settings = get_job_application_settings()
-    return render_template('job_applications/apply.html', applications_open=settings.applications_open)
+    open_posts = (
+        JobPost.query.filter_by(is_open=True, is_archived=False)
+        .order_by(JobPost.created_at.desc())
+        .all()
+    )
+
+    return render_template(
+        'job_applications/apply.html',
+        applications_open=settings.applications_open,
+        open_posts=open_posts,
+        job_post=None,
+        required_documents=[],
+    )
 
 
-@bp.route('/apply', methods=['GET', 'POST'])
-def start_application():
+@bp.route('/apply', defaults={'post_id': None}, methods=['GET', 'POST'])
+@bp.route('/apply/<int:post_id>', methods=['GET', 'POST'])
+def start_application(post_id):
     """Start job application process"""
     settings = get_job_application_settings()
+    selected_post_id = post_id or request.args.get('post_id', type=int)
 
-    if not settings.applications_open:
+    job_post = None
+    if selected_post_id:
+        job_post = JobPost.query.get_or_404(selected_post_id)
+    else:
+        job_post = JobPost.query.filter_by(is_open=True, is_archived=False).order_by(JobPost.created_at.desc()).first()
+
+    required_documents = get_post_requirements(job_post)
+
+    if not settings.applications_open or (job_post and (not job_post.is_open or job_post.is_archived)):
         if request.method == 'POST':
             flash('Applications are currently closed. Please check back later.', 'warning')
-        return render_template('job_applications/apply.html', applications_open=False)
+        return render_template(
+            'job_applications/apply.html',
+            applications_open=False,
+            open_posts=[],
+            job_post=job_post,
+            required_documents=required_documents,
+        )
+
+    if not job_post:
+        flash('No active job post is available right now.', 'warning')
+        return redirect(url_for('job_applications.list_applications'))
 
     if request.method == 'POST':
         # Get form data
@@ -213,15 +311,26 @@ def start_application():
             flash('Please fill in all required fields.', 'danger')
             return render_template('job_applications/apply.html', applications_open=True)
         
-        # Check if email has already submitted an application
-        existing_application = JobApplication.query.filter_by(email=email, is_deleted=False).first()
+        # Check if email has already submitted an application for this specific post.
+        existing_application = JobApplication.query.filter_by(
+            email=email,
+            job_post_id=job_post.id,
+            is_deleted=False,
+        ).first()
         if existing_application:
-            flash('An application has already been submitted with this email address.', 'warning')
-            return render_template('job_applications/apply.html', applications_open=True)
+            flash('An application has already been submitted with this email address for this job post.', 'warning')
+            return render_template(
+                'job_applications/apply.html',
+                applications_open=True,
+                open_posts=[job_post],
+                job_post=job_post,
+                required_documents=required_documents,
+            )
         
         try:
             # Create application
             app_obj = JobApplication(
+                job_post_id=job_post.id,
                 full_name=full_name,
                 email=email,
                 phone_number=phone_number,
@@ -232,9 +341,19 @@ def start_application():
             )
             db.session.add(app_obj)
             db.session.flush()  # Get the ID without committing
+
+            profile_image = request.files.get('applicant_image')
+            if profile_image and profile_image.filename and allowed_file(profile_image.filename):
+                timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+                image_name = secure_filename(f"profile_{app_obj.id}_{timestamp}_{profile_image.filename}")
+                image_path = os.path.join(UPLOAD_FOLDER, 'applicant_images', image_name)
+                ensure_dir(image_path)
+                profile_image.save(image_path)
+                app_obj.applicant_image_path = image_path
             
             # Handle file uploads
-            for file_type in ['id_copy', 'qualification', 'cv', 'affidavit']:
+            for requirement in required_documents:
+                file_type = requirement.document_code
                 if file_type in request.files:
                     file = request.files[file_type]
                     if file and file.filename and allowed_file(file.filename):
@@ -257,6 +376,10 @@ def start_application():
                             mime_type=get_mime_type(file.filename)
                         )
                         db.session.add(doc)
+                    elif requirement.is_required:
+                        raise ValueError(f'Missing or invalid required document: {requirement.label}')
+                elif requirement.is_required:
+                    raise ValueError(f'Missing required document: {requirement.label}')
             
             # Handle optional other documents
             if 'other_documents' in request.files:
@@ -288,9 +411,21 @@ def start_application():
         except Exception as e:
             db.session.rollback()
             flash(f'Error submitting application: {str(e)}', 'danger')
-            return render_template('job_applications/apply.html', applications_open=True)
+            return render_template(
+                'job_applications/apply.html',
+                applications_open=True,
+                open_posts=[job_post],
+                job_post=job_post,
+                required_documents=required_documents,
+            )
     
-    return render_template('job_applications/apply.html', applications_open=True)
+    return render_template(
+        'job_applications/apply.html',
+        applications_open=True,
+        open_posts=[job_post],
+        job_post=job_post,
+        required_documents=required_documents,
+    )
 
 
 @bp.route('/received/<int:app_id>')
@@ -320,6 +455,8 @@ def staff_dashboard():
     recent_applications = JobApplication.query.filter_by(is_deleted=False).order_by(
         JobApplication.submitted_at.desc()
     ).limit(10).all()
+
+    job_posts = JobPost.query.order_by(JobPost.created_at.desc()).all()
     
     return render_template('job_applications/staff_dashboard.html',
                          total_applications=total_applications,
@@ -329,8 +466,233 @@ def staff_dashboard():
                          rejected=rejected,
                          accepted=accepted,
                          recent_applications=recent_applications,
+                         job_posts=job_posts,
                          applications_open=settings.applications_open,
                          portal_settings=settings)
+
+
+@bp.route('/staff/posts/create', methods=['POST'])
+@login_required
+@staff_required
+@permission_required('manage_job_posts')
+def create_job_post():
+    """Create a job post with configurable required documents."""
+    title = (request.form.get('title') or '').strip()
+    summary = (request.form.get('summary') or '').strip()
+    description = (request.form.get('description') or '').strip()
+    deadline_raw = (request.form.get('application_deadline') or '').strip()
+
+    if not title:
+        flash('Job post title is required.', 'danger')
+        return redirect(url_for('job_applications.staff_dashboard'))
+
+    deadline = None
+    if deadline_raw:
+        try:
+            deadline = datetime.strptime(deadline_raw, '%Y-%m-%d')
+        except ValueError:
+            flash('Invalid deadline date format.', 'danger')
+            return redirect(url_for('job_applications.staff_dashboard'))
+
+    post = JobPost(
+        title=title,
+        summary=summary or None,
+        description=description or None,
+        application_deadline=deadline,
+        created_by=current_user.id,
+        is_open=True,
+    )
+    db.session.add(post)
+    db.session.flush()
+
+    banner_image = request.files.get('poster_image')
+    if banner_image and banner_image.filename and allowed_file(banner_image.filename):
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        poster_name = secure_filename(f"post_{post.id}_{timestamp}_{banner_image.filename}")
+        poster_path = os.path.join(UPLOAD_FOLDER, 'posters', poster_name)
+        ensure_dir(poster_path)
+        banner_image.save(poster_path)
+        post.image_path = poster_path
+
+    labels = request.form.getlist('doc_label[]')
+    codes = request.form.getlist('doc_code[]')
+    required_flags = request.form.getlist('doc_required[]')
+
+    docs_to_create = []
+    for index, raw_label in enumerate(labels):
+        label = (raw_label or '').strip()
+        code = normalize_document_code(codes[index] if index < len(codes) else label)
+        if not label or not code:
+            continue
+        docs_to_create.append({
+            'label': label,
+            'code': code,
+            'required': str(index) in required_flags,
+            'sort_order': index + 1,
+        })
+
+    if not docs_to_create:
+        docs_to_create = [
+            {
+                'label': item['label'],
+                'code': item['document_code'],
+                'required': item['is_required'],
+                'sort_order': item['sort_order'],
+            }
+            for item in DEFAULT_REQUIRED_DOCUMENTS
+        ]
+
+    for item in docs_to_create:
+        db.session.add(JobPostRequiredDocument(
+            job_post_id=post.id,
+            document_code=item['code'],
+            label=item['label'],
+            is_required=item['required'],
+            sort_order=item['sort_order'],
+        ))
+
+    try:
+        db.session.commit()
+        log_audit_event(
+            actor_user_id=current_user.id,
+            action='job_post_created',
+            entity_type='job_post',
+            entity_id=post.id,
+            details={'title': post.title, 'deadline': post.application_deadline},
+        )
+        flash('Job post created successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Failed to create job post: {str(e)}', 'danger')
+
+    return redirect(url_for('job_applications.staff_dashboard'))
+
+
+@bp.route('/staff/posts/<int:post_id>/toggle', methods=['POST'])
+@login_required
+@staff_required
+@permission_required('manage_job_posts')
+def toggle_job_post(post_id):
+    """Open or close an individual job post."""
+    post = JobPost.query.get_or_404(post_id)
+    next_state = request.form.get('is_open') == 'true'
+
+    try:
+        post.is_open = next_state
+        post.closed_at = None if next_state else datetime.utcnow()
+        db.session.commit()
+        if next_state:
+            for user in User.query.filter(User.role.in_(['admin', 'staff']), User.is_deleted == False).all():
+                Notification.create_notification(
+                    user_id=user.id,
+                    title=f'Job Post Opened: {post.title}',
+                    message='A job post was opened and is now accepting applications.',
+                    notification_type='job_post_opened',
+                    related_type='job_post',
+                    related_id=post.id,
+                )
+        else:
+            for user in User.query.filter(User.role.in_(['admin', 'staff']), User.is_deleted == False).all():
+                Notification.create_notification(
+                    user_id=user.id,
+                    title=f'Job Post Closed: {post.title}',
+                    message='A job post was closed and no longer accepts applications.',
+                    notification_type='job_post_closed',
+                    related_type='job_post',
+                    related_id=post.id,
+                )
+
+        log_audit_event(
+            actor_user_id=current_user.id,
+            action='job_post_toggled',
+            entity_type='job_post',
+            entity_id=post.id,
+            details={'is_open': post.is_open},
+        )
+        flash(f'Job post "{post.title}" is now {"open" if next_state else "closed"}.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Failed to update job post status: {str(e)}', 'danger')
+
+    return redirect(url_for('job_applications.staff_dashboard'))
+
+
+@bp.route('/staff/posts/<int:post_id>/edit', methods=['POST'])
+@login_required
+@staff_required
+@permission_required('manage_job_posts')
+def edit_job_post(post_id):
+    """Edit key job post details."""
+    post = JobPost.query.get_or_404(post_id)
+
+    title = (request.form.get('title') or '').strip()
+    summary = (request.form.get('summary') or '').strip()
+    description = (request.form.get('description') or '').strip()
+    deadline_raw = (request.form.get('application_deadline') or '').strip()
+
+    if not title:
+        flash('Title is required.', 'danger')
+        return redirect(url_for('job_applications.staff_dashboard'))
+
+    deadline = None
+    if deadline_raw:
+        try:
+            deadline = datetime.strptime(deadline_raw, '%Y-%m-%d')
+        except ValueError:
+            flash('Invalid deadline date format.', 'danger')
+            return redirect(url_for('job_applications.staff_dashboard'))
+
+    post.title = title
+    post.summary = summary or None
+    post.description = description or None
+    post.application_deadline = deadline
+
+    try:
+        db.session.commit()
+        log_audit_event(
+            actor_user_id=current_user.id,
+            action='job_post_updated',
+            entity_type='job_post',
+            entity_id=post.id,
+            details={'title': post.title, 'deadline': post.application_deadline},
+        )
+        flash('Job post updated successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Failed to update job post: {str(e)}', 'danger')
+
+    return redirect(url_for('job_applications.staff_dashboard'))
+
+
+@bp.route('/staff/posts/<int:post_id>/archive', methods=['POST'])
+@login_required
+@staff_required
+@permission_required('manage_job_posts')
+def archive_job_post(post_id):
+    """Archive a job post from active operations."""
+    post = JobPost.query.get_or_404(post_id)
+
+    try:
+        post.is_archived = True
+        post.is_open = False
+        post.archived_at = datetime.utcnow()
+        post.closed_at = post.closed_at or datetime.utcnow()
+        db.session.commit()
+
+        log_audit_event(
+            actor_user_id=current_user.id,
+            action='job_post_archived',
+            entity_type='job_post',
+            entity_id=post.id,
+            details={'title': post.title},
+        )
+
+        flash('Job post archived successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Failed to archive job post: {str(e)}', 'danger')
+
+    return redirect(url_for('job_applications.staff_dashboard'))
 
 
 @bp.route('/staff/toggle-application-portal', methods=['POST'])
@@ -451,7 +813,7 @@ def send_application_feedback(app_id):
         return redirect(url_for('job_applications.staff_view_application', app_id=app_id))
 
     timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')
-    reviewer_name = current_user.name if getattr(current_user, 'name', None) else current_user.username
+    reviewer_name = current_user.name if getattr(current_user, 'name', None) else (current_user.email or f'User {current_user.id}')
     feedback_entry = f"[{timestamp}] Feedback by {reviewer_name}:\n{feedback_message}"
 
     try:
@@ -551,7 +913,7 @@ def send_feedback_by_status():
         if ok:
             sent_count += 1
             timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')
-            reviewer_name = current_user.name if getattr(current_user, 'name', None) else current_user.username
+            reviewer_name = current_user.name if getattr(current_user, 'name', None) else (current_user.email or f'User {current_user.id}')
             note_entry = f"[{timestamp}] Email feedback sent for status '{status}' by {reviewer_name}. Subject: {subject}"
             if app_obj.review_notes:
                 app_obj.review_notes = f"{app_obj.review_notes}\n\n{note_entry}"

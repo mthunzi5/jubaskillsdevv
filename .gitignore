@@ -15,3 +15,8 @@ instance/
 uploads/
 *.log
 .DS_Store
+cookies.txt
+intern_cookies.txt
+live_users.html
+live_users_new.html
+app/static/submissions/

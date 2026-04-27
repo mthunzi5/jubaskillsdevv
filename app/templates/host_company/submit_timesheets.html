@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Timesheets - Host Company{% endblock %}
+{% block page_title %}Submit Cohort Timesheets{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('host_company.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">Submit Timesheets</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <p class="text-muted mb-0">Submit timesheets for a cohort during a specific month. Select cohort, month, and the interns you wish to submit timesheets for.</p>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header bg-light">
+        <strong>New Submission</strong>
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label" for="cohortSelect">Cohort *</label>
+                <select class="form-select" id="cohortSelect" name="cohort_id" required>
+                    <option value="">-- Select Cohort --</option>
+                    {% for cohort in cohorts %}
+                    <option value="{{ cohort.id }}">{{ cohort.name }} - {{ cohort.group.education_type|upper if cohort.group else 'MIXED' }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" for="monthSelect">Month *</label>
+                <input type="month" class="form-control" id="monthSelect" name="submission_month" required>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" class="btn btn-outline-secondary w-100" onclick="loadInterns()">Load Interns</button>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Select Interns to Submit For *</label>
+                <div id="internsContainer" class="border rounded p-3" style="background-color: #f8f9fa; min-height: 100px;">
+                    <p class="text-muted text-center mb-0">Select a cohort and month to load interns.</p>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-upload"></i> Submit Timesheets
+                </button>
+                <a href="{{ url_for('host_company.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function loadInterns() {
+    const cohortId = document.getElementById('cohortSelect').value;
+    const monthInput = document.getElementById('monthSelect').value;
+
+    if (!cohortId || !monthInput) {
+        alert('Please select both cohort and month.');
+        return;
+    }
+    const container = document.getElementById('internsContainer');
+
+    fetch(`{{ url_for('host_company.cohort_interns', cohort_id=0) }}`.replace('/0/interns', `/${cohortId}/interns`) + `?month=${monthInput}`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.ok || !data.interns.length) {
+                container.innerHTML = `
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        No active interns found for this cohort at your host company.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            data.interns.forEach(intern => {
+                const fullName = `${intern.name} ${intern.surname}`.trim() || 'Unnamed Intern';
+                const alreadySubmitted = !!intern.already_submitted;
+                const submittedLabel = alreadySubmitted
+                    ? `Already submitted by ${intern.submitted_by} on ${intern.submitted_at || 'unknown time'}`
+                    : 'Not submitted yet';
+                html += `
+                    <div class="row g-2 align-items-center border rounded p-2 mb-2 bg-white">
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input intern-check" type="checkbox" name="interns" value="${intern.id}" id="intern_${intern.id}" ${alreadySubmitted ? 'disabled' : ''}>
+                                <label class="form-check-label" for="intern_${intern.id}">
+                                    <strong>${fullName}</strong><br>
+                                    <small class="text-muted">${intern.id_number || 'No ID'} | ${(intern.intern_type || 'mixed').toUpperCase()}</small><br>
+                                    <small class="${alreadySubmitted ? 'text-danger' : 'text-success'}">${submittedLabel}</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <input type="file" class="form-control form-control-sm timesheet-input" 
+                                name="timesheet_${intern.id}" accept=".pdf,.doc,.docx,.xls,.xlsx" disabled ${alreadySubmitted ? 'style="opacity:0.6"' : ''}>
+                            <small class="text-muted">Upload timesheet file for this intern.</small>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            container.querySelectorAll('.intern-check').forEach(check => {
+                check.addEventListener('change', function () {
+                    const fileInput = container.querySelector(`input[name="timesheet_${this.value}"]`);
+                    if (fileInput) {
+                        fileInput.disabled = !this.checked;
+                        fileInput.required = this.checked;
+                    }
+                });
+            });
+        })
+        .catch(() => {
+            container.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <i class="bi bi-x-circle"></i>
+                    Failed to load interns for this cohort.
+                </div>
+            `;
+        });
+}
+
+// Set default month to current month
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    document.getElementById('monthSelect').value = `${year}-${month}`;
+});
+</script>
+
+{% endblock %}

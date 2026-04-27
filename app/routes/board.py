@@ -246,3 +246,19 @@ def download_attachment(attachment_id):
         return redirect(url_for('board.board'))
     
     return send_file(file_path, as_attachment=True, download_name=attachment.file_name)
+
+
+@bp.route('/view/<int:attachment_id>')
+@login_required
+def view_attachment(attachment_id):
+    """Preview an attachment in browser."""
+    attachment = PostAttachment.query.get_or_404(attachment_id)
+
+    file_path = os.path.join(current_app.root_path, 'static', 'board_attachments',
+                             os.path.basename(attachment.file_path))
+
+    if not os.path.exists(file_path):
+        flash('File not found.', 'danger')
+        return redirect(url_for('board.board'))
+
+    return send_file(file_path, as_attachment=False, download_name=attachment.file_name)

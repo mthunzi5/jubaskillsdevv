@@ -173,6 +173,139 @@
         </div>
     </div>
 
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-file-plus"></i> Create Job Post</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('job_applications.create_job_post') }}" enctype="multipart/form-data" id="createJobPostForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Title *</label>
+                        <input type="text" name="title" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Application Deadline</label>
+                        <input type="date" name="application_deadline" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Summary</label>
+                        <input type="text" name="summary" class="form-control" maxlength="250">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Job Poster Image</label>
+                        <input type="file" name="poster_image" class="form-control" accept=".jpg,.jpeg,.png,.pdf">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Description</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <hr>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="mb-0">Required Documents</h6>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="addDocRow">
+                        <i class="bi bi-plus"></i> Add Document
+                    </button>
+                </div>
+                <div id="docRows" class="vstack gap-2">
+                    <div class="row g-2 doc-row">
+                        <div class="col-md-4"><input type="text" class="form-control" name="doc_label[]" placeholder="Document Label" value="ID Copy / Passport" required></div>
+                        <div class="col-md-3"><input type="text" class="form-control" name="doc_code[]" placeholder="document_code" value="id_copy" required></div>
+                        <div class="col-md-3 d-flex align-items-center"><input class="form-check-input me-2" type="checkbox" name="doc_required[]" value="0" checked><label class="form-check-label">Required</label></div>
+                        <div class="col-md-2"><button type="button" class="btn btn-sm btn-outline-danger remove-doc" disabled>Remove</button></div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Create Job Post
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-briefcase"></i> Manage Job Posts</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if job_posts %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Archived</th>
+                            <th>Created</th>
+                            <th>Deadline</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in job_posts %}
+                        <tr>
+                            <td>{{ post.title }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if post.is_open else 'secondary' }}">
+                                    {{ 'Open' if post.is_open else 'Closed' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'dark' if post.is_archived else 'light text-dark' }}">
+                                    {{ 'Yes' if post.is_archived else 'No' }}
+                                </span>
+                            </td>
+                            <td>{{ post.created_at.strftime('%d %b %Y') if post.created_at else '-' }}</td>
+                            <td>{{ post.application_deadline.strftime('%d %b %Y') if post.application_deadline else '-' }}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#editPost{{ post.id }}" aria-expanded="false">Edit</button>
+                                <form method="POST" action="{{ url_for('job_applications.toggle_job_post', post_id=post.id) }}" class="d-inline">
+                                    <input type="hidden" name="is_open" value="{{ 'false' if post.is_open else 'true' }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-{{ 'danger' if post.is_open else 'success' }}" {% if post.is_archived %}disabled{% endif %}>
+                                        {{ 'Close' if post.is_open else 'Open' }}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('job_applications.archive_job_post', post_id=post.id) }}" class="d-inline" onsubmit="return confirm('Archive this post?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-dark" {% if post.is_archived %}disabled{% endif %}>Archive</button>
+                                </form>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('job_applications.start_application', post_id=post.id) }}" target="_blank">Preview</a>
+                            </td>
+                        </tr>
+                        <tr class="collapse" id="editPost{{ post.id }}">
+                            <td colspan="7">
+                                <form method="POST" action="{{ url_for('job_applications.edit_job_post', post_id=post.id) }}" class="row g-2">
+                                    <div class="col-md-3">
+                                        <input class="form-control form-control-sm" name="title" value="{{ post.title }}" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input class="form-control form-control-sm" name="summary" value="{{ post.summary or '' }}" placeholder="Summary">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="date" class="form-control form-control-sm" name="application_deadline" value="{{ post.application_deadline.strftime('%Y-%m-%d') if post.application_deadline else '' }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                    </div>
+                                    <div class="col-12">
+                                        <textarea class="form-control form-control-sm" name="description" rows="2" placeholder="Description">{{ post.description or '' }}</textarea>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-3 text-muted">No job posts yet.</div>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Send Feedback By Status -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-light">
@@ -337,6 +470,54 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rowsContainer = document.getElementById('docRows');
+    const addDocButton = document.getElementById('addDocRow');
+
+    if (!rowsContainer || !addDocButton) {
+        return;
+    }
+
+    function refreshRequiredCheckboxValues() {
+        const rows = rowsContainer.querySelectorAll('.doc-row');
+        rows.forEach((row, index) => {
+            const checkbox = row.querySelector('input[name="doc_required[]"]');
+            if (checkbox) {
+                checkbox.value = String(index);
+            }
+        });
+    }
+
+    addDocButton.addEventListener('click', function() {
+        const row = document.createElement('div');
+        row.className = 'row g-2 doc-row';
+        row.innerHTML = `
+            <div class="col-md-4"><input type="text" class="form-control" name="doc_label[]" placeholder="Document Label" required></div>
+            <div class="col-md-3"><input type="text" class="form-control" name="doc_code[]" placeholder="document_code" required></div>
+            <div class="col-md-3 d-flex align-items-center"><input class="form-check-input me-2" type="checkbox" name="doc_required[]" checked><label class="form-check-label">Required</label></div>
+            <div class="col-md-2"><button type="button" class="btn btn-sm btn-outline-danger remove-doc">Remove</button></div>
+        `;
+        rowsContainer.appendChild(row);
+        refreshRequiredCheckboxValues();
+    });
+
+    rowsContainer.addEventListener('click', function(event) {
+        if (!event.target.classList.contains('remove-doc')) {
+            return;
+        }
+        const allRows = rowsContainer.querySelectorAll('.doc-row');
+        if (allRows.length <= 1) {
+            return;
+        }
+        event.target.closest('.doc-row').remove();
+        refreshRequiredCheckboxValues();
+    });
+
+    refreshRequiredCheckboxValues();
+});
+</script>
 
 <style>
 .card {

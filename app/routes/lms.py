@@ -101,6 +101,16 @@ def download_material(material_id):
     
     return send_file(filepath, as_attachment=True, download_name=f"{material.title}.{material.file_type}")
 
+
+@lms_bp.route('/materials/<int:material_id>/view')
+@login_required
+def view_material(material_id):
+    """Preview a training material in browser."""
+    material = TrainingMaterial.query.get_or_404(material_id)
+    filepath = os.path.join(current_app.root_path, 'static', material.file_path)
+
+    return send_file(filepath, as_attachment=False, download_name=f"{material.title}.{material.file_type}")
+
 @lms_bp.route('/materials/<int:material_id>/delete', methods=['POST'])
 @login_required
 @staff_required

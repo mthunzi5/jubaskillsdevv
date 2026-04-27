@@ -74,10 +74,16 @@
                 </div>
                 <div class="card-footer bg-transparent">
                     <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('lms.download_material', material_id=material.id) }}" 
-                           class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Download material">
-                            <i class="bi bi-download"></i> Download
-                        </a>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('lms.view_material', material_id=material.id) }}" 
+                               class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="View material" target="_blank">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            <a href="{{ url_for('lms.download_material', material_id=material.id) }}" 
+                               class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Download material">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                        </div>
                         {% if current_user.role in ['admin', 'staff'] %}
                         <button type="button" class="btn btn-sm btn-outline-danger" 
                                 data-bs-toggle="modal" 
