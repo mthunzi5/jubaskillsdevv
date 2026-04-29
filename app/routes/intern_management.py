@@ -476,6 +476,30 @@ def archive_cohort(cohort_id):
     return redirect(url_for('intern_management.dashboard'))
 
 
+@bp.route('/cohorts/<int:cohort_id>/restore', methods=['POST'])
+@login_required
+@staff_required
+@permission_required('manage_intern_operations')
+def restore_cohort(cohort_id):
+    cohort = Cohort.query.get_or_404(cohort_id)
+    cohort.is_active = True
+    cohort.archived_at = None
+    if cohort.status == 'archived':
+        cohort.status = 'active'
+    db.session.commit()
+
+    log_audit_event(
+        actor_user_id=current_user.id,
+        action='cohort_restored',
+        entity_type='cohort',
+        entity_id=cohort.id,
+        details={'name': cohort.name},
+    )
+
+    flash('Cohort restored.', 'success')
+    return redirect(url_for('intern_management.dashboard'))
+
+
 @bp.route('/hosts/<int:host_id>/edit', methods=['POST'])
 @login_required
 @staff_required
@@ -520,6 +544,28 @@ def archive_host_company(host_id):
     )
 
     flash('Host company archived.', 'success')
+    return redirect(url_for('intern_management.dashboard'))
+
+
+@bp.route('/hosts/<int:host_id>/restore', methods=['POST'])
+@login_required
+@staff_required
+@permission_required('manage_host_companies')
+def restore_host_company(host_id):
+    host = HostCompany.query.get_or_404(host_id)
+    host.is_active = True
+    host.archived_at = None
+    db.session.commit()
+
+    log_audit_event(
+        actor_user_id=current_user.id,
+        action='host_company_restored',
+        entity_type='host_company',
+        entity_id=host.id,
+        details={'company_name': host.company_name},
+    )
+
+    flash('Host company restored.', 'success')
     return redirect(url_for('intern_management.dashboard'))
 
 

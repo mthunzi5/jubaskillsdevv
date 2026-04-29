@@ -201,9 +201,15 @@
                         <div><small>{{ cohort.members.count() }} interns</small></div>
                         <div class="small mt-2 d-flex gap-2">
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#editCohort{{ cohort.id }}">Edit</button>
+                            {% if cohort.is_active %}
                             <form method="POST" action="{{ url_for('intern_management.archive_cohort', cohort_id=cohort.id) }}" onsubmit="return confirm('Archive this cohort?');">
-                                <button class="btn btn-sm btn-outline-dark" type="submit" {% if not cohort.is_active %}disabled{% endif %}>Archive</button>
+                                <button class="btn btn-sm btn-outline-dark" type="submit">Archive</button>
                             </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('intern_management.restore_cohort', cohort_id=cohort.id) }}" onsubmit="return confirm('Restore this cohort?');">
+                                <button class="btn btn-sm btn-outline-success" type="submit">Restore</button>
+                            </form>
+                            {% endif %}
                         </div>
                         <div class="collapse mt-2" id="editCohort{{ cohort.id }}">
                             <form method="POST" action="{{ url_for('intern_management.edit_cohort', cohort_id=cohort.id) }}" class="row g-2">
@@ -239,9 +245,15 @@
                         <small class="text-muted">{{ host.contact_email or '-' }}</small>
                         <div class="small mt-2 d-flex gap-2 flex-wrap">
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#editHost{{ host.id }}">Edit</button>
+                            {% if host.is_active %}
                             <form method="POST" action="{{ url_for('intern_management.archive_host_company', host_id=host.id) }}" onsubmit="return confirm('Archive this host company?');">
-                                <button class="btn btn-sm btn-outline-dark" type="submit" {% if not host.is_active %}disabled{% endif %}>Archive</button>
+                                <button class="btn btn-sm btn-outline-dark" type="submit">Archive</button>
                             </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('intern_management.restore_host_company', host_id=host.id) }}" onsubmit="return confirm('Restore this host company?');">
+                                <button class="btn btn-sm btn-outline-success" type="submit">Restore</button>
+                            </form>
+                            {% endif %}
                         </div>
                         <form method="POST" action="{{ url_for('intern_management.reset_host_password', host_id=host.id) }}" class="mt-2">
                             <div class="input-group input-group-sm">
