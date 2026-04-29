@@ -79,7 +79,7 @@ def induction():
 
     # Get current user's cohort if available
     cohort = None
-    cohort_member = CohortMember.query.filter_by(user_id=current_user.id).first()
+    cohort_member = CohortMember.query.filter_by(intern_id=current_user.id).first()
     if cohort_member:
         cohort = cohort_member.cohort
 
