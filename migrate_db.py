@@ -49,6 +49,12 @@ def migrate_database():
 
             if 'host_companies' in table_names:
                 ensure_column(connection, 'host_companies', 'archived_at', 'archived_at DATETIME')
+                ensure_column(connection, 'host_companies', 'login_user_id', 'login_user_id INTEGER')
+
+            if 'notifications' in table_names:
+                ensure_column(connection, 'notifications', 'notification_type', "notification_type VARCHAR(50) DEFAULT 'request_created'")
+                ensure_column(connection, 'notifications', 'related_type', 'related_type VARCHAR(50)')
+                ensure_column(connection, 'notifications', 'related_id', 'related_id INTEGER')
 
             if 'timesheets' in table_names:
                 ensure_column(connection, 'timesheets', 'cohort_id', 'cohort_id INTEGER')

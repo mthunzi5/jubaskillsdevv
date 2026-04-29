@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, current_app
 from flask_login import login_required, current_user
 from app import db
 from app.models.timesheet import Timesheet
@@ -13,6 +13,13 @@ from io import BytesIO
 from zipfile import ZipFile
 
 bp = Blueprint('staff', __name__, url_prefix='/staff')
+
+
+def _run_timesheet_reminders_safely(month_value):
+    try:
+        _send_missing_timesheet_reminders(month_value)
+    except Exception:
+        current_app.logger.exception('Failed to generate timesheet reminders for %s', month_value)
 
 
 def _resolve_induction_doc(submission, doc_key):
@@ -212,7 +219,7 @@ def _send_missing_induction_reminders(only_cohort_id=None):
 @staff_required
 def dashboard():
     """Staff dashboard"""
-    _send_missing_timesheet_reminders(datetime.utcnow().strftime('%Y-%m'))
+    _run_timesheet_reminders_safely(datetime.utcnow().strftime('%Y-%m'))
 
     total_timesheets = Timesheet.query.filter_by(is_deleted=False).count()
     total_interns = User.query.filter_by(role='intern', is_deleted=False).count()
@@ -239,7 +246,7 @@ def dashboard():
 @staff_required
 def timesheets():
     """View all timesheets organized by month"""
-    _send_missing_timesheet_reminders(datetime.utcnow().strftime('%Y-%m'))
+    _run_timesheet_reminders_safely(datetime.utcnow().strftime('%Y-%m'))
 
     month_filter = request.args.get('month', datetime.utcnow().strftime('%Y-%m'))
     intern_type_filter = request.args.get('intern_type', 'all')

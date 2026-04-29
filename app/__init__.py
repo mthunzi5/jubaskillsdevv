@@ -110,26 +110,41 @@ def create_app(config_name='default'):
         # Backfill induction columns for existing databases where the table already exists.
         inspector = inspect(db.engine)
         table_names = inspector.get_table_names()
-        if 'induction_submissions' in table_names:
-            existing_cols = {col['name'] for col in inspector.get_columns('induction_submissions')}
-            alter_statements = []
 
-            if 'cohort_id' not in existing_cols:
-                alter_statements.append("ALTER TABLE induction_submissions ADD COLUMN cohort_id INTEGER")
-            if 'is_locked' not in existing_cols:
-                alter_statements.append("ALTER TABLE induction_submissions ADD COLUMN is_locked BOOLEAN NOT NULL DEFAULT 0")
-            if 'is_submitted' not in existing_cols:
-                alter_statements.append("ALTER TABLE induction_submissions ADD COLUMN is_submitted BOOLEAN NOT NULL DEFAULT 0")
-            if 'locked_at' not in existing_cols:
-                alter_statements.append("ALTER TABLE induction_submissions ADD COLUMN locked_at DATETIME")
-            if 'submitted_at' not in existing_cols:
-                alter_statements.append("ALTER TABLE induction_submissions ADD COLUMN submitted_at DATETIME")
+        def ensure_columns(table_name, column_statements):
+            if table_name not in table_names:
+                return False
 
-            for stmt in alter_statements:
+            existing_cols = {col['name'] for col in inspector.get_columns(table_name)}
+            pending = [stmt for name, stmt in column_statements if name not in existing_cols]
+
+            for stmt in pending:
                 db.session.execute(text(stmt))
 
-            if alter_statements:
-                db.session.commit()
+            return bool(pending)
+
+        schema_changed = False
+
+        schema_changed = ensure_columns('induction_submissions', [
+            ('cohort_id', "ALTER TABLE induction_submissions ADD COLUMN cohort_id INTEGER"),
+            ('is_locked', "ALTER TABLE induction_submissions ADD COLUMN is_locked BOOLEAN NOT NULL DEFAULT 0"),
+            ('is_submitted', "ALTER TABLE induction_submissions ADD COLUMN is_submitted BOOLEAN NOT NULL DEFAULT 0"),
+            ('locked_at', "ALTER TABLE induction_submissions ADD COLUMN locked_at DATETIME"),
+            ('submitted_at', "ALTER TABLE induction_submissions ADD COLUMN submitted_at DATETIME"),
+        ]) or schema_changed
+
+        schema_changed = ensure_columns('host_companies', [
+            ('login_user_id', "ALTER TABLE host_companies ADD COLUMN login_user_id INTEGER"),
+        ]) or schema_changed
+
+        schema_changed = ensure_columns('notifications', [
+            ('notification_type', "ALTER TABLE notifications ADD COLUMN notification_type VARCHAR(50) DEFAULT 'request_created'"),
+            ('related_type', "ALTER TABLE notifications ADD COLUMN related_type VARCHAR(50)"),
+            ('related_id', "ALTER TABLE notifications ADD COLUMN related_id INTEGER"),
+        ]) or schema_changed
+
+        if schema_changed:
+            db.session.commit()
 
         # Create default admin if none exists
         from app.utils.helpers import create_default_admin
