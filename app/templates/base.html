@@ -952,20 +952,26 @@
             initTheme();
             
             // Initialize notification polling
-            updateNotificationCount();
-            setInterval(updateNotificationCount, 30000); // Update every 30 seconds
+            if (document.getElementById('notificationBadge')) {
+                updateNotificationCount();
+                setInterval(updateNotificationCount, 30000); // Update every 30 seconds
+            }
         });
         
         // Notification count functionality
         function updateNotificationCount() {
+            const badge = document.getElementById('notificationBadge');
+            if (!badge) {
+                return;
+            }
+
             fetch('{{ url_for("request_hub.unread_notification_count") }}')
                 .then(response => response.json())
                 .then(data => {
-                    const badge = document.getElementById('notificationBadge');
-                    if (badge && data.count > 0) {
+                    if (data.count > 0) {
                         badge.textContent = data.count > 99 ? '99+' : data.count;
                         badge.style.display = 'inline-block';
-                    } else if (badge) {
+                    } else {
                         badge.style.display = 'none';
                     }
                 })
