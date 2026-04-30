@@ -99,19 +99,22 @@
 <div class="row g-4 mb-4">
     <div class="col-lg-6">
         <div class="card">
-            <div class="card-header bg-light"><strong>Assign Intern to Cohort</strong></div>
+            <div class="card-header bg-light"><strong>Assign Interns to Cohort</strong></div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('intern_management.assign_member_to_cohort') }}" class="row g-2 align-items-end">
-                    <div class="col-md-6">
-                        <label class="form-label">Intern *</label>
-                        <select class="form-select" name="intern_id" required>
-                            <option value="">Select intern</option>
+                <form method="POST" action="{{ url_for('intern_management.assign_member_to_cohort') }}" class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label">Filter interns</label>
+                        <input type="text" class="form-control form-control-sm" placeholder="Type name or ID to filter..." oninput="filterSelect(this, 'cohortInternSelect')">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Interns * <small class="text-muted">(hold Ctrl / Cmd to select multiple)</small></label>
+                        <select class="form-select" name="intern_ids" id="cohortInternSelect" multiple size="8">
                             {% for intern in interns %}
                             <option value="{{ intern.id }}">{{ intern.name or 'NoName' }} {{ intern.surname or '' }} ({{ intern.id_number or intern.email }})</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-12">
                         <label class="form-label">Cohort *</label>
                         <select class="form-select" name="cohort_id" required>
                             <option value="">Select cohort</option>
@@ -130,19 +133,22 @@
 
     <div class="col-lg-6">
         <div class="card">
-            <div class="card-header bg-light"><strong>Assign Intern to Host Company</strong></div>
+            <div class="card-header bg-light"><strong>Assign Interns to Host Company</strong></div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('intern_management.assign_intern_to_host') }}" class="row g-2 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label">Intern *</label>
-                        <select class="form-select" name="intern_id" required>
-                            <option value="">Select</option>
+                <form method="POST" action="{{ url_for('intern_management.assign_intern_to_host') }}" class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label">Filter interns</label>
+                        <input type="text" class="form-control form-control-sm" placeholder="Type name or ID to filter..." oninput="filterSelect(this, 'hostInternSelect')">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Interns * <small class="text-muted">(hold Ctrl / Cmd to select multiple)</small></label>
+                        <select class="form-select" name="intern_ids" id="hostInternSelect" multiple size="8">
                             {% for intern in interns %}
-                            <option value="{{ intern.id }}">{{ intern.name or 'NoName' }} {{ intern.surname or '' }}</option>
+                            <option value="{{ intern.id }}">{{ intern.name or 'NoName' }} {{ intern.surname or '' }} ({{ intern.id_number or intern.email }})</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label class="form-label">Host *</label>
                         <select class="form-select" name="host_company_id" required>
                             <option value="">Select</option>
@@ -151,7 +157,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label class="form-label">Cohort (Optional)</label>
                         <select class="form-select" name="cohort_id">
                             <option value="">Not tied to cohort</option>
@@ -168,6 +174,18 @@
         </div>
     </div>
 </div>
+
+<script>
+function filterSelect(input, selectId) {
+    var filter = input.value.toLowerCase();
+    var select = document.getElementById(selectId);
+    Array.from(select.options).forEach(function(opt) {
+        var match = opt.text.toLowerCase().indexOf(filter) !== -1;
+        opt.style.display = match ? '' : 'none';
+        if (!match) { opt.selected = false; }
+    });
+}
+</script>
 
 <div class="row g-4">
     <div class="col-lg-4">

@@ -190,42 +190,55 @@ def create_cohort():
 @permission_required('manage_assignments')
 def assign_member_to_cohort():
     cohort_id = request.form.get('cohort_id', type=int)
-    intern_id = request.form.get('intern_id', type=int)
+    intern_ids = [int(x) for x in request.form.getlist('intern_ids') if x.isdigit()]
 
-    if not cohort_id or not intern_id:
-        flash('Please select both intern and cohort.', 'danger')
+    if not cohort_id or not intern_ids:
+        flash('Please select a cohort and at least one intern.', 'danger')
         return redirect(url_for('intern_management.dashboard'))
 
     cohort = Cohort.query.get(cohort_id)
-    intern = User.query.filter_by(id=intern_id, role='intern', is_deleted=False).first()
-    if not cohort or not intern:
-        flash('Invalid cohort or intern selected.', 'danger')
+    if not cohort:
+        flash('Invalid cohort selected.', 'danger')
         return redirect(url_for('intern_management.dashboard'))
 
     cohort_intern_type = cohort.group.education_type if cohort.group else 'mixed'
-    intern_type = (intern.intern_type or 'mixed').lower()
-    if cohort_intern_type != 'mixed' and intern_type != cohort_intern_type:
-        flash(f'Intern type ({intern_type}) does not match this cohort type ({cohort_intern_type}).', 'danger')
-        return redirect(url_for('intern_management.dashboard'))
+    assigned = skipped = type_mismatch = 0
 
-    existing = CohortMember.query.filter_by(cohort_id=cohort_id, intern_id=intern_id).first()
-    if existing:
-        flash('Intern is already assigned to this cohort.', 'warning')
-        return redirect(url_for('intern_management.dashboard'))
+    for intern_id in intern_ids:
+        intern = User.query.filter_by(id=intern_id, role='intern', is_deleted=False).first()
+        if not intern:
+            skipped += 1
+            continue
 
-    member = CohortMember(cohort_id=cohort_id, intern_id=intern_id, created_by=current_user.id)
-    db.session.add(member)
+        intern_type = (intern.intern_type or 'mixed').lower()
+        if cohort_intern_type != 'mixed' and intern_type != cohort_intern_type:
+            type_mismatch += 1
+            continue
+
+        if CohortMember.query.filter_by(cohort_id=cohort_id, intern_id=intern_id).first():
+            skipped += 1
+            continue
+
+        member = CohortMember(cohort_id=cohort_id, intern_id=intern_id, created_by=current_user.id)
+        db.session.add(member)
+        assigned += 1
+
     db.session.commit()
 
     log_audit_event(
         actor_user_id=current_user.id,
         action='cohort_member_assigned',
         entity_type='cohort_member',
-        entity_id=member.id,
-        details={'cohort_id': cohort_id, 'intern_id': intern_id},
+        entity_id=cohort_id,
+        details={'cohort_id': cohort_id, 'assigned': assigned, 'skipped': skipped},
     )
 
-    flash('Intern assigned to cohort.', 'success')
+    parts = [f'{assigned} intern(s) assigned to cohort.']
+    if skipped:
+        parts.append(f'{skipped} skipped (already assigned or not found).')
+    if type_mismatch:
+        parts.append(f'{type_mismatch} skipped (intern type mismatch).')
+    flash(' '.join(parts), 'success' if assigned else 'warning')
     return redirect(url_for('intern_management.dashboard'))
 
 
@@ -295,66 +308,75 @@ def create_host_company():
 @staff_required
 @permission_required('manage_assignments')
 def assign_intern_to_host():
-    intern_id = request.form.get('intern_id', type=int)
+    intern_ids = [int(x) for x in request.form.getlist('intern_ids') if x.isdigit()]
     host_company_id = request.form.get('host_company_id', type=int)
-    cohort_id = request.form.get('cohort_id', type=int)
+    cohort_id = request.form.get('cohort_id', type=int) or None
 
-    intern = User.query.filter_by(id=intern_id, role='intern', is_deleted=False).first()
     host = HostCompany.query.filter_by(id=host_company_id, is_active=True).first()
-
-    if not intern or not host:
-        flash('Invalid intern or host company selected.', 'danger')
+    if not host or not intern_ids:
+        flash('Please select a host company and at least one intern.', 'danger')
         return redirect(url_for('intern_management.dashboard'))
 
-    if cohort_id:
-        cohort = Cohort.query.get(cohort_id)
-        if not cohort:
-            flash('Selected cohort does not exist.', 'danger')
-            return redirect(url_for('intern_management.dashboard'))
+    if cohort_id and not Cohort.query.get(cohort_id):
+        flash('Selected cohort does not exist.', 'danger')
+        return redirect(url_for('intern_management.dashboard'))
 
-    current_active = InternPlacement.query.filter_by(intern_id=intern_id, is_active=True).all()
-    for item in current_active:
-        item.is_active = False
-        item.ended_at = datetime.utcnow()
+    assigned = skipped = 0
+    now = datetime.utcnow()
 
-    placement = InternPlacement(
-        intern_id=intern_id,
-        host_company_id=host_company_id,
-        cohort_id=cohort_id,
-        assigned_by=current_user.id,
-        is_active=True,
-    )
-    db.session.add(placement)
+    for intern_id in intern_ids:
+        intern = User.query.filter_by(id=intern_id, role='intern', is_deleted=False).first()
+        if not intern:
+            skipped += 1
+            continue
+
+        for item in InternPlacement.query.filter_by(intern_id=intern_id, is_active=True).all():
+            item.is_active = False
+            item.ended_at = now
+
+        placement = InternPlacement(
+            intern_id=intern_id,
+            host_company_id=host_company_id,
+            cohort_id=cohort_id,
+            assigned_by=current_user.id,
+            is_active=True,
+        )
+        db.session.add(placement)
+        assigned += 1
+
+        Notification.create_notification(
+            user_id=intern.id,
+            title='Host Placement Updated',
+            message=f'You have been assigned to host company: {host.company_name}.',
+            notification_type='intern_host_assignment',
+            related_type='host_company',
+            related_id=host.id,
+        )
+
     db.session.commit()
 
-    Notification.create_notification(
-        user_id=intern.id,
-        title='Host Placement Updated',
-        message=f'You have been assigned to host company: {host.company_name}.',
-        notification_type='intern_host_assignment',
-        related_type='host_company',
-        related_id=host.id,
-    )
-
-    if host.login_user_id:
+    if host.login_user_id and assigned:
         Notification.create_notification(
             user_id=host.login_user_id,
-            title='New Intern Assigned',
-            message=f'{intern.name or "Intern"} {intern.surname or ""} has been assigned to your company.',
+            title='New Interns Assigned',
+            message=f'{assigned} intern(s) have been assigned to your company.',
             notification_type='host_intern_assignment',
-            related_type='intern',
-            related_id=intern.id,
+            related_type='host_company',
+            related_id=host.id,
         )
 
     log_audit_event(
         actor_user_id=current_user.id,
         action='intern_host_assignment_updated',
-        entity_type='intern_placement',
-        entity_id=placement.id,
-        details={'intern_id': intern.id, 'host_company_id': host.id, 'cohort_id': cohort_id},
+        entity_type='host_company',
+        entity_id=host_company_id,
+        details={'host_company_id': host_company_id, 'assigned': assigned, 'cohort_id': cohort_id},
     )
 
-    flash('Intern assignment updated successfully.', 'success')
+    parts = [f'{assigned} intern(s) assigned to {host.company_name}.']
+    if skipped:
+        parts.append(f'{skipped} skipped (not found).')
+    flash(' '.join(parts), 'success' if assigned else 'warning')
     return redirect(url_for('intern_management.dashboard'))
 
 
