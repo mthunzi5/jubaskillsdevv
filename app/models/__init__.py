@@ -19,6 +19,7 @@ from app.models.intern_management import InternGroup, Cohort, CohortMember, Host
 from app.models.permission import RolePermission
 from app.models.audit_log import OperationAuditLog
 from app.models.induction import InductionSubmission, InductionPortalSettings, InductionExportAuditLog
+from app.models.mict_learner import MictLearnerProfile
 
 __all__ = ['User', 'Timesheet', 'DeletionHistory', 'SoftDelete', 
            'TrainingMaterial', 'Task', 'Progress', 'Certificate', 'Evaluation',
@@ -28,4 +29,5 @@ __all__ = ['User', 'Timesheet', 'DeletionHistory', 'SoftDelete',
            'Request', 'RequestSubmission', 'RequestDocument', 'Notification', 'RecurringRequest',
            'JobApplication', 'JobApplicationDocument', 'JobApplicationSettings', 'JobPost', 'JobPostRequiredDocument',
            'InternGroup', 'Cohort', 'CohortMember', 'HostCompany', 'InternPlacement',
-           'RolePermission', 'OperationAuditLog', 'InductionSubmission', 'InductionPortalSettings', 'InductionExportAuditLog']
+           'RolePermission', 'OperationAuditLog', 'InductionSubmission', 'InductionPortalSettings', 'InductionExportAuditLog',
+           'MictLearnerProfile']

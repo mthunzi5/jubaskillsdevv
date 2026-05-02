@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MICT LMS – Learner Details Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f4f7fb; font-family: 'Segoe UI', sans-serif; }
+        .topbar { background: linear-gradient(135deg, #163247 0%, #2e6f93 100%); color: white; padding: 18px 30px; }
+        .topbar h5 { margin: 0; font-weight: 700; }
+        .section-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
+        .section-title { font-size: 1rem; font-weight: 700; color: #163247; border-left: 4px solid #2e6f93; padding-left: 10px; margin-bottom: 20px; }
+        .form-label { font-weight: 500; font-size: 0.88rem; color: #374151; }
+        .badge-id { background: #e8f0fe; color: #163247; font-size: 0.95rem; padding: 6px 14px; border-radius: 20px; font-weight: 600; }
+        .btn-submit { background: #163247; border: none; padding: 12px 40px; font-size: 1rem; border-radius: 8px; }
+        .btn-submit:hover { background: #1e4a6e; }
+        .submission-info { background: #eaf4ed; border-radius: 8px; padding: 12px 18px; font-size: 0.85rem; color: #2b7a57; border: 1px solid #c3e6cb; }
+    </style>
+</head>
+<body>
+
+<div class="topbar d-flex justify-content-between align-items-center">
+    <h5><i class="bi bi-person-badge"></i> MICT LMS – Learner Registration Form</h5>
+    <a href="{{ url_for('mict_learner.lookup') }}" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="container py-4">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- ID + submission info banner -->
+    <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+        <div>
+            <span class="text-muted small">Submitting for ID:</span><br>
+            <span class="badge-id"><i class="bi bi-fingerprint"></i> {{ id_number }}</span>
+        </div>
+        {% if profile %}
+        <div class="submission-info ms-auto">
+            <i class="bi bi-check-circle-fill"></i>
+            Details on file &mdash; last updated {{ profile.updated_at.strftime('%d %b %Y %H:%M') }}.
+            You can update and re-submit at any time.
+        </div>
+        {% else %}
+        <div class="ms-auto text-muted small"><i class="bi bi-info-circle"></i> No details submitted yet. All fields are optional – fill in as much as you can.</div>
+        {% endif %}
+    </div>
+
+    <form method="POST" action="{{ url_for('mict_learner.submit_form', id_number=id_number) }}">
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             SECTION 1 – Personal Information
+        ════════════════════════════════════════════════════════════════════ -->
+        <div class="section-card">
+            <div class="section-title"><i class="bi bi-person"></i> Personal Information</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Learner First Name</label>
+                    <input type="text" name="first_name" class="form-control"
+                           value="{{ profile.first_name or '' if profile else '' }}"
+                           placeholder="e.g. Ingiphile Nozipho">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Learner Last Name</label>
+                    <input type="text" name="last_name" class="form-control"
+                           value="{{ profile.last_name or '' if profile else '' }}"
+                           placeholder="e.g. Mhlongo">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Learner Email</label>
+                    <input type="email" name="personal_email" class="form-control"
+                           value="{{ profile.personal_email or '' if profile else '' }}"
+                           placeholder="e.g. example@gmail.com">
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             SECTION 2 – Contact & Address
+        ════════════════════════════════════════════════════════════════════ -->
+        <div class="section-card">
+            <div class="section-title"><i class="bi bi-geo-alt"></i> Contact and Address Information</div>
+            <div class="row g-3">
+                <div class="col-12"><h6 class="text-muted fw-semibold small text-uppercase">Physical Address</h6></div>
+                <div class="col-md-4">
+                    <label class="form-label">Physical Address Line 1</label>
+                    <input type="text" name="physical_address_line1" class="form-control"
+                           value="{{ profile.physical_address_line1 or '' if profile else '' }}"
+                           placeholder="e.g. 4750 Ridgeview">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Physical Address Line 2</label>
+                    <input type="text" name="physical_address_line2" class="form-control"
+                           value="{{ profile.physical_address_line2 or '' if profile else '' }}"
+                           placeholder="e.g. Umkhumbane">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Physical Address Line 3</label>
+                    <input type="text" name="physical_address_line3" class="form-control"
+                           value="{{ profile.physical_address_line3 or '' if profile else '' }}"
+                           placeholder="e.g. Durban">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Physical Postal Code</label>
+                    <input type="text" name="physical_postal_code" class="form-control"
+                           value="{{ profile.physical_postal_code or '' if profile else '' }}"
+                           placeholder="e.g. 4001">
+                </div>
+
+                <div class="col-12 mt-2"><h6 class="text-muted fw-semibold small text-uppercase">Postal Address</h6></div>
+                <div class="col-md-4">
+                    <label class="form-label">Postal Address Line 1</label>
+                    <input type="text" name="postal_address_line1" class="form-control"
+                           value="{{ profile.postal_address_line1 or '' if profile else '' }}"
+                           placeholder="e.g. 4750 Ridgeview">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Postal Address Line 2</label>
+                    <input type="text" name="postal_address_line2" class="form-control"
+                           value="{{ profile.postal_address_line2 or '' if profile else '' }}"
+                           placeholder="e.g. Umkhumbane">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Postal Address Line 3</label>
+                    <input type="text" name="postal_address_line3" class="form-control"
+                           value="{{ profile.postal_address_line3 or '' if profile else '' }}"
+                           placeholder="e.g. Durban">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Postal Postal Code</label>
+                    <input type="text" name="postal_postal_code" class="form-control"
+                           value="{{ profile.postal_postal_code or '' if profile else '' }}"
+                           placeholder="e.g. 4001">
+                </div>
+
+                <div class="col-12 mt-2"><h6 class="text-muted fw-semibold small text-uppercase">Contact Details</h6></div>
+                <div class="col-md-4">
+                    <label class="form-label">Type of Area</label>
+                    <select name="area_type" class="form-select">
+                        <option value="">-- Select --</option>
+                        {% for opt in ['Urban', 'Rural', 'Peri-urban'] %}
+                        <option value="{{ opt }}" {% if profile and profile.area_type == opt %}selected{% endif %}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="contact_email" class="form-control"
+                           value="{{ profile.contact_email or '' if profile else '' }}"
+                           placeholder="e.g. contact@gmail.com">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Telephone Number</label>
+                    <input type="text" name="telephone_number" class="form-control"
+                           value="{{ profile.telephone_number or '' if profile else '' }}"
+                           placeholder="e.g. 0784538908">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Cellphone Number</label>
+                    <input type="text" name="cellphone_number" class="form-control"
+                           value="{{ profile.cellphone_number or '' if profile else '' }}"
+                           placeholder="e.g. 0784538908">
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             SECTION 3 – Parent / Guardian Details
+        ════════════════════════════════════════════════════════════════════ -->
+        <div class="section-card">
+            <div class="section-title"><i class="bi bi-people"></i> Parent or Guardian Details</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">First Name</label>
+                    <input type="text" name="guardian_first_name" class="form-control"
+                           value="{{ profile.guardian_first_name or '' if profile else '' }}"
+                           placeholder="e.g. Nonkululeko">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" name="guardian_last_name" class="form-control"
+                           value="{{ profile.guardian_last_name or '' if profile else '' }}"
+                           placeholder="e.g. Qwabe">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Type of ID</label>
+                    <select name="guardian_id_type" class="form-select">
+                        <option value="">-- Select --</option>
+                        {% for opt in ['SA ID', 'Passport', 'Other'] %}
+                        <option value="{{ opt }}" {% if profile and profile.guardian_id_type == opt %}selected{% endif %}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ID Number</label>
+                    <input type="text" name="guardian_id_number" class="form-control"
+                           value="{{ profile.guardian_id_number or '' if profile else '' }}"
+                           placeholder="e.g. 9601130342088">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Telephone</label>
+                    <input type="text" name="guardian_telephone" class="form-control"
+                           value="{{ profile.guardian_telephone or '' if profile else '' }}"
+                           placeholder="e.g. 0784538908">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Cellphone</label>
+                    <input type="text" name="guardian_cellphone" class="form-control"
+                           value="{{ profile.guardian_cellphone or '' if profile else '' }}"
+                           placeholder="e.g. 0784538908">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Home Address</label>
+                    <textarea name="guardian_home_address" class="form-control" rows="2"
+                              placeholder="e.g. 4750 Ridgeview, Umkhumbane, Durban">{{ profile.guardian_home_address or '' if profile else '' }}</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Postal Address</label>
+                    <textarea name="guardian_postal_address" class="form-control" rows="2"
+                              placeholder="e.g. 4750 Ridgeview, Umkhumbane, Durban">{{ profile.guardian_postal_address or '' if profile else '' }}</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="guardian_email" class="form-control"
+                           value="{{ profile.guardian_email or '' if profile else '' }}"
+                           placeholder="e.g. guardian@gmail.com">
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             SECTION 4 – Education Details
+        ════════════════════════════════════════════════════════════════════ -->
+        <div class="section-card">
+            <div class="section-title"><i class="bi bi-mortarboard"></i> Education Details</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Highest NQF Level Attained</label>
+                    <select name="highest_nqf_level" class="form-select">
+                        <option value="">-- Select --</option>
+                        {% for lvl in ['1','2','3','4','5','6','7','8','9','10','Other'] %}
+                        <option value="{{ lvl }}" {% if profile and profile.highest_nqf_level == lvl %}selected{% endif %}>{{ lvl }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-8" id="nqfOtherWrapper" style="display:none;">
+                    <label class="form-label">Other (NQF Description)</label>
+                    <input type="text" name="nqf_other" class="form-control"
+                           value="{{ profile.nqf_other or '' if profile else '' }}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Title of your highest qualification</label>
+                    <input type="text" name="qualification_title" class="form-control"
+                           value="{{ profile.qualification_title or '' if profile else '' }}"
+                           placeholder="e.g. Diploma in Information and Communication Technology in App Dev">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Has the Learner matriculated from high school?</label>
+                    <select name="has_matriculated" class="form-select">
+                        <option value="">-- Select --</option>
+                        <option value="Yes" {% if profile and profile.has_matriculated == 'Yes' %}selected{% endif %}>Yes</option>
+                        <option value="No" {% if profile and profile.has_matriculated == 'No' %}selected{% endif %}>No</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Did the Learner matriculate in South Africa?</label>
+                    <select name="matriculated_in_sa" class="form-select">
+                        <option value="">-- Select --</option>
+                        <option value="Yes" {% if profile and profile.matriculated_in_sa == 'Yes' %}selected{% endif %}>Yes</option>
+                        <option value="No" {% if profile and profile.matriculated_in_sa == 'No' %}selected{% endif %}>No</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Province High School Matriculated From</label>
+                    <select name="matric_province" class="form-select">
+                        <option value="">-- Select --</option>
+                        {% for prov in ['Eastern Cape','Free State','Gauteng','KwaZulu-Natal','Limpopo','Mpumalanga','Northern Cape','North West','Western Cape'] %}
+                        <option value="{{ prov }}" {% if profile and profile.matric_province == prov %}selected{% endif %}>{{ prov }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">High School Matriculated From</label>
+                    <input type="text" name="matric_high_school" class="form-control"
+                           value="{{ profile.matric_high_school or '' if profile else '' }}"
+                           placeholder="e.g. KHONDLO SECONDARY SCHOOL">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Institution Type</label>
+                    <select name="institution_type" class="form-select">
+                        <option value="">-- Select --</option>
+                        {% for itype in ['University / University of Technology', 'TVET College', 'Private College', 'Other'] %}
+                        <option value="{{ itype }}" {% if profile and profile.institution_type == itype %}selected{% endif %}>{{ itype }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">University / Institution Name</label>
+                    <input type="text" name="institution_name" class="form-control"
+                           value="{{ profile.institution_name or '' if profile else '' }}"
+                           placeholder="e.g. Durban University of Technology">
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="text-center mb-5">
+            <button type="submit" class="btn btn-primary btn-submit text-white">
+                <i class="bi bi-cloud-upload"></i>
+                {% if profile %}Update Details{% else %}Submit Details{% endif %}
+            </button>
+            <p class="text-muted small mt-3">You can come back and update your details at any time using your SA ID number.</p>
+        </div>
+
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Show "Other NQF" text field when "Other" is selected
+    const nqfSelect = document.querySelector('[name="highest_nqf_level"]');
+    const nqfOtherWrapper = document.getElementById('nqfOtherWrapper');
+    function toggleNqfOther() {
+        nqfOtherWrapper.style.display = nqfSelect.value === 'Other' ? 'block' : 'none';
+    }
+    nqfSelect.addEventListener('change', toggleNqfOther);
+    toggleNqfOther();
+</script>
+</body>
+</html>

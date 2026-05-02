@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}MICT Learner Profiles{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0"><i class="bi bi-person-lines-fill"></i> MICT Learner Profiles</h2>
+        <p class="text-muted small mb-0">{{ profiles|length }} submission(s){% if search %} matching "{{ search }}"{% endif %}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('mict_learner.export_csv', q=search) }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-download"></i> Export CSV
+        </a>
+        <a href="{{ url_for('mict_learner.lookup') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-box-arrow-up-right"></i> Public Form
+        </a>
+    </div>
+</div>
+
+<!-- Search -->
+<form method="GET" class="mb-4 d-flex gap-2">
+    <input type="text" name="q" class="form-control" value="{{ search }}" placeholder="Search by ID, name or email…" style="max-width:360px;">
+    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Search</button>
+    {% if search %}
+    <a href="{{ url_for('mict_learner.admin_list') }}" class="btn btn-outline-secondary btn-sm">Clear</a>
+    {% endif %}
+</form>
+
+{% if profiles %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>SA ID Number</th>
+                    <th>Full Name</th>
+                    <th>Contact Email</th>
+                    <th>Cellphone</th>
+                    <th>Submitted</th>
+                    <th>Updates</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in profiles %}
+                <tr>
+                    <td class="text-muted small">{{ loop.index }}</td>
+                    <td><code>{{ p.id_number }}</code></td>
+                    <td>
+                        {% if p.first_name or p.last_name %}
+                            {{ p.full_name }}
+                        {% else %}
+                            <span class="text-muted fst-italic">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.contact_email or p.personal_email or '—' }}</td>
+                    <td>{{ p.cellphone_number or '—' }}</td>
+                    <td class="small text-muted">{{ p.submitted_at.strftime('%d %b %Y') }}</td>
+                    <td>
+                        {% if p.submission_count > 1 %}
+                        <span class="badge bg-info text-dark">{{ p.submission_count }} times</span>
+                        {% else %}
+                        <span class="badge bg-secondary">1st</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('mict_learner.admin_detail', profile_id=p.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card p-5 text-center text-muted">
+    <i class="bi bi-inbox display-4"></i>
+    <p class="mt-3">No learner submissions found{% if search %} matching your search{% endif %}.</p>
+    <p class="small">Share the public form link with learners: <code>{{ request.host_url }}mict-learner/</code></p>
+</div>
+{% endif %}
+{% endblock %}

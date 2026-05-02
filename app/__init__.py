@@ -58,7 +58,7 @@ def create_app(config_name='default'):
     os.makedirs(app.config['INDUCTION_UPLOAD_FOLDER'], exist_ok=True)
     
     # Register blueprints
-    from app.routes import auth, admin, staff, intern, main, lms, board, request_hub, job_applications, intern_management, host_company
+    from app.routes import auth, admin, staff, intern, main, lms, board, request_hub, job_applications, intern_management, host_company, mict_learner
     app.register_blueprint(auth.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(staff.bp)
@@ -70,6 +70,7 @@ def create_app(config_name='default'):
     app.register_blueprint(job_applications.bp)
     app.register_blueprint(intern_management.bp)
     app.register_blueprint(host_company.bp)
+    app.register_blueprint(mict_learner.bp)
     
     # Register error handlers
     from flask import render_template

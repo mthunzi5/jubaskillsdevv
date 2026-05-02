@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}MICT Learner – {{ profile.full_name or profile.id_number }}{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex align-items-center gap-3">
+    <a href="{{ url_for('mict_learner.admin_list') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+    <div>
+        <h2 class="mb-0">{{ profile.full_name or 'Unnamed Learner' }}</h2>
+        <span class="text-muted small"><i class="bi bi-fingerprint"></i> SA ID: <code>{{ profile.id_number }}</code></span>
+    </div>
+    <div class="ms-auto d-flex gap-2">
+        <a href="{{ url_for('mict_learner.submit_form', id_number=profile.id_number) }}" target="_blank"
+           class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-pencil-square"></i> Open Learner's Form
+        </a>
+    </div>
+</div>
+
+<!-- Submission meta -->
+<div class="alert alert-light border d-flex gap-4 flex-wrap small mb-4">
+    <span><i class="bi bi-calendar-check"></i> First submitted: <strong>{{ profile.submitted_at.strftime('%d %b %Y %H:%M') }}</strong></span>
+    <span><i class="bi bi-arrow-repeat"></i> Last updated: <strong>{{ profile.updated_at.strftime('%d %b %Y %H:%M') }}</strong></span>
+    <span><i class="bi bi-123"></i> Total submissions: <strong>{{ profile.submission_count }}</strong></span>
+</div>
+
+{% macro row(label, value) %}
+<div class="col-md-4 mb-3">
+    <div class="text-muted small">{{ label }}</div>
+    <div class="fw-semibold">{{ value or '—' }}</div>
+</div>
+{% endmacro %}
+
+<!-- SECTION 1 -->
+<div class="card mb-4">
+    <div class="card-header fw-semibold"><i class="bi bi-person"></i> Personal Information</div>
+    <div class="card-body">
+        <div class="row">
+            {{ row('First Name', profile.first_name) }}
+            {{ row('Last Name', profile.last_name) }}
+            {{ row('Learner Email', profile.personal_email) }}
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 2 -->
+<div class="card mb-4">
+    <div class="card-header fw-semibold"><i class="bi bi-geo-alt"></i> Contact and Address</div>
+    <div class="card-body">
+        <p class="text-muted small fw-bold mb-1 text-uppercase">Physical Address</p>
+        <div class="row">
+            {{ row('Line 1', profile.physical_address_line1) }}
+            {{ row('Line 2', profile.physical_address_line2) }}
+            {{ row('Line 3', profile.physical_address_line3) }}
+            {{ row('Postal Code', profile.physical_postal_code) }}
+        </div>
+        <hr>
+        <p class="text-muted small fw-bold mb-1 text-uppercase">Postal Address</p>
+        <div class="row">
+            {{ row('Line 1', profile.postal_address_line1) }}
+            {{ row('Line 2', profile.postal_address_line2) }}
+            {{ row('Line 3', profile.postal_address_line3) }}
+            {{ row('Postal Code', profile.postal_postal_code) }}
+        </div>
+        <hr>
+        <p class="text-muted small fw-bold mb-1 text-uppercase">Contact</p>
+        <div class="row">
+            {{ row('Type of Area', profile.area_type) }}
+            {{ row('Email Address', profile.contact_email) }}
+            {{ row('Telephone', profile.telephone_number) }}
+            {{ row('Cellphone', profile.cellphone_number) }}
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 3 -->
+<div class="card mb-4">
+    <div class="card-header fw-semibold"><i class="bi bi-people"></i> Parent / Guardian Details</div>
+    <div class="card-body">
+        <div class="row">
+            {{ row('First Name', profile.guardian_first_name) }}
+            {{ row('Last Name', profile.guardian_last_name) }}
+            {{ row('Type of ID', profile.guardian_id_type) }}
+            {{ row('ID Number', profile.guardian_id_number) }}
+            {{ row('Telephone', profile.guardian_telephone) }}
+            {{ row('Cellphone', profile.guardian_cellphone) }}
+            {{ row('Email', profile.guardian_email) }}
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="text-muted small">Home Address</div>
+                <div class="fw-semibold">{{ profile.guardian_home_address or '—' }}</div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="text-muted small">Postal Address</div>
+                <div class="fw-semibold">{{ profile.guardian_postal_address or '—' }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 4 -->
+<div class="card mb-4">
+    <div class="card-header fw-semibold"><i class="bi bi-mortarboard"></i> Education Details</div>
+    <div class="card-body">
+        <div class="row">
+            {{ row('Highest NQF Level', profile.highest_nqf_level) }}
+            {{ row('NQF Other', profile.nqf_other) }}
+            {{ row('Qualification Title', profile.qualification_title) }}
+            {{ row('Has Matriculated?', profile.has_matriculated) }}
+            {{ row('Matriculated in SA?', profile.matriculated_in_sa) }}
+            {{ row('Matric Province', profile.matric_province) }}
+            {{ row('High School', profile.matric_high_school) }}
+            {{ row('Institution Type', profile.institution_type) }}
+            {{ row('Institution Name', profile.institution_name) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -235,6 +235,9 @@
                     <a class="nav-link" href="#apply">Apply Now</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('mict_learner.lookup') }}">MICT Learner Form</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('auth.login') }}">Staff Login</a>
                 </li>
             </ul>
@@ -247,9 +250,14 @@
     <div class="container">
         <h1>Juba Consultants Internship Program</h1>
         <p>Join our team and gain valuable practical experience in a dynamic professional environment</p>
-        <a href="#apply" class="cta-button">
-            <i class="bi bi-arrow-right"></i> Apply Now
-        </a>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="#apply" class="cta-button">
+                <i class="bi bi-arrow-right"></i> Apply Now
+            </a>
+            <a href="{{ url_for('mict_learner.lookup') }}" class="cta-button" style="background: linear-gradient(135deg, #2b7a57 0%, #3da477 100%);">
+                <i class="bi bi-person-badge"></i> MICT Learner Form
+            </a>
+        </div>
     </div>
 </section>
 

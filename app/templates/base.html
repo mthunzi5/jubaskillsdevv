@@ -595,6 +595,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if 'mict_learner' in endpoint %}active{% endif %}" href="{{ url_for('mict_learner.admin_list') }}">
+                                <i class="bi bi-person-badge"></i> MICT LMS Learners
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'lms.material_deletion_requests' %}active{% endif %}" href="{{ url_for('lms.material_deletion_requests') }}">
                                 <i class="bi bi-file-earmark-x"></i> Material Deletions
                             </a>
@@ -688,6 +693,11 @@
                         <li class="nav-item">
                             <a class="nav-link {% if 'job_applications.staff' in endpoint %}active{% endif %}" href="{{ url_for('job_applications.staff_dashboard') }}">
                                 <i class="bi bi-briefcase"></i> Job Applications
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'mict_learner' in endpoint %}active{% endif %}" href="{{ url_for('mict_learner.admin_list') }}">
+                                <i class="bi bi-person-badge"></i> MICT LMS Learners
                             </a>
                         </li>
                         <li class="nav-item mt-3">
