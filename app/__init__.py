@@ -55,6 +55,7 @@ def create_app(config_name='default'):
     
     # Create upload folder
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs(app.config['TIMESHEET_TEMPLATE_UPLOAD_FOLDER'], exist_ok=True)
     os.makedirs(app.config['INDUCTION_UPLOAD_FOLDER'], exist_ok=True)
     
     # Register blueprints

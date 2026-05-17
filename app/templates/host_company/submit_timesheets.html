@@ -52,6 +52,9 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-upload"></i> Submit Timesheets
                 </button>
+                <a href="{{ url_for('main.download_timesheet_template') }}" class="btn btn-outline-info">
+                    <i class="bi bi-file-earmark-arrow-down"></i> Download Template
+                </a>
                 <a href="{{ url_for('host_company.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>

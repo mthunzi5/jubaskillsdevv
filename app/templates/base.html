@@ -585,6 +585,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin.manage_timesheet_template' %}active{% endif %}" href="{{ url_for('admin.manage_timesheet_template') }}">
+                                <i class="bi bi-file-earmark-arrow-up"></i> Timesheet Template
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if 'job_applications.staff' in endpoint %}active{% endif %}" href="{{ url_for('job_applications.staff_dashboard') }}">
                                 <i class="bi bi-briefcase"></i> Job Applications
                             </a>

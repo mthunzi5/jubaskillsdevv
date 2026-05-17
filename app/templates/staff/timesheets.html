@@ -64,12 +64,8 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label mb-1">Select Month</label>
-                        <select class="form-select form-select-sm" id="cohortMonthSelect" required>
-                            <option value="">-- Select Month --</option>
-                            {% for month in available_months %}
-                            <option value="{{ month }}" {% if month == month_filter %}selected{% endif %}>{{ month }}</option>
-                            {% endfor %}
-                        </select>
+                        <input type="month" class="form-control form-control-sm" id="cohortMonthSelect" value="{{ month_filter }}" required>
+                        <small class="text-muted">ZIP includes files submitted plus a <strong>MISSING_TIMESHEETS.txt</strong> report.</small>
                     </div>
                     <div class="col-12">
                         <button type="button" class="btn btn-primary btn-sm w-100" onclick="downloadCohortTimesheets()">

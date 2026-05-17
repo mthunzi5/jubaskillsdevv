@@ -219,6 +219,7 @@ function filterSelect(input, selectId) {
                         <div><small>{{ cohort.members.count() }} interns</small></div>
                         <div class="small mt-2 d-flex gap-2">
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#editCohort{{ cohort.id }}">Edit</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#membersCohort{{ cohort.id }}">View Interns</button>
                             {% if cohort.is_active %}
                             <form method="POST" action="{{ url_for('intern_management.archive_cohort', cohort_id=cohort.id) }}" onsubmit="return confirm('Archive this cohort?');">
                                 <button class="btn btn-sm btn-outline-dark" type="submit">Archive</button>
@@ -242,6 +243,39 @@ function filterSelect(input, selectId) {
                                 <div class="col-md-5"><button class="btn btn-sm btn-primary" type="submit">Save</button></div>
                                 <div class="col-12"><textarea class="form-control form-control-sm" name="notes" rows="2">{{ cohort.notes or '' }}</textarea></div>
                             </form>
+                        </div>
+                        <div class="collapse mt-2" id="membersCohort{{ cohort.id }}">
+                            {% set members = cohort_members_map.get(cohort.id, []) %}
+                            {% if members %}
+                            <div class="table-responsive border rounded">
+                                <table class="table table-sm mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Intern</th>
+                                            <th>ID Number</th>
+                                            <th>Host</th>
+                                            <th class="text-end">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in members %}
+                                        <tr>
+                                            <td>{{ item.membership.intern.name or 'NoName' }} {{ item.membership.intern.surname or '' }}</td>
+                                            <td>{{ item.membership.intern.id_number or '-' }}</td>
+                                            <td>{{ item.placement.host_company.company_name if item.placement and item.placement.host_company else '-' }}</td>
+                                            <td class="text-end">
+                                                <form method="POST" action="{{ url_for('intern_management.remove_member_from_cohort', cohort_id=cohort.id, intern_id=item.membership.intern_id) }}" onsubmit="return confirm('Unassign this intern from the cohort?');">
+                                                    <button class="btn btn-sm btn-outline-danger" type="submit">Unassign</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-light border small mb-0">No interns are currently assigned to this cohort.</div>
+                            {% endif %}
                         </div>
                     </li>
                     {% else %}

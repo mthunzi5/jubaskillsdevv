@@ -51,6 +51,9 @@
                         <button type="submit" class="btn btn-primary" data-bs-toggle="tooltip" title="Upload your completed timesheet (PDF only, max 16MB)">
                             <i class="bi bi-upload"></i> Submit Timesheet
                         </button>
+                        <a href="{{ url_for('main.download_timesheet_template') }}" class="btn btn-outline-info" data-bs-toggle="tooltip" title="Download the current official monthly timesheet template">
+                            <i class="bi bi-file-earmark-arrow-down"></i> Download Template
+                        </a>
                         <a href="{{ url_for('intern.timesheets') }}" class="btn btn-secondary">Cancel</a>
                     </div>
                 </form>

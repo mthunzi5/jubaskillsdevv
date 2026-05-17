@@ -390,8 +390,11 @@ def download_month_timesheets(month):
 @login_required
 @staff_required
 def download_cohort_timesheets(cohort_id, month):
-    """Download all timesheets for a specific cohort and month, organized by host company."""
+    """Download cohort-month timesheets and include a missing submissions report."""
     cohort = Cohort.query.get_or_404(cohort_id)
+    if len(month) != 7 or '-' not in month:
+        flash('Invalid month format. Use YYYY-MM.', 'danger')
+        return redirect(url_for('staff.timesheets'))
     
     # Get all timesheets for this cohort in the given month
     timesheets = Timesheet.query.filter_by(
@@ -406,9 +409,23 @@ def download_cohort_timesheets(cohort_id, month):
         if ts.intern_id not in unique_by_intern:
             unique_by_intern[ts.intern_id] = ts
     timesheets = list(unique_by_intern.values())
-    
-    if not timesheets:
-        flash(f'No timesheets found for cohort {cohort.name} in {month}.', 'warning')
+
+    memberships = (
+        CohortMember.query
+        .filter_by(cohort_id=cohort_id)
+        .order_by(CohortMember.created_at.asc())
+        .all()
+    )
+    expected_interns = [m.intern for m in memberships if m.intern and not m.intern.is_deleted]
+    submitted_ids = {ts.intern_id for ts in timesheets}
+    missing_interns = [intern for intern in expected_interns if intern.id not in submitted_ids]
+
+    if not expected_interns:
+        flash(f'No interns are assigned to cohort {cohort.name}.', 'warning')
+        return redirect(url_for('staff.timesheets'))
+
+    if not timesheets and not missing_interns:
+        flash(f'No timesheet records found for cohort {cohort.name} in {month}.', 'warning')
         return redirect(url_for('staff.timesheets'))
     
     # Create ZIP file in memory with host company organization
@@ -439,6 +456,25 @@ def download_cohort_timesheets(cohort_id, month):
                 zip_path = f"{host_folder}/{intern_identifier}_{intern.id_number}_{month}{file_ext}"
                 
                 zf.write(abs_path, zip_path)
+
+        report_lines = [
+            f'Cohort: {cohort.name}',
+            f'Month: {month}',
+            f'Total Interns in Cohort: {len(expected_interns)}',
+            f'Submitted: {len(submitted_ids)}',
+            f'Missing: {len(missing_interns)}',
+            '',
+            'Missing Interns:',
+        ]
+
+        if missing_interns:
+            for idx, intern in enumerate(missing_interns, start=1):
+                full_name = f"{(intern.name or '').strip()} {(intern.surname or '').strip()}".strip() or 'Unnamed Intern'
+                report_lines.append(f"{idx}. {full_name} | ID: {intern.id_number or '-'} | Email: {intern.email}")
+        else:
+            report_lines.append('None. All interns submitted for this month.')
+
+        zf.writestr('MISSING_TIMESHEETS.txt', '\n'.join(report_lines))
     
     memory_file.seek(0)
     

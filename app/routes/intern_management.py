@@ -58,6 +58,25 @@ def dashboard():
         .all()
     )
 
+    active_placement_map = {}
+    for placement in active_placements:
+        if placement.intern_id not in active_placement_map:
+            active_placement_map[placement.intern_id] = placement
+
+    cohort_members_map = {}
+    all_memberships = (
+        CohortMember.query
+        .join(User, CohortMember.intern_id == User.id)
+        .filter(User.is_deleted == False)
+        .order_by(CohortMember.created_at.desc())
+        .all()
+    )
+    for membership in all_memberships:
+        cohort_members_map.setdefault(membership.cohort_id, []).append({
+            'membership': membership,
+            'placement': active_placement_map.get(membership.intern_id),
+        })
+
     unassigned_intern_ids = {
         user.id
         for user in interns
@@ -74,6 +93,7 @@ def dashboard():
         active_placements=active_placements,
         intern_type=intern_type,
         unassigned_intern_ids=unassigned_intern_ids,
+        cohort_members_map=cohort_members_map,
     )
 
 
@@ -240,6 +260,42 @@ def assign_member_to_cohort():
         parts.append(f'{type_mismatch} skipped (intern type mismatch).')
     flash(' '.join(parts), 'success' if assigned else 'warning')
     return redirect(url_for('intern_management.dashboard'))
+
+
+@bp.route('/cohorts/<int:cohort_id>/members/<int:intern_id>/remove', methods=['POST'])
+@login_required
+@staff_required
+@permission_required('manage_assignments')
+def remove_member_from_cohort(cohort_id, intern_id):
+    """Unassign an intern from a cohort membership list."""
+    membership = CohortMember.query.filter_by(cohort_id=cohort_id, intern_id=intern_id).first()
+    if not membership:
+        flash('Cohort membership not found.', 'warning')
+        return redirect(url_for('intern_management.dashboard') + '#cohorts')
+
+    cohort_name = membership.cohort.name if membership.cohort else f'Cohort {cohort_id}'
+    intern = membership.intern
+
+    for placement in InternPlacement.query.filter_by(intern_id=intern_id, cohort_id=cohort_id, is_active=True).all():
+        placement.cohort_id = None
+
+    db.session.delete(membership)
+    db.session.commit()
+
+    log_audit_event(
+        actor_user_id=current_user.id,
+        action='cohort_member_removed',
+        entity_type='cohort_member',
+        entity_id=cohort_id,
+        details={
+            'cohort_id': cohort_id,
+            'intern_id': intern_id,
+            'intern_name': f'{intern.name or ""} {intern.surname or ""}'.strip(),
+        },
+    )
+
+    flash(f'Intern removed from {cohort_name}.', 'success')
+    return redirect(url_for('intern_management.dashboard') + '#cohorts')
 
 
 @bp.route('/hosts/create', methods=['POST'])
