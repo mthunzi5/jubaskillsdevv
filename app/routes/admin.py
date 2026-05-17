@@ -1,11 +1,16 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+import os
+from datetime import datetime
+
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file, current_app
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+
 from app import db
 from app.models.user import User
 from app.models.permission import RolePermission
 from app.models.deletion_history import DeletionHistory
 from app.models.soft_delete import SoftDelete
-from app.models.timesheet import Timesheet
+from app.models.timesheet import Timesheet, TimesheetTemplate, TimesheetPolicySettings
 from app.models.intern_management import Cohort, HostCompany, InternPlacement, CohortMember, InternGroup
 from app.models.job_application import JobApplication, JobPost
 from app.models.notification import Notification
@@ -13,7 +18,6 @@ from app.models.induction import InductionPortalSettings, InductionExportAuditLo
 from app.utils.audit import log_audit_event
 from app.utils.decorators import admin_required
 from app.utils.helpers import save_deletion_history
-from datetime import datetime
 import json
 
 PERMISSION_KEYS = [
@@ -671,3 +675,94 @@ def induction_audit_logs():
         'admin/induction_audit_logs.html',
         logs=logs,
     )
+
+
+@bp.route('/timesheet-template', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def manage_timesheet_template():
+    """Upload and manage active timesheet template file."""
+    if request.method == 'POST':
+        action = (request.form.get('action') or 'upload').strip()
+
+        if action == 'update_policy':
+            policy = TimesheetPolicySettings.get_settings()
+            lock_before_month = (request.form.get('lock_before_month') or '').strip() or None
+
+            if lock_before_month and (len(lock_before_month) != 7 or '-' not in lock_before_month):
+                flash('Oldest allowed month must be in YYYY-MM format.', 'danger')
+                return redirect(url_for('admin.manage_timesheet_template'))
+
+            policy.block_future_months = request.form.get('block_future_months') == 'on'
+            policy.lock_before_month = lock_before_month
+            policy.updated_by = current_user.id
+            db.session.commit()
+            flash('Timesheet month policy updated.', 'success')
+            return redirect(url_for('admin.manage_timesheet_template'))
+
+        if action == 'activate':
+            template_id = request.form.get('template_id', type=int)
+            template = TimesheetTemplate.query.get_or_404(template_id)
+            TimesheetTemplate.query.update({'is_active': False})
+            template.is_active = True
+            db.session.commit()
+            flash('Timesheet template activated.', 'success')
+            return redirect(url_for('admin.manage_timesheet_template'))
+
+        file = request.files.get('template_file')
+        notes = (request.form.get('notes') or '').strip() or None
+        if not file or file.filename == '':
+            flash('Please choose a template file to upload.', 'danger')
+            return redirect(url_for('admin.manage_timesheet_template'))
+
+        original_filename = secure_filename(file.filename)
+        ext = os.path.splitext(original_filename)[1].lower()
+        allowed_exts = {'.pdf', '.doc', '.docx', '.xls', '.xlsx'}
+        if ext not in allowed_exts:
+            flash('Unsupported file type. Use PDF, DOC, DOCX, XLS, or XLSX.', 'danger')
+            return redirect(url_for('admin.manage_timesheet_template'))
+
+        upload_dir = current_app.config['TIMESHEET_TEMPLATE_UPLOAD_FOLDER']
+        os.makedirs(upload_dir, exist_ok=True)
+
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        saved_name = f'timesheet_template_{timestamp}{ext}'
+        save_path = os.path.join(upload_dir, saved_name)
+        file.save(save_path)
+
+        TimesheetTemplate.query.update({'is_active': False})
+        template = TimesheetTemplate(
+            filename=saved_name,
+            original_filename=original_filename,
+            file_path=save_path,
+            file_size=os.path.getsize(save_path),
+            notes=notes,
+            is_active=True,
+            created_by=current_user.id,
+        )
+        db.session.add(template)
+        db.session.commit()
+        flash('Timesheet template uploaded and activated.', 'success')
+        return redirect(url_for('admin.manage_timesheet_template'))
+
+    templates = TimesheetTemplate.query.order_by(TimesheetTemplate.created_at.desc()).all()
+    active_template = next((t for t in templates if t.is_active), None)
+    policy_settings = TimesheetPolicySettings.get_settings()
+    return render_template(
+        'admin/timesheet_template.html',
+        templates=templates,
+        active_template=active_template,
+        policy_settings=policy_settings,
+    )
+
+
+@bp.route('/timesheet-template/<int:template_id>/download')
+@login_required
+@admin_required
+def download_timesheet_template_admin(template_id):
+    template = TimesheetTemplate.query.get_or_404(template_id)
+    abs_path = os.path.abspath(template.file_path)
+    if not os.path.exists(abs_path):
+        flash('Template file not found.', 'danger')
+        return redirect(url_for('admin.manage_timesheet_template'))
+    return send_file(abs_path, as_attachment=True, download_name=template.original_filename)

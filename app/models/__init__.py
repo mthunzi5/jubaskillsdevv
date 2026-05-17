@@ -1,5 +1,5 @@
 from app.models.user import User
-from app.models.timesheet import Timesheet
+from app.models.timesheet import Timesheet, TimesheetTemplate, TimesheetPolicySettings
 from app.models.deletion_history import DeletionHistory
 from app.models.soft_delete import SoftDelete
 from app.models.training_material import TrainingMaterial
@@ -21,7 +21,7 @@ from app.models.audit_log import OperationAuditLog
 from app.models.induction import InductionSubmission, InductionPortalSettings, InductionExportAuditLog
 from app.models.mict_learner import MictLearnerProfile
 
-__all__ = ['User', 'Timesheet', 'DeletionHistory', 'SoftDelete', 
+__all__ = ['User', 'Timesheet', 'TimesheetTemplate', 'TimesheetPolicySettings', 'DeletionHistory', 'SoftDelete', 
            'TrainingMaterial', 'Task', 'Progress', 'Certificate', 'Evaluation',
            'TaskDeletionRequest', 'TaskDeletionHistory',
            'TaskV2', 'TaskAssignment', 'QuizQuestion', 'QuizAnswer',

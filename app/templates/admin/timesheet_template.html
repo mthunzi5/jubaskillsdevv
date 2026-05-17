@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Timesheet Template - Admin{% endblock %}
+{% block page_title %}Timesheet Template{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+<li class="breadcrumb-item active" aria-current="page">Timesheet Template</li>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-header bg-light"><strong>Submission Month Policy</strong></div>
+    <div class="card-body">
+        <p class="text-muted mb-3">Control month governance for intern and host timesheet uploads.</p>
+        <form method="POST" class="row g-3 align-items-end">
+            <input type="hidden" name="action" value="update_policy">
+            <div class="col-md-4">
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" id="blockFutureSwitch" name="block_future_months" {% if policy_settings and policy_settings.block_future_months %}checked{% endif %}>
+                    <label class="form-check-label" for="blockFutureSwitch">Block Future Month Submissions</label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Oldest Allowed Month (Optional)</label>
+                <input type="month" class="form-control" name="lock_before_month" value="{{ policy_settings.lock_before_month if policy_settings else '' }}">
+                <small class="text-muted">If set, submissions older than this month are blocked.</small>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Save Policy</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header bg-light"><strong>Upload Monthly Timesheet Template</strong></div>
+    <div class="card-body">
+        <p class="text-muted mb-3">Interns and host companies will download the active template from their submit pages.</p>
+        <form method="POST" enctype="multipart/form-data" class="row g-2">
+            <input type="hidden" name="action" value="upload">
+            <div class="col-md-6">
+                <label class="form-label">Template File *</label>
+                <input type="file" class="form-control" name="template_file" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Notes (Optional)</label>
+                <input type="text" class="form-control" name="notes" placeholder="e.g. May 2026 official template">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-upload"></i> Upload
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <strong>Template History</strong>
+        {% if active_template %}
+        <span class="badge bg-success">Active: {{ active_template.original_filename }}</span>
+        {% endif %}
+    </div>
+    <div class="card-body p-0">
+        {% if templates %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Notes</th>
+                        <th>Uploaded By</th>
+                        <th>Uploaded At</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for template in templates %}
+                    <tr>
+                        <td>{{ template.original_filename }}</td>
+                        <td>{{ template.notes or '-' }}</td>
+                        <td>{{ template.creator.name if template.creator else '-' }}</td>
+                        <td>{{ template.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if template.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.download_timesheet_template_admin', template_id=template.id) }}">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                            {% if not template.is_active %}
+                            <form method="POST" action="{{ url_for('admin.manage_timesheet_template') }}">
+                                <input type="hidden" name="action" value="activate">
+                                <input type="hidden" name="template_id" value="{{ template.id }}">
+                                <button class="btn btn-sm btn-outline-success" type="submit">Set Active</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-3 text-muted">No templates uploaded yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

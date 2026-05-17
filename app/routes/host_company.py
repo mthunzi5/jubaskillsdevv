@@ -6,7 +6,7 @@ import os
 
 from app import db
 from app.models.intern_management import HostCompany, InternPlacement, Cohort
-from app.models.timesheet import Timesheet
+from app.models.timesheet import Timesheet, TimesheetPolicySettings
 from app.models.notification import Notification
 from app.utils.decorators import host_company_required, permission_required
 from app.utils.audit import log_audit_event
@@ -131,6 +131,20 @@ def submit_timesheets():
         if not cohort_id or not submission_month or not selected_interns:
             flash('Please select cohort, month, and at least one intern.', 'danger')
             return redirect(url_for('host_company.submit_timesheets'))
+
+        if len(submission_month) != 7 or '-' not in submission_month:
+            flash('Please provide a valid submission month (YYYY-MM).', 'danger')
+            return redirect(url_for('host_company.submit_timesheets'))
+
+        policy = TimesheetPolicySettings.get_settings()
+        current_month = datetime.utcnow().strftime('%Y-%m')
+        if policy.block_future_months and submission_month > current_month:
+            flash('Submitting for future months is currently blocked by policy.', 'danger')
+            return redirect(url_for('host_company.submit_timesheets'))
+
+        if policy.lock_before_month and submission_month < policy.lock_before_month:
+            flash(f'Submissions before {policy.lock_before_month} are locked by policy.', 'danger')
+            return redirect(url_for('host_company.submit_timesheets'))
         
         # Validate cohort belongs to this host
         cohort = Cohort.query.get_or_404(cohort_id)
@@ -185,7 +199,11 @@ def submit_timesheets():
             file.save(file_path)
             
             # Create timesheet record
-            year = int(submission_month.split('-')[0])
+            try:
+                year = int(submission_month.split('-')[0])
+            except (ValueError, IndexError):
+                errors.append(f'Invalid month format for intern {intern_id}.')
+                continue
             timesheet = Timesheet(
                 intern_id=intern_id,
                 cohort_id=cohort_id,

@@ -60,3 +60,48 @@ class Timesheet(db.Model):
     
     def __repr__(self):
         return f'<Timesheet {self.id} - {self.original_filename}>'
+
+
+class TimesheetTemplate(db.Model):
+    """Admin-managed template that learners/hosts can download for monthly submissions."""
+    __tablename__ = 'timesheet_templates'
+
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    file_size = db.Column(db.Integer, nullable=False)
+    notes = db.Column(db.String(255), nullable=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    creator = db.relationship('User', backref='uploaded_timesheet_templates', foreign_keys=[created_by])
+
+    def __repr__(self):
+        return f'<TimesheetTemplate {self.id} - {self.original_filename}>'
+
+
+class TimesheetPolicySettings(db.Model):
+    """Admin-governed rules controlling which timesheet months can be submitted."""
+    __tablename__ = 'timesheet_policy_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+    block_future_months = db.Column(db.Boolean, default=False, nullable=False)
+    lock_before_month = db.Column(db.String(7), nullable=True)  # Optional YYYY-MM lower boundary
+    updated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    updater = db.relationship('User', backref='updated_timesheet_policy_settings', foreign_keys=[updated_by])
+
+    @staticmethod
+    def get_settings():
+        settings = TimesheetPolicySettings.query.first()
+        if not settings:
+            settings = TimesheetPolicySettings(block_future_months=False, lock_before_month=None)
+            db.session.add(settings)
+            db.session.commit()
+        return settings
+
+    def __repr__(self):
+        return f'<TimesheetPolicySettings future={self.block_future_months} lock_before={self.lock_before_month}>'

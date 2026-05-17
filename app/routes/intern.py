@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
 from app.models.timesheet import Timesheet
+from app.models.timesheet import TimesheetPolicySettings
 from app.models.induction import InductionSubmission, InductionPortalSettings, INDUCTION_DOC_FIELDS
 from app.models.intern_management import CohortMember, InternPlacement, Cohort
 from app.models.notification import Notification
@@ -242,6 +243,16 @@ def submit_timesheet():
         submission_month = (request.form.get('submission_month') or '').strip()
         if not submission_month or len(submission_month) != 7 or '-' not in submission_month:
             flash('Please select a valid submission month.', 'danger')
+            return redirect(request.url)
+
+        policy = TimesheetPolicySettings.get_settings()
+        current_month = datetime.utcnow().strftime('%Y-%m')
+        if policy.block_future_months and submission_month > current_month:
+            flash('Submitting for future months is currently blocked by policy.', 'danger')
+            return redirect(request.url)
+
+        if policy.lock_before_month and submission_month < policy.lock_before_month:
+            flash(f'Submissions before {policy.lock_before_month} are locked by policy.', 'danger')
             return redirect(request.url)
 
         existing = Timesheet.query.filter_by(
