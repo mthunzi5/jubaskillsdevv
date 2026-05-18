@@ -31,6 +31,30 @@
     </div>
 </div>
 
+{% if host %}
+<div class="row g-3 mb-4">
+    <div class="col-md-2 col-6">
+        <div class="card border-0 bg-light"><div class="card-body py-2"><small class="text-muted">Assigned</small><div class="h5 mb-0">{{ total_assigned }}</div></div></div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="card border-0 bg-light"><div class="card-body py-2"><small class="text-muted">Submitted ({{ current_month }})</small><div class="h5 mb-0 text-success">{{ submitted_this_month }}</div></div></div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="card border-0 bg-light"><div class="card-body py-2"><small class="text-muted">Not Worked</small><div class="h5 mb-0 text-warning">{{ not_worked_this_month }}</div></div></div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="card border-0 bg-light"><div class="card-body py-2"><small class="text-muted">Pending</small><div class="h5 mb-0 text-danger">{{ pending_this_month }}</div></div></div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="card border-0 bg-light"><div class="card-body py-2"><small class="text-muted">Feedback Done</small><div class="h5 mb-0 text-primary">{{ feedback_this_month }}</div></div></div>
+    </div>
+    <div class="col-md-2 col-6 d-grid gap-2">
+        <a href="{{ url_for('host_company.bulk_action_center') }}" class="btn btn-sm btn-primary"><i class="bi bi-grid-3x3-gap"></i> Action Center</a>
+        <a href="{{ url_for('host_company.monthly_feedback') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chat-left-text"></i> Feedback</a>
+    </div>
+</div>
+{% endif %}
+
 {% if host and cohorts_data %}
 {% for cohort_id, cohort_info in cohorts_data.items() %}
 <div class="card mb-4">

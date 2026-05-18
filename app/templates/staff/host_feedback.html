@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Host Feedback - Staff{% endblock %}
+{% block page_title %}Host Feedback{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('staff.timesheets') }}">Timesheets</a></li>
+<li class="breadcrumb-item active" aria-current="page">Host Feedback</li>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Month</label>
+                <input type="month" class="form-control form-control-sm" name="month" value="{{ month_filter }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Cohort</label>
+                <select class="form-select form-select-sm" name="cohort_id">
+                    <option value="">-- All Cohorts --</option>
+                    {% for cohort in cohorts %}
+                    <option value="{{ cohort.id }}" {% if cohort_id == cohort.id %}selected{% endif %}>{{ cohort.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary btn-sm w-100" type="submit"><i class="bi bi-funnel"></i> Apply</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if feedback_rows %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Host</th>
+                        <th>Cohort</th>
+                        <th>Intern</th>
+                        <th>Attendance</th>
+                        <th>Punctuality</th>
+                        <th>Communication</th>
+                        <th>Task Quality</th>
+                        <th>Comments</th>
+                        <th>Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in feedback_rows %}
+                    <tr>
+                        <td>{{ row.submission_month }}</td>
+                        <td>{{ row.host_company.company_name if row.host_company else '-' }}</td>
+                        <td>{{ row.cohort.name if row.cohort else '-' }}</td>
+                        <td>{{ row.intern.name }} {{ row.intern.surname }}</td>
+                        <td>{{ row.attendance_rating or '-' }}</td>
+                        <td>{{ row.punctuality_rating or '-' }}</td>
+                        <td>{{ row.communication_rating or '-' }}</td>
+                        <td>{{ row.task_quality_rating or '-' }}</td>
+                        <td>{{ row.comments or '-' }}</td>
+                        <td>{{ row.updated_at.strftime('%Y-%m-%d %H:%M') if row.updated_at else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-3 text-muted">No feedback records found for the selected filters.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

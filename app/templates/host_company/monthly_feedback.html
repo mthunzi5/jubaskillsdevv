@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Feedback - Host Company{% endblock %}
+{% block page_title %}Monthly Feedback{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('host_company.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">Monthly Feedback</li>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Cohort</label>
+                <select class="form-select" name="cohort_id" required>
+                    <option value="">-- Select Cohort --</option>
+                    {% for cohort in cohorts %}
+                    <option value="{{ cohort.id }}" {% if selected_cohort_id == cohort.id %}selected{% endif %}>{{ cohort.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Month</label>
+                <input type="month" class="form-control" name="submission_month" value="{{ selected_month }}" required>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Load</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if selected_cohort_id and rows %}
+<form method="POST" class="card">
+    <input type="hidden" name="cohort_id" value="{{ selected_cohort_id }}">
+    <input type="hidden" name="submission_month" value="{{ selected_month }}">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Intern</th>
+                        <th>Attendance</th>
+                        <th>Punctuality</th>
+                        <th>Communication</th>
+                        <th>Task Quality</th>
+                        <th>Comments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td>
+                            <strong>{{ row.intern.name }} {{ row.intern.surname }}</strong><br>
+                            <small class="text-muted">{{ row.intern.id_number or row.intern.email }}</small>
+                        </td>
+                        <td><input type="number" min="1" max="5" class="form-control form-control-sm" name="attendance_{{ row.intern.id }}" value="{{ row.feedback.attendance_rating if row.feedback else '' }}"></td>
+                        <td><input type="number" min="1" max="5" class="form-control form-control-sm" name="punctuality_{{ row.intern.id }}" value="{{ row.feedback.punctuality_rating if row.feedback else '' }}"></td>
+                        <td><input type="number" min="1" max="5" class="form-control form-control-sm" name="communication_{{ row.intern.id }}" value="{{ row.feedback.communication_rating if row.feedback else '' }}"></td>
+                        <td><input type="number" min="1" max="5" class="form-control form-control-sm" name="task_quality_{{ row.intern.id }}" value="{{ row.feedback.task_quality_rating if row.feedback else '' }}"></td>
+                        <td><input type="text" class="form-control form-control-sm" name="comments_{{ row.intern.id }}" value="{{ row.feedback.comments if row.feedback else '' }}"></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer text-end">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Save Feedback</button>
+    </div>
+</form>
+{% elif selected_cohort_id %}
+<div class="alert alert-info">No active interns found for this cohort.</div>
+{% endif %}
+{% endblock %}

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import db
 from app.models.timesheet import Timesheet
+from app.models.timesheet import HostInternMonthlyFeedback
 from app.models.induction import InductionSubmission, InductionExportAuditLog, INDUCTION_DOC_FIELDS
 from app.models.user import User
 from app.models.notification import Notification
@@ -583,6 +584,32 @@ def timesheet_submission_status():
         total_count=total_count,
         submitted_count=submitted_count,
         pending_count=pending_count,
+    )
+
+
+@bp.route('/host-feedback')
+@login_required
+@staff_required
+def host_feedback():
+    """View monthly host feedback per intern/cohort."""
+    month_filter = request.args.get('month', datetime.utcnow().strftime('%Y-%m'))
+    cohort_id = request.args.get('cohort_id', type=int)
+
+    query = HostInternMonthlyFeedback.query.join(User, HostInternMonthlyFeedback.intern_id == User.id)
+    if month_filter:
+        query = query.filter(HostInternMonthlyFeedback.submission_month == month_filter)
+    if cohort_id:
+        query = query.filter(HostInternMonthlyFeedback.cohort_id == cohort_id)
+
+    feedback_rows = query.order_by(HostInternMonthlyFeedback.updated_at.desc()).all()
+    cohorts = Cohort.query.filter_by(is_active=True).order_by(Cohort.name.asc()).all()
+
+    return render_template(
+        'staff/host_feedback.html',
+        feedback_rows=feedback_rows,
+        month_filter=month_filter,
+        cohort_id=cohort_id,
+        cohorts=cohorts,
     )
 
 @bp.route('/interns')

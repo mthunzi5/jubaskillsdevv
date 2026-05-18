@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Timesheet Action Center{% endblock %}
+{% block page_title %}Bulk Timesheet Action Center{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('host_company.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">Bulk Action Center</li>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Cohort</label>
+                <select class="form-select" name="cohort_id" required>
+                    <option value="">-- Select Cohort --</option>
+                    {% for cohort in cohorts %}
+                    <option value="{{ cohort.id }}" {% if selected_cohort_id == cohort.id %}selected{% endif %}>{{ cohort.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Month</label>
+                <input type="month" class="form-control" name="submission_month" value="{{ selected_month }}" required>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Load</button>
+            </div>
+            <div class="col-md-3 text-md-end">
+                <a href="{{ url_for('main.download_timesheet_template') }}" class="btn btn-outline-info"><i class="bi bi-file-earmark-arrow-down"></i> Download Template</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if selected_cohort_id and rows %}
+<form method="POST" enctype="multipart/form-data" class="card">
+    <input type="hidden" name="cohort_id" value="{{ selected_cohort_id }}">
+    <input type="hidden" name="submission_month" value="{{ selected_month }}">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <strong>Monthly Actions</strong>
+        <small class="text-muted">Upload missing, replace existing, mark not worked, and capture feedback.</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Intern</th>
+                        <th>Status</th>
+                        <th style="min-width:220px;">Upload / Replace</th>
+                        <th style="min-width:220px;">Not Worked</th>
+                        <th style="min-width:260px;">Feedback (1-5 + comments)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td>
+                            <strong>{{ row.intern.name }} {{ row.intern.surname }}</strong><br>
+                            <small class="text-muted">{{ row.intern.id_number or row.intern.email }}</small>
+                        </td>
+                        <td>
+                            {% if row.timesheet %}
+                            <span class="badge bg-success">Submitted</span><br>
+                            <small class="text-muted">{{ row.timesheet.original_filename }}</small>
+                            {% elif row.non_worked %}
+                            <span class="badge bg-warning text-dark">Not Worked</span><br>
+                            <small class="text-muted">{{ row.non_worked.reason }}</small>
+                            {% else %}
+                            <span class="badge bg-danger">Missing</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <input type="file" class="form-control form-control-sm" name="timesheet_{{ row.intern.id }}" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" name="replace_{{ row.intern.id }}" id="replace_{{ row.intern.id }}">
+                                <label class="form-check-label small" for="replace_{{ row.intern.id }}">Replace existing (if any)</label>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" name="not_worked_{{ row.intern.id }}" id="not_worked_{{ row.intern.id }}" {% if row.non_worked %}checked{% endif %}>
+                                <label class="form-check-label small" for="not_worked_{{ row.intern.id }}">Mark not worked this month</label>
+                            </div>
+                            <input type="text" class="form-control form-control-sm" name="not_worked_reason_{{ row.intern.id }}" placeholder="Reason" value="{{ row.non_worked.reason if row.non_worked else '' }}">
+                        </td>
+                        <td>
+                            <div class="row g-1">
+                                <div class="col-3"><input type="number" min="1" max="5" class="form-control form-control-sm" name="attendance_{{ row.intern.id }}" placeholder="Att" value="{{ row.feedback.attendance_rating if row.feedback else '' }}"></div>
+                                <div class="col-3"><input type="number" min="1" max="5" class="form-control form-control-sm" name="punctuality_{{ row.intern.id }}" placeholder="Punc" value="{{ row.feedback.punctuality_rating if row.feedback else '' }}"></div>
+                                <div class="col-3"><input type="number" min="1" max="5" class="form-control form-control-sm" name="communication_{{ row.intern.id }}" placeholder="Comm" value="{{ row.feedback.communication_rating if row.feedback else '' }}"></div>
+                                <div class="col-3"><input type="number" min="1" max="5" class="form-control form-control-sm" name="task_quality_{{ row.intern.id }}" placeholder="Task" value="{{ row.feedback.task_quality_rating if row.feedback else '' }}"></div>
+                                <div class="col-12"><input type="text" class="form-control form-control-sm" name="feedback_comments_{{ row.intern.id }}" placeholder="Comments" value="{{ row.feedback.comments if row.feedback else '' }}"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer text-end">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Save Bulk Updates</button>
+    </div>
+</form>
+{% elif selected_cohort_id %}
+<div class="alert alert-info">No active interns found for the selected cohort.</div>
+{% endif %}
+{% endblock %}

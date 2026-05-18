@@ -105,3 +105,63 @@ class TimesheetPolicySettings(db.Model):
 
     def __repr__(self):
         return f'<TimesheetPolicySettings future={self.block_future_months} lock_before={self.lock_before_month}>'
+
+
+class TimesheetNonWorkingMonth(db.Model):
+    """Tracks interns marked as not working for a host/cohort/month with reason."""
+    __tablename__ = 'timesheet_non_working_months'
+
+    id = db.Column(db.Integer, primary_key=True)
+    host_company_id = db.Column(db.Integer, db.ForeignKey('host_companies.id'), nullable=False)
+    cohort_id = db.Column(db.Integer, db.ForeignKey('cohorts.id'), nullable=True)
+    intern_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    submission_month = db.Column(db.String(7), nullable=False)
+    reason = db.Column(db.String(255), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    host_company = db.relationship('HostCompany', backref='non_working_months')
+    cohort = db.relationship('Cohort', backref='non_working_months')
+    intern = db.relationship('User', foreign_keys=[intern_id], backref='non_working_months')
+    creator = db.relationship('User', foreign_keys=[created_by], backref='created_non_working_months')
+
+    __table_args__ = (
+        db.UniqueConstraint('host_company_id', 'cohort_id', 'intern_id', 'submission_month', name='uq_non_working_month'),
+    )
+
+    def __repr__(self):
+        return f'<TimesheetNonWorkingMonth host={self.host_company_id} intern={self.intern_id} month={self.submission_month}>'
+
+
+class HostInternMonthlyFeedback(db.Model):
+    """Monthly host feedback scores/comments per intern, visible to staff."""
+    __tablename__ = 'host_intern_monthly_feedback'
+
+    id = db.Column(db.Integer, primary_key=True)
+    host_company_id = db.Column(db.Integer, db.ForeignKey('host_companies.id'), nullable=False)
+    cohort_id = db.Column(db.Integer, db.ForeignKey('cohorts.id'), nullable=True)
+    intern_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    submission_month = db.Column(db.String(7), nullable=False)
+
+    attendance_rating = db.Column(db.Integer, nullable=True)
+    punctuality_rating = db.Column(db.Integer, nullable=True)
+    communication_rating = db.Column(db.Integer, nullable=True)
+    task_quality_rating = db.Column(db.Integer, nullable=True)
+    comments = db.Column(db.Text, nullable=True)
+
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    host_company = db.relationship('HostCompany', backref='monthly_feedback')
+    cohort = db.relationship('Cohort', backref='monthly_feedback')
+    intern = db.relationship('User', foreign_keys=[intern_id], backref='monthly_host_feedback')
+    creator = db.relationship('User', foreign_keys=[created_by], backref='created_monthly_host_feedback')
+
+    __table_args__ = (
+        db.UniqueConstraint('host_company_id', 'cohort_id', 'intern_id', 'submission_month', name='uq_host_feedback_month'),
+    )
+
+    def __repr__(self):
+        return f'<HostInternMonthlyFeedback host={self.host_company_id} intern={self.intern_id} month={self.submission_month}>'

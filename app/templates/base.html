@@ -6,9 +6,6 @@
     <title>{% block title %}Juba Skills LMS{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -382,115 +379,6 @@
             width: 3rem;
             height: 3rem;
         }
-
-        /* Workplace Refresh */
-        :root {
-            --primary-color: #163247;
-            --secondary-color: #2e6f93;
-            --success-color: #2b7a57;
-            --danger-color: #b23a48;
-            --warning-color: #b7791f;
-            --bg-color: #f4f7fb;
-            --text-color: #1f2933;
-            --card-bg: #ffffff;
-            --sidebar-bg: #142433;
-            --border-color: #d7e0ea;
-        }
-
-        body {
-            font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
-            letter-spacing: 0.1px;
-            background-image: linear-gradient(180deg, #f8fafc 0%, #f4f7fb 50%, #eef3f8 100%);
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            background: linear-gradient(180deg, #122738 0%, #152f44 60%, #12304a 100%);
-        }
-
-        .sidebar .nav-link {
-            border-left: 3px solid transparent;
-            font-weight: 500;
-        }
-
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            border-left-color: #6cb4da;
-            background-color: rgba(108, 180, 218, 0.12);
-        }
-
-        main.col-md-10 {
-            background: transparent;
-        }
-
-        .card {
-            border-radius: 14px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 6px 22px rgba(16, 42, 67, 0.08);
-        }
-
-        .card .card-header {
-            background: #f8fbff;
-            border-bottom: 1px solid var(--border-color);
-            border-top-left-radius: 14px;
-            border-top-right-radius: 14px;
-            font-weight: 600;
-        }
-
-        .btn {
-            border-radius: 10px;
-            font-weight: 600;
-        }
-
-        .btn-outline-primary,
-        .btn-outline-secondary,
-        .btn-outline-success,
-        .btn-outline-danger {
-            border-width: 1.5px;
-        }
-
-        .table {
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
-        .table thead th {
-            background-color: #f6f9fc;
-            color: #334e68;
-            font-weight: 600;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .table tbody tr:hover {
-            background-color: #f7fbff;
-        }
-
-        .badge {
-            font-weight: 600;
-            letter-spacing: 0.2px;
-        }
-
-        .breadcrumb {
-            background: rgba(255, 255, 255, 0.65);
-            border-radius: 10px;
-            padding: 0.55rem 0.8rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .alert {
-            border-radius: 10px;
-            border: 1px solid transparent;
-        }
-
-        code, pre {
-            font-family: 'IBM Plex Mono', monospace;
-        }
-
-        .theme-toggle {
-            border-radius: 16px;
-            width: 54px;
-            height: 54px;
-        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -528,7 +416,6 @@
             <!-- Sidebar -->
             <nav class="col-md-2 d-md-block sidebar px-0" id="sidebar">
                 <div class="position-sticky pt-3">
-                    {% set endpoint = request.endpoint or '' %}
                     <div class="text-center mb-4">
                         <h5 class="navbar-brand">Juba Skills LMS</h5>
                         <p class="small mb-0">{{ current_user.name }} {{ current_user.surname }}</p>
@@ -555,7 +442,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'users' in endpoint %}active{% endif %}" href="{{ url_for('admin.users') }}">
+                            <a class="nav-link {% if 'users' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.users') }}">
                                 <i class="bi bi-people"></i> Users
                             </a>
                         </li>
@@ -570,38 +457,8 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'admin.permissions_matrix' %}active{% endif %}" href="{{ url_for('admin.permissions_matrix') }}">
-                                <i class="bi bi-shield-check"></i> Permission Matrix
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'admin.manage_induction_portal' %}active{% endif %}" href="{{ url_for('admin.manage_induction_portal') }}">
-                                <i class="bi bi-toggle-on"></i> Induction Portal
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'admin.induction_audit_logs' %}active{% endif %}" href="{{ url_for('admin.induction_audit_logs') }}">
-                                <i class="bi bi-journal-text"></i> Induction Audit Logs
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'admin.manage_timesheet_template' %}active{% endif %}" href="{{ url_for('admin.manage_timesheet_template') }}">
-                                <i class="bi bi-file-earmark-arrow-up"></i> Timesheet Template
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'job_applications.staff' in endpoint %}active{% endif %}" href="{{ url_for('job_applications.staff_dashboard') }}">
+                            <a class="nav-link {% if 'job_applications.staff' in request.endpoint %}active{% endif %}" href="{{ url_for('job_applications.staff_dashboard') }}">
                                 <i class="bi bi-briefcase"></i> Job Applications
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'intern_management' in endpoint %}active{% endif %}" href="{{ url_for('intern_management.dashboard') }}">
-                                <i class="bi bi-diagram-3"></i> Intern Management
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'mict_learner' in endpoint %}active{% endif %}" href="{{ url_for('mict_learner.admin_list') }}">
-                                <i class="bi bi-person-badge"></i> MICT LMS Learners
                             </a>
                         </li>
                         <li class="nav-item">
@@ -620,22 +477,22 @@
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.materials' in endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
+                            <a class="nav-link {% if 'lms.materials' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
                                 <i class="bi bi-book"></i> Training Materials
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.tasks' in endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
+                            <a class="nav-link {% if 'lms.tasks' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
                                 <i class="bi bi-list-task"></i> Tasks
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.progress' in endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
+                            <a class="nav-link {% if 'lms.progress' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
                                 <i class="bi bi-graph-up"></i> Progress Tracking
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.certificates' in endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
+                            <a class="nav-link {% if 'lms.certificates' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
                                 <i class="bi bi-award"></i> Certificates
                             </a>
                         </li>
@@ -645,27 +502,27 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.evaluations' in endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
+                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
                                 <i class="bi bi-clipboard-check"></i> Evaluations
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'board.board' in endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
+                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
                                 <i class="bi bi-chat-square-text"></i> Communication Board
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'request_hub' in endpoint %}active{% endif %}" href="{{ url_for('request_hub.staff_index') }}">
+                            <a class="nav-link {% if 'request_hub' in request.endpoint %}active{% endif %}" href="{{ url_for('request_hub.staff_index') }}">
                                 <i class="bi bi-folder"></i> Request Hub
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.task_deletion_requests' in endpoint %}active{% endif %}" href="{{ url_for('lms.task_deletion_requests') }}">
+                            <a class="nav-link {% if 'lms.task_deletion_requests' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.task_deletion_requests') }}">
                                 <i class="bi bi-exclamation-triangle"></i> Task Deletion Requests
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.task_deletion_history' in endpoint %}active{% endif %}" href="{{ url_for('lms.task_deletion_history') }}">
+                            <a class="nav-link {% if 'lms.task_deletion_history' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.task_deletion_history') }}">
                                 <i class="bi bi-clock-history"></i> Task Deletion History
                             </a>
                         </li>
@@ -676,33 +533,18 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'timesheets' in endpoint %}active{% endif %}" href="{{ url_for('staff.timesheets') }}">
+                            <a class="nav-link {% if 'timesheets' in request.endpoint %}active{% endif %}" href="{{ url_for('staff.timesheets') }}">
                                 <i class="bi bi-file-earmark-text"></i> Timesheets
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'interns' in endpoint %}active{% endif %}" href="{{ url_for('staff.interns') }}">
+                            <a class="nav-link {% if request.endpoint == 'staff.host_feedback' %}active{% endif %}" href="{{ url_for('staff.host_feedback') }}">
+                                <i class="bi bi-chat-dots"></i> Host Feedback
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'interns' in request.endpoint %}active{% endif %}" href="{{ url_for('staff.interns') }}">
                                 <i class="bi bi-people"></i> Interns
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'induction' in endpoint %}active{% endif %}" href="{{ url_for('staff.induction_documents') }}">
-                                <i class="bi bi-person-vcard"></i> Induction Documents
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'intern_management' in endpoint %}active{% endif %}" href="{{ url_for('intern_management.dashboard') }}">
-                                <i class="bi bi-diagram-3"></i> Intern Management
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'job_applications.staff' in endpoint %}active{% endif %}" href="{{ url_for('job_applications.staff_dashboard') }}">
-                                <i class="bi bi-briefcase"></i> Job Applications
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'mict_learner' in endpoint %}active{% endif %}" href="{{ url_for('mict_learner.admin_list') }}">
-                                <i class="bi bi-person-badge"></i> MICT LMS Learners
                             </a>
                         </li>
                         <li class="nav-item mt-3">
@@ -711,37 +553,37 @@
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.materials' in endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
+                            <a class="nav-link {% if 'lms.materials' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
                                 <i class="bi bi-book"></i> Training Materials
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.tasks' in endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
+                            <a class="nav-link {% if 'lms.tasks' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
                                 <i class="bi bi-list-task"></i> Tasks
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.progress' in endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
+                            <a class="nav-link {% if 'lms.progress' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
                                 <i class="bi bi-graph-up"></i> Progress Tracking
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.certificates' in endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
+                            <a class="nav-link {% if 'lms.certificates' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
                                 <i class="bi bi-award"></i> Certificates
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.evaluations' in endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
+                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
                                 <i class="bi bi-clipboard-check"></i> Evaluations
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'board.board' in endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
+                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
                                 <i class="bi bi-chat-square-text"></i> Communication Board
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'request_hub' in endpoint %}active{% endif %}" href="{{ url_for('request_hub.staff_index') }}">
+                            <a class="nav-link {% if 'request_hub' in request.endpoint %}active{% endif %}" href="{{ url_for('request_hub.staff_index') }}">
                                 <i class="bi bi-inbox"></i> Request Hub
                             </a>
                         </li>
@@ -752,7 +594,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'timesheets' in endpoint %}active{% endif %}" href="{{ url_for('intern.timesheets') }}">
+                            <a class="nav-link {% if 'timesheets' in request.endpoint %}active{% endif %}" href="{{ url_for('intern.timesheets') }}">
                                 <i class="bi bi-file-earmark-text"></i> My Timesheets
                             </a>
                         </li>
@@ -761,55 +603,75 @@
                                 <i class="bi bi-person"></i> Profile
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'induction' in endpoint %}active{% endif %}" href="{{ url_for('intern.induction') }}">
-                                <i class="bi bi-file-earmark-check"></i> Induction Portal
-                            </a>
-                        </li>
                         <li class="nav-item mt-3">
                             <h6 class="sidebar-heading px-3 mt-4 mb-1 text-white-50">
                                 <span>Learning Management</span>
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.materials' in endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
+                            <a class="nav-link {% if 'lms.materials' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
                                 <i class="bi bi-book"></i> Training Materials
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.tasks' in endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
+                            <a class="nav-link {% if 'lms.tasks' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
                                 <i class="bi bi-list-task"></i> My Tasks
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.progress' in endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
+                            <a class="nav-link {% if 'lms.progress' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
                                 <i class="bi bi-graph-up"></i> My Progress
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.certificates' in endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
+                            <a class="nav-link {% if 'lms.certificates' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
                                 <i class="bi bi-award"></i> My Certificates
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.evaluations' in endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
+                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
                                 <i class="bi bi-clipboard-check"></i> Evaluations
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'board.board' in endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
+                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
                                 <i class="bi bi-chat-square-text"></i> Communication Board
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'request_hub' in endpoint %}active{% endif %}" href="{{ url_for('request_hub.intern_index') }}">
+                            <a class="nav-link {% if 'request_hub' in request.endpoint %}active{% endif %}" href="{{ url_for('request_hub.intern_index') }}">
                                 <i class="bi bi-inbox-fill"></i> My Requests
                             </a>
                         </li>
                         {% elif current_user.is_host_company() %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'host_company.dashboard' %}active{% endif %}" href="{{ url_for('host_company.dashboard') }}">
-                                <i class="bi bi-building"></i> Host Dashboard
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'host_company.interns_list' %}active{% endif %}" href="{{ url_for('host_company.interns_list') }}">
+                                <i class="bi bi-people"></i> Assigned Interns
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'host_company.bulk_action_center' %}active{% endif %}" href="{{ url_for('host_company.bulk_action_center') }}">
+                                <i class="bi bi-grid-3x3-gap"></i> Bulk Action Center
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'host_company.monthly_feedback' %}active{% endif %}" href="{{ url_for('host_company.monthly_feedback') }}">
+                                <i class="bi bi-chat-left-text"></i> Monthly Feedback
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'host_company.submit_timesheets' %}active{% endif %}" href="{{ url_for('host_company.submit_timesheets') }}">
+                                <i class="bi bi-upload"></i> Submit Timesheets
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'host_company.view_timesheets' %}active{% endif %}" href="{{ url_for('host_company.view_timesheets') }}">
+                                <i class="bi bi-file-text"></i> Submitted Timesheets
                             </a>
                         </li>
                         {% endif %}
@@ -967,26 +829,20 @@
             initTheme();
             
             // Initialize notification polling
-            if (document.getElementById('notificationBadge')) {
-                updateNotificationCount();
-                setInterval(updateNotificationCount, 30000); // Update every 30 seconds
-            }
+            updateNotificationCount();
+            setInterval(updateNotificationCount, 30000); // Update every 30 seconds
         });
         
         // Notification count functionality
         function updateNotificationCount() {
-            const badge = document.getElementById('notificationBadge');
-            if (!badge) {
-                return;
-            }
-
             fetch('{{ url_for("request_hub.unread_notification_count") }}')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.count > 0) {
+                    const badge = document.getElementById('notificationBadge');
+                    if (badge && data.count > 0) {
                         badge.textContent = data.count > 99 ? '99+' : data.count;
                         badge.style.display = 'inline-block';
-                    } else {
+                    } else if (badge) {
                         badge.style.display = 'none';
                     }
                 })
