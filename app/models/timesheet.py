@@ -71,11 +71,13 @@ class TimesheetTemplate(db.Model):
     original_filename = db.Column(db.String(255), nullable=False)
     file_path = db.Column(db.String(500), nullable=False)
     file_size = db.Column(db.Integer, nullable=False)
+    cohort_id = db.Column(db.Integer, db.ForeignKey('cohorts.id'), nullable=True, index=True)
     notes = db.Column(db.String(255), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+    cohort = db.relationship('Cohort', backref='timesheet_templates')
     creator = db.relationship('User', backref='uploaded_timesheet_templates', foreign_keys=[created_by])
 
     def __repr__(self):

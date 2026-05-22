@@ -36,10 +36,19 @@
 <div class="card mb-3">
     <div class="card-header bg-light"><strong>Upload Monthly Timesheet Template</strong></div>
     <div class="card-body">
-        <p class="text-muted mb-3">Interns and host companies will download the active template from their submit pages.</p>
+        <p class="text-muted mb-3">Upload templates per cohort. Interns and host companies will download the template for the selected cohort.</p>
         <form method="POST" enctype="multipart/form-data" class="row g-2">
             <input type="hidden" name="action" value="upload">
-            <div class="col-md-6">
+            <div class="col-md-3">
+                <label class="form-label">Cohort *</label>
+                <select class="form-select" name="cohort_id" required>
+                    <option value="">-- Select Cohort --</option>
+                    {% for cohort in cohorts %}
+                    <option value="{{ cohort.id }}">{{ cohort.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
                 <label class="form-label">Template File *</label>
                 <input type="file" class="form-control" name="template_file" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
             </div>
@@ -47,7 +56,7 @@
                 <label class="form-label">Notes (Optional)</label>
                 <input type="text" class="form-control" name="notes" placeholder="e.g. May 2026 official template">
             </div>
-            <div class="col-md-2 d-flex align-items-end">
+            <div class="col-md-1 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-upload"></i> Upload
                 </button>
@@ -59,9 +68,7 @@
 <div class="card">
     <div class="card-header bg-light d-flex justify-content-between align-items-center">
         <strong>Template History</strong>
-        {% if active_template %}
-        <span class="badge bg-success">Active: {{ active_template.original_filename }}</span>
-        {% endif %}
+        <span class="badge bg-info">Grouped by cohort</span>
     </div>
     <div class="card-body p-0">
         {% if templates %}
@@ -69,6 +76,7 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
+                        <th>Cohort</th>
                         <th>Filename</th>
                         <th>Notes</th>
                         <th>Uploaded By</th>
@@ -80,6 +88,7 @@
                 <tbody>
                     {% for template in templates %}
                     <tr>
+                        <td>{{ template.cohort.name if template.cohort else '-' }}</td>
                         <td>{{ template.original_filename }}</td>
                         <td>{{ template.notes or '-' }}</td>
                         <td>{{ template.creator.name if template.creator else '-' }}</td>

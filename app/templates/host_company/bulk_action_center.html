@@ -29,7 +29,7 @@
                 <button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Load</button>
             </div>
             <div class="col-md-3 text-md-end">
-                <a href="{{ url_for('main.download_timesheet_template') }}" class="btn btn-outline-info"><i class="bi bi-file-earmark-arrow-down"></i> Download Template</a>
+                <a href="{{ url_for('main.download_timesheet_template', cohort_id=selected_cohort_id) if selected_cohort_id else '#' }}" class="btn btn-outline-info {% if not selected_cohort_id %}disabled{% endif %}"><i class="bi bi-file-earmark-arrow-down"></i> Download Template</a>
             </div>
         </form>
     </div>

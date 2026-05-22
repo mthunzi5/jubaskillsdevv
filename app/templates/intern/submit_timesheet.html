@@ -51,14 +51,72 @@
                         <button type="submit" class="btn btn-primary" data-bs-toggle="tooltip" title="Upload your completed timesheet (PDF only, max 16MB)">
                             <i class="bi bi-upload"></i> Submit Timesheet
                         </button>
-                        <a href="{{ url_for('main.download_timesheet_template') }}" class="btn btn-outline-info" data-bs-toggle="tooltip" title="Download the current official monthly timesheet template">
+                        <a href="{{ url_for('main.download_timesheet_template', cohort_id=intern_cohort_id) if intern_cohort_id else '#' }}" class="btn btn-outline-info {% if not intern_cohort_id %}disabled{% endif %}" data-bs-toggle="tooltip" title="Download your cohort's official monthly timesheet template">
                             <i class="bi bi-file-earmark-arrow-down"></i> Download Template
                         </a>
                         <a href="{{ url_for('intern.timesheets') }}" class="btn btn-secondary">Cancel</a>
                     </div>
+                    {% if not intern_cohort_id %}
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> You are not linked to a cohort yet, so no template can be downloaded.
+                    </div>
+                    {% endif %}
                 </form>
             </div>
         </div>
+
+        {% if intern_cohort_id %}
+        <div class="card mt-3">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <strong>Your Cohort Templates</strong>
+                <span class="badge bg-secondary">{{ cohort_templates|length }} file(s)</span>
+            </div>
+            <div class="card-body p-0">
+                {% if cohort_templates %}
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Filename</th>
+                                <th>Notes</th>
+                                <th>Uploaded At</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for template in cohort_templates %}
+                            <tr>
+                                <td>{{ template.original_filename }}</td>
+                                <td>{{ template.notes or '-' }}</td>
+                                <td>{{ template.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if template.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if template.is_active %}
+                                    <a href="{{ url_for('main.download_timesheet_template', cohort_id=intern_cohort_id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-download"></i> Download
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted small">Only active template is downloadable</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-3 text-muted">No templates uploaded for your cohort yet.</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
     
     <div class="col-12 col-lg-4">

@@ -823,7 +823,7 @@ def send_induction_reminders():
 
 @bp.route('/induction/<int:submission_id>/unlock', methods=['POST'])
 @login_required
-@admin_required
+@staff_required
 def unlock_induction_submission(submission_id):
     """Admin override to unlock a completed induction submission for further edits."""
     submission = InductionSubmission.query.get_or_404(submission_id)
@@ -843,3 +843,65 @@ def unlock_induction_submission(submission_id):
     
     flash(f'Unlocked induction submission for {submission.intern.name}.', 'success')
     return redirect(url_for('staff.induction_documents'))
+
+
+@bp.route('/induction/<int:submission_id>/lock', methods=['POST'])
+@login_required
+@staff_required
+def lock_induction_submission(submission_id):
+    """Allow staff/admin to lock an induction submission to prevent edits."""
+    submission = InductionSubmission.query.get_or_404(submission_id)
+    submission.is_locked = True
+    submission.locked_at = datetime.utcnow()
+    db.session.commit()
+
+    Notification.create_notification(
+        user_id=submission.intern_id,
+        title='Induction Submission Locked',
+        message='Your induction submission has been locked. Contact staff if updates are needed.',
+        notification_type='induction_locked',
+        related_type='induction',
+        related_id=submission.id,
+    )
+
+    flash(f'Locked induction submission for {submission.intern.name}.', 'success')
+    return redirect(url_for('staff.induction_documents'))
+
+
+@bp.route('/induction/lock-state/bulk', methods=['POST'])
+@login_required
+@staff_required
+def bulk_update_induction_lock_state():
+    """Bulk lock or unlock induction submissions, optionally filtered by cohort."""
+    action = (request.form.get('action') or '').strip().lower()
+    cohort_id = request.form.get('cohort_id', type=int)
+
+    if action not in {'lock', 'unlock'}:
+        flash('Invalid bulk action requested.', 'danger')
+        return redirect(url_for('staff.induction_documents', cohort_id=cohort_id) if cohort_id else url_for('staff.induction_documents'))
+
+    query = InductionSubmission.query
+    if cohort_id:
+        query = query.filter(InductionSubmission.cohort_id == cohort_id)
+
+    submissions = query.all()
+    if not submissions:
+        flash('No induction submissions found for the selected filter.', 'warning')
+        return redirect(url_for('staff.induction_documents', cohort_id=cohort_id) if cohort_id else url_for('staff.induction_documents'))
+
+    updated_count = 0
+    now = datetime.utcnow()
+    lock_value = action == 'lock'
+
+    for submission in submissions:
+        if submission.is_locked == lock_value:
+            continue
+        submission.is_locked = lock_value
+        submission.locked_at = now if lock_value else None
+        updated_count += 1
+
+    db.session.commit()
+
+    label = 'locked' if lock_value else 'unlocked'
+    flash(f'{updated_count} submission(s) {label}.', 'success')
+    return redirect(url_for('staff.induction_documents', cohort_id=cohort_id) if cohort_id else url_for('staff.induction_documents'))

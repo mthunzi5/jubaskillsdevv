@@ -52,7 +52,7 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-upload"></i> Submit Timesheets
                 </button>
-                <a href="{{ url_for('main.download_timesheet_template') }}" class="btn btn-outline-info">
+                <a href="#" id="downloadTemplateBtn" class="btn btn-outline-info disabled">
                     <i class="bi bi-file-earmark-arrow-down"></i> Download Template
                 </a>
                 <a href="{{ url_for('host_company.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
@@ -141,6 +141,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     document.getElementById('monthSelect').value = `${year}-${month}`;
+
+    const cohortSelect = document.getElementById('cohortSelect');
+    const templateBtn = document.getElementById('downloadTemplateBtn');
+
+    function updateTemplateLink() {
+        const cohortId = cohortSelect.value;
+        if (!cohortId) {
+            templateBtn.href = '#';
+            templateBtn.classList.add('disabled');
+            return;
+        }
+        templateBtn.href = `{{ url_for('main.download_timesheet_template') }}?cohort_id=${cohortId}`;
+        templateBtn.classList.remove('disabled');
+    }
+
+    cohortSelect.addEventListener('change', updateTemplateLink);
+    updateTemplateLink();
 });
 </script>
 

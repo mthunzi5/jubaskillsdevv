@@ -681,7 +681,7 @@ def induction_audit_logs():
 @login_required
 @admin_required
 def manage_timesheet_template():
-    """Upload and manage active timesheet template file."""
+    """Upload and manage active timesheet templates per cohort."""
     if request.method == 'POST':
         action = (request.form.get('action') or 'upload').strip()
 
@@ -703,14 +703,24 @@ def manage_timesheet_template():
         if action == 'activate':
             template_id = request.form.get('template_id', type=int)
             template = TimesheetTemplate.query.get_or_404(template_id)
-            TimesheetTemplate.query.update({'is_active': False})
+            TimesheetTemplate.query.filter_by(cohort_id=template.cohort_id).update({'is_active': False})
             template.is_active = True
             db.session.commit()
             flash('Timesheet template activated.', 'success')
             return redirect(url_for('admin.manage_timesheet_template'))
 
+        cohort_id = request.form.get('cohort_id', type=int)
         file = request.files.get('template_file')
         notes = (request.form.get('notes') or '').strip() or None
+        if not cohort_id:
+            flash('Please select a cohort for this template.', 'danger')
+            return redirect(url_for('admin.manage_timesheet_template'))
+
+        cohort = Cohort.query.get(cohort_id)
+        if not cohort:
+            flash('Selected cohort was not found.', 'danger')
+            return redirect(url_for('admin.manage_timesheet_template'))
+
         if not file or file.filename == '':
             flash('Please choose a template file to upload.', 'danger')
             return redirect(url_for('admin.manage_timesheet_template'))
@@ -726,32 +736,33 @@ def manage_timesheet_template():
         os.makedirs(upload_dir, exist_ok=True)
 
         timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-        saved_name = f'timesheet_template_{timestamp}{ext}'
+        saved_name = f'timesheet_template_cohort_{cohort_id}_{timestamp}{ext}'
         save_path = os.path.join(upload_dir, saved_name)
         file.save(save_path)
 
-        TimesheetTemplate.query.update({'is_active': False})
+        TimesheetTemplate.query.filter_by(cohort_id=cohort_id).update({'is_active': False})
         template = TimesheetTemplate(
             filename=saved_name,
             original_filename=original_filename,
             file_path=save_path,
             file_size=os.path.getsize(save_path),
+            cohort_id=cohort_id,
             notes=notes,
             is_active=True,
             created_by=current_user.id,
         )
         db.session.add(template)
         db.session.commit()
-        flash('Timesheet template uploaded and activated.', 'success')
+        flash(f'Timesheet template uploaded and activated for {cohort.name}.', 'success')
         return redirect(url_for('admin.manage_timesheet_template'))
 
     templates = TimesheetTemplate.query.order_by(TimesheetTemplate.created_at.desc()).all()
-    active_template = next((t for t in templates if t.is_active), None)
+    cohorts = Cohort.query.filter_by(is_active=True).order_by(Cohort.name.asc()).all()
     policy_settings = TimesheetPolicySettings.get_settings()
     return render_template(
         'admin/timesheet_template.html',
         templates=templates,
-        active_template=active_template,
+        cohorts=cohorts,
         policy_settings=policy_settings,
     )
 

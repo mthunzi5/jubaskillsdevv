@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
-from app.models.timesheet import Timesheet
+from app.models.timesheet import Timesheet, TimesheetTemplate
 from app.models.timesheet import TimesheetPolicySettings
 from app.models.induction import InductionSubmission, InductionPortalSettings, INDUCTION_DOC_FIELDS
 from app.models.intern_management import CohortMember, InternPlacement, Cohort
@@ -349,10 +349,38 @@ def submit_timesheet():
         is_deleted=False,
     ).order_by(Timesheet.submission_date.desc()).first()
 
+    active_placement = (
+        InternPlacement.query
+        .filter_by(intern_id=current_user.id, is_active=True)
+        .order_by(InternPlacement.assigned_at.desc())
+        .first()
+    )
+    intern_cohort_id = active_placement.cohort_id if active_placement and active_placement.cohort_id else None
+
+    if not intern_cohort_id:
+        latest_membership = (
+            CohortMember.query
+            .filter_by(intern_id=current_user.id)
+            .order_by(CohortMember.created_at.desc())
+            .first()
+        )
+        intern_cohort_id = latest_membership.cohort_id if latest_membership else None
+
+    cohort_templates = []
+    if intern_cohort_id:
+        cohort_templates = (
+            TimesheetTemplate.query
+            .filter_by(cohort_id=intern_cohort_id)
+            .order_by(TimesheetTemplate.is_active.desc(), TimesheetTemplate.created_at.desc())
+            .all()
+        )
+
     return render_template(
         'intern/submit_timesheet.html',
         current_month=current_month,
         existing_current_month=existing_current_month,
+        intern_cohort_id=intern_cohort_id,
+        cohort_templates=cohort_templates,
     )
 
 
