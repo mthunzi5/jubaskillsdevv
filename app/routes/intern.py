@@ -85,6 +85,12 @@ def induction():
         cohort = cohort_member.cohort
 
     if request.method == 'POST':
+        allowed_extensions = current_app.config.get('INDUCTION_ALLOWED_EXTENSIONS', {'pdf', 'png', 'jpg', 'jpeg'})
+        upload_dir = current_app.config.get(
+            'INDUCTION_UPLOAD_FOLDER',
+            os.path.join(current_app.root_path, '..', 'uploads', 'induction')
+        )
+
         # Check if already locked (unless admin override)
         if submission and submission.is_locked:
             flash('Your submission is locked. No further uploads allowed.', 'warning')
@@ -103,7 +109,7 @@ def induction():
             if not file or file.filename == '':
                 continue
 
-            if not allowed_file(file.filename, current_app.config['INDUCTION_ALLOWED_EXTENSIONS']):
+            if not allowed_file(file.filename, allowed_extensions):
                 flash(f"{meta['label']}: invalid file type. Allowed: PDF, PNG, JPG, JPEG.", 'danger')
                 return redirect(url_for('intern.induction'))
 
@@ -112,7 +118,6 @@ def induction():
             timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
             saved_name = f"induction_{current_user.id}_{doc_key}_{timestamp}{extension}"
 
-            upload_dir = current_app.config['INDUCTION_UPLOAD_FOLDER']
             os.makedirs(upload_dir, exist_ok=True)
             save_path = os.path.join(upload_dir, saved_name)
             file.save(save_path)
