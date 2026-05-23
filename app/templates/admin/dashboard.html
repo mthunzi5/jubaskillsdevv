@@ -181,20 +181,21 @@
                 <h5 class="mb-0">Quick Actions</h5>
             </div>
             <div class="card-body">
+                {% set intern_management_url = '/intern-management/' %}
                 <div class="d-grid gap-2">
                     <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
                         <i class="bi bi-person-plus"></i> Add New User
                     </a>
-                    <a href="{{ url_for('intern_management.dashboard') }}" class="btn btn-primary">
+                    <a href="{{ intern_management_url }}" class="btn btn-primary">
                         <i class="bi bi-buildings"></i> Add Host Company
                     </a>
-                    <a href="{{ url_for('intern_management.dashboard') }}#cohorts" class="btn btn-outline-primary">
+                    <a href="{{ intern_management_url }}#cohorts" class="btn btn-outline-primary">
                         <i class="bi bi-collection"></i> Add Cohort
                     </a>
                     <a href="{{ url_for('admin.users', role='intern') }}" class="btn btn-outline-primary">
                         <i class="bi bi-person-gear"></i> Edit Intern Profiles
                     </a>
-                    <a href="{{ url_for('intern_management.dashboard') }}" class="btn btn-outline-primary">
+                    <a href="{{ intern_management_url }}" class="btn btn-outline-primary">
                         <i class="bi bi-diagram-3"></i> Assign Interns to Cohorts and Hosts
                     </a>
                     <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">
