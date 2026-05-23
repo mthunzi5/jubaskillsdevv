@@ -37,9 +37,12 @@ bp = Blueprint('admin', __name__, url_prefix='/admin')
 @admin_required
 def dashboard():
     """Admin dashboard"""
-    # Trigger automatic timesheet completeness reminders for current month.
-    from app.routes.staff import _send_missing_timesheet_reminders
-    _send_missing_timesheet_reminders(datetime.utcnow().strftime('%Y-%m'))
+    # Trigger automatic timesheet completeness reminders for current month without breaking the page.
+    try:
+        from app.routes.staff import _send_missing_timesheet_reminders
+        _send_missing_timesheet_reminders(datetime.utcnow().strftime('%Y-%m'))
+    except Exception:
+        current_app.logger.exception('Admin dashboard reminder generation failed')
 
     total_users = User.query.filter_by(is_deleted=False).count()
     total_admins = User.query.filter_by(role='admin', is_deleted=False).count()
@@ -60,11 +63,19 @@ def dashboard():
     tvet_interns = User.query.filter_by(role='intern', intern_type='tvet', is_deleted=False).count()
     mixed_interns = User.query.filter_by(role='intern', intern_type='mixed', is_deleted=False).count()
 
-    total_job_posts = JobPost.query.filter_by(is_archived=False).count()
-    open_job_posts = JobPost.query.filter_by(is_open=True, is_archived=False).count()
-    total_job_applications = JobApplication.query.filter_by(is_deleted=False).count()
-    submitted_applications = JobApplication.query.filter_by(status='submitted', is_deleted=False).count()
-    under_review_applications = JobApplication.query.filter_by(status='under_review', is_deleted=False).count()
+    total_job_posts = 0
+    open_job_posts = 0
+    total_job_applications = 0
+    submitted_applications = 0
+    under_review_applications = 0
+    try:
+        total_job_posts = JobPost.query.filter_by(is_archived=False).count()
+        open_job_posts = JobPost.query.filter_by(is_open=True, is_archived=False).count()
+        total_job_applications = JobApplication.query.filter_by(is_deleted=False).count()
+        submitted_applications = JobApplication.query.filter_by(status='submitted', is_deleted=False).count()
+        under_review_applications = JobApplication.query.filter_by(status='under_review', is_deleted=False).count()
+    except Exception:
+        current_app.logger.exception('Admin dashboard job application stats failed')
     
     recent_deletions = DeletionHistory.query.order_by(DeletionHistory.deletion_date.desc()).limit(5).all()
     
