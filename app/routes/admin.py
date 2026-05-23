@@ -743,7 +743,10 @@ def manage_timesheet_template():
             flash('Unsupported file type. Use PDF, DOC, DOCX, XLS, or XLSX.', 'danger')
             return redirect(url_for('admin.manage_timesheet_template'))
 
-        upload_dir = current_app.config['TIMESHEET_TEMPLATE_UPLOAD_FOLDER']
+        upload_dir = current_app.config.get(
+            'TIMESHEET_TEMPLATE_UPLOAD_FOLDER',
+            os.path.join(current_app.root_path, '..', 'uploads', 'timesheet_templates')
+        )
         os.makedirs(upload_dir, exist_ok=True)
 
         timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
