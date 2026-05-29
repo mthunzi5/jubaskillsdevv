@@ -280,7 +280,8 @@ def submit_timesheet():
             flash('No file selected.', 'danger')
             return redirect(request.url)
         
-        if not allowed_file(file.filename, current_app.config['ALLOWED_EXTENSIONS']):
+        allowed_exts = current_app.config.get('ALLOWED_EXTENSIONS', {'pdf'})
+        if not allowed_file(file.filename, allowed_exts):
             flash('Only PDF files are allowed.', 'danger')
             return redirect(request.url)
         
@@ -289,8 +290,19 @@ def submit_timesheet():
         unique_filename = generate_filename(filename, f"intern_{current_user.id}_")
         
         # Save file
-        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
-        file.save(file_path)
+        upload_folder = current_app.config.get(
+            'UPLOAD_FOLDER',
+            os.path.join(current_app.root_path, '..', 'uploads', 'timesheets')
+        )
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        file_path = os.path.join(upload_folder, unique_filename)
+        try:
+            file.save(file_path)
+        except Exception as exc:
+            current_app.logger.exception('Timesheet file save failed')
+            flash('Unable to save the timesheet file. Please try again or contact support.', 'danger')
+            return redirect(request.url)
         
         # Get file size
         file_size = os.path.getsize(file_path)
@@ -333,7 +345,13 @@ def submit_timesheet():
         )
         
         db.session.add(timesheet)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.exception('Timesheet database save failed')
+            flash('Unable to save your timesheet. Please try again later or contact support.', 'danger')
+            return redirect(request.url)
 
         if host_company_id and active_placement and active_placement.host_company and active_placement.host_company.login_user_id:
             Notification.create_notification(
