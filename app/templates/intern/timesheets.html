@@ -46,6 +46,12 @@
                             <a href="/intern/timesheets/{{ timesheet.id }}/download" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-download"></i> Download
                             </a>
+                            <form id="delete-form-{{ timesheet.id }}" method="POST" action="{{ url_for('intern.delete_timesheet', timesheet_id=timesheet.id) }}" class="d-inline">
+                                <input type="hidden" name="reason" id="delete-reason-{{ timesheet.id }}">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="submitTimesheetDelete({{ timesheet.id }})">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}
@@ -59,4 +65,14 @@
         {% endif %}
     </div>
 </div>
+<script>
+function submitTimesheetDelete(timesheetId) {
+    const reason = prompt('Please provide a reason for deleting this timesheet:');
+    if (!reason) {
+        return false;
+    }
+    document.getElementById(`delete-reason-${timesheetId}`).value = reason;
+    document.getElementById(`delete-form-${timesheetId}`).submit();
+}
+</script>
 {% endblock %}
