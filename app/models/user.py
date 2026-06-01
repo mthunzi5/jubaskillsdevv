@@ -31,9 +31,11 @@ class User(UserMixin, db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
-    # Soft delete
+    # Soft delete / termination
     is_deleted = db.Column(db.Boolean, default=False)
     deleted_at = db.Column(db.DateTime, nullable=True)
+    is_terminated = db.Column(db.Boolean, default=False)
+    termination_date = db.Column(db.DateTime, nullable=True)
     
     # Password reset
     reset_token = db.Column(db.String(100), unique=True, nullable=True)
@@ -45,6 +47,10 @@ class User(UserMixin, db.Model):
     
     # Relationships
     timesheets = db.relationship('Timesheet', backref='intern', lazy='dynamic', foreign_keys='Timesheet.intern_id')
+
+    @staticmethod
+    def active_interns():
+        return User.query.filter_by(role='intern', is_deleted=False, is_terminated=False)
     
     def set_password(self, password):
         """Hash and set password"""
@@ -139,7 +145,9 @@ class User(UserMixin, db.Model):
             'intern_type': self.intern_type,
             'is_profile_complete': self.is_profile_complete,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'is_deleted': self.is_deleted
+            'is_deleted': self.is_deleted,
+            'is_terminated': self.is_terminated,
+            'termination_date': self.termination_date.isoformat() if self.termination_date else None,
         }
     
     def __repr__(self):
@@ -153,7 +161,7 @@ def load_user(user_id):
     except (TypeError, ValueError):
         return None
 
-    if not user or user.is_deleted:
+    if not user or user.is_deleted or user.is_terminated:
         return None
 
     return user

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Cohort Certificates - {{ cohort.name }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lms.certificates_list') }}">Certificates</a></li>
+        <li class="breadcrumb-item active">{{ cohort.name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-award"></i> Cohort Certificates</h2>
+            <p class="text-muted">Review cohort completion status, certificate eligibility, and issue certificates for {{ cohort.name }}.</p>
+        </div>
+        <div class="col-md-4 text-md-end align-self-center">
+            <a href="{{ url_for('lms.progress_dashboard', cohort_id=cohort.id) }}" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="bi bi-graph-up"></i> View Progress
+            </a>
+            <form method="POST" action="{{ url_for('lms.generate_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline me-2">
+                <button type="submit" class="btn btn-success btn-sm">
+                    <i class="bi bi-award"></i> Generate All Eligible
+                </button>
+            </form>
+            <form method="POST" action="{{ url_for('lms.award_and_download_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-download"></i> Award All & Download ZIP
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Learners</h5>
+                    <p class="display-6 mb-0">{{ cohort_summary.total_members }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Eligible</h5>
+                    <p class="display-6 mb-0">{{ cohort_summary.eligible }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Issued</h5>
+                    <p class="display-6 mb-0">{{ cohort_summary.issued }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Terminated</h5>
+                    <p class="display-6 mb-0">{{ cohort_summary.terminated }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Intern</th>
+                            <th>ID Number</th>
+                            <th>Completion %</th>
+                            <th>Hours</th>
+                            <th>Grade</th>
+                            <th>Status</th>
+                            <th>Certificate</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in intern_rows %}
+                        <tr>
+                            <td>{{ row.intern.name or 'Unknown' }} {{ row.intern.surname or '' }}</td>
+                            <td>{{ row.intern.id_number or 'N/A' }}</td>
+                            <td>{{ "%.1f"|format(row.progress.completion_percentage) }}%</td>
+                            <td>{{ "%.0f"|format(row.progress.total_hours_logged) }}</td>
+                            <td>{{ "%.1f"|format(row.progress.average_grade) }}%</td>
+                            <td>
+                                {% if row.is_terminated %}
+                                <span class="badge bg-danger">Terminated</span>
+                                {% elif row.certificate %}
+                                <span class="badge bg-success">Issued</span>
+                                {% elif row.progress.is_eligible_for_certificate %}
+                                <span class="badge bg-info text-dark">Eligible</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Not Eligible</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.certificate %}
+                                <a href="{{ url_for('lms.view_certificate', cert_id=row.certificate.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if not row.is_terminated and not row.certificate and row.progress.is_eligible_for_certificate %}
+                                <form method="POST" action="{{ url_for('lms.generate_certificate', intern_id=row.intern.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success">Issue</button>
+                                </form>
+                                {% endif %}
+                                {% if not row.is_terminated and not row.certificate %}
+                                <a href="{{ url_for('lms.award_certificate_direct', intern_id=row.intern.id) }}" class="btn btn-sm btn-outline-warning">Award</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

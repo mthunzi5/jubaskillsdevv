@@ -81,7 +81,12 @@
                     <tr>
                         <td>{{ user.email or user.id_number }}</td>
                         <td>{{ user.name }} {{ user.surname }}</td>
-                        <td><span class="badge bg-{{ 'primary' if user.role == 'admin' else 'info' if user.role == 'staff' else 'success' }}">{{ user.role|title }}</span></td>
+                        <td>
+                            <span class="badge bg-{{ 'primary' if user.role == 'admin' else 'info' if user.role == 'staff' else 'success' }}">{{ user.role|title }}</span>
+                            {% if user.is_terminated %}
+                            <span class="badge bg-danger ms-1">Terminated</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if user.role == 'intern' %}
                             <span class="badge bg-secondary">{{ (user.intern_type or 'mixed')|upper }}</span>
@@ -120,6 +125,19 @@
                             <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="collapse" data-bs-target="#assignmentForm{{ user.id }}" aria-expanded="false">
                                 <i class="bi bi-diagram-3"></i>
                             </button>
+                            {% if user.is_terminated %}
+                            <form method="POST" action="{{ url_for('admin.restore_user', user_id=user.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-warning" title="Restore terminated intern">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('admin.terminate_user', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Terminate this intern? This will block LMS access.');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Terminate intern">
+                                    <i class="bi bi-person-dash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
                             {% endif %}
                             {% if user.id != current_user.id %}
                             <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">

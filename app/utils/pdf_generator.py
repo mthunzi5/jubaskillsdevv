@@ -193,3 +193,90 @@ def download_submission_receipt(submission_id):
     # Return the most recent one
     receipts.sort(reverse=True)
     return os.path.join(receipts_dir, receipts[0])
+
+
+def generate_certificate_pdf(certificate):
+    """Generate a simple certificate PDF for a Certificate record.
+    Returns the file path of the generated PDF.
+    """
+    # Certificates directory
+    certs_dir = os.path.join('app', 'static', 'certificates')
+    os.makedirs(certs_dir, exist_ok=True)
+
+    # Filename
+    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    filename = f"certificate_{certificate.id}_{timestamp}.pdf"
+    filepath = os.path.join(certs_dir, filename)
+
+    # Create PDF
+    doc = SimpleDocTemplate(filepath, pagesize=A4)
+    story = []
+    styles = getSampleStyleSheet()
+
+    # Header logos row
+    logos_row = []
+    try:
+        logo_main = Image(os.path.join('app', 'static', 'images', 'logo-main.png'))
+        logo_main.drawHeight = 0.8 * inch
+        logo_main.drawWidth = 2.5 * inch
+        logos_row.append(logo_main)
+    except Exception:
+        logos_row.append(Spacer(1, 0.8 * inch))
+
+    try:
+        logo_partner = Image(os.path.join('app', 'static', 'images', 'logo-footer.png'))
+        logo_partner.drawHeight = 0.8 * inch
+        logo_partner.drawWidth = 2.5 * inch
+        logos_row.append(logo_partner)
+    except Exception:
+        logos_row.append(Spacer(1, 0.8 * inch))
+
+    # Use a simple table to place logos left and right
+    tbl = Table([logos_row], colWidths=[3*inch, 3*inch])
+    tbl.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('VALIGN', (0,0), (-1,-1), 'MIDDLE')]))
+    story.append(tbl)
+    story.append(Spacer(1, 0.2 * inch))
+
+    # Title
+    title_style = ParagraphStyle('CertTitle', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=24)
+    story.append(Paragraph('Certificate of Completion', title_style))
+    story.append(Spacer(1, 0.2 * inch))
+
+    # Recipient
+    name_style = ParagraphStyle('Name', parent=styles['Heading2'], alignment=TA_CENTER, fontSize=20)
+    story.append(Paragraph(certificate.intern_name, name_style))
+    story.append(Spacer(1, 0.1 * inch))
+
+    # Program and metrics
+    normal_center = ParagraphStyle('NormalCenter', parent=styles['Normal'], alignment=TA_CENTER)
+    story.append(Paragraph(f"Program: {certificate.program_name}", normal_center))
+    story.append(Spacer(1, 0.05 * inch))
+    story.append(Paragraph(f"Certificate Number: {certificate.certificate_number}", normal_center))
+    story.append(Spacer(1, 0.1 * inch))
+
+    metrics = [
+        ['Final Grade', f"{certificate.final_grade or 0:.1f}%"],
+        ['Tasks Completed', str(certificate.tasks_completed or 0)],
+        ['Training Hours', f"{int(certificate.total_hours or 0)}"]
+    ]
+    metrics_tbl = Table(metrics, colWidths=[2.5*inch, 2.5*inch])
+    metrics_tbl.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN',(0,0),(-1,-1),'CENTER'),
+        ('FONTSIZE',(0,0),(-1,-1),12),
+        ('BOTTOMPADDING',(0,0),(-1,-1),6),
+    ]))
+    story.append(metrics_tbl)
+    story.append(Spacer(1, 0.5 * inch))
+
+    # Footer / signature placeholder
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], alignment=TA_LEFT, fontSize=10, textColor=colors.grey)
+    approver = certificate.approver.name + ' ' + certificate.approver.surname if certificate.approver else 'Administrator'
+    story.append(Paragraph(f"Approved By: {approver}", footer_style))
+    story.append(Spacer(1, 0.1 * inch))
+    story.append(Paragraph(f"Issued On: {certificate.issue_date.strftime('%d %B %Y')}", footer_style))
+
+    # Build PDF
+    doc.build(story)
+
+    return filepath

@@ -378,6 +378,53 @@ def update_intern_assignments(user_id):
     flash('Intern assignment updated successfully.', 'success')
     return redirect(url_for('admin.users', role='intern'))
 
+@bp.route('/users/<int:user_id>/terminate', methods=['POST'])
+@login_required
+@admin_required
+def terminate_user(user_id):
+    """Terminate an intern and block LMS access without deleting the account"""
+    user = User.query.get_or_404(user_id)
+    if user.role != 'intern':
+        flash('Only intern accounts can be terminated.', 'danger')
+        return redirect(url_for('admin.users', role='intern'))
+
+    if user.is_terminated:
+        flash('Intern is already terminated.', 'info')
+        return redirect(url_for('admin.users', role='intern'))
+
+    user.is_terminated = True
+    user.termination_date = datetime.utcnow()
+
+    for placement in InternPlacement.query.filter_by(intern_id=user.id, is_active=True).all():
+        placement.is_active = False
+        placement.ended_at = datetime.utcnow()
+
+    db.session.commit()
+
+    flash('Intern has been terminated and access is blocked.', 'success')
+    return redirect(url_for('admin.users', role='intern'))
+
+@bp.route('/users/<int:user_id>/restore', methods=['POST'])
+@login_required
+@admin_required
+def restore_user(user_id):
+    """Restore a terminated intern account"""
+    user = User.query.get_or_404(user_id)
+    if user.role != 'intern':
+        flash('Only intern accounts can be restored.', 'danger')
+        return redirect(url_for('admin.users', role='intern'))
+
+    if not user.is_terminated:
+        flash('Intern is not terminated.', 'info')
+        return redirect(url_for('admin.users', role='intern'))
+
+    user.is_terminated = False
+    user.termination_date = None
+    db.session.commit()
+
+    flash('Intern account has been restored.', 'success')
+    return redirect(url_for('admin.users', role='intern'))
+
 @bp.route('/users/create', methods=['GET', 'POST'])
 @login_required
 @admin_required

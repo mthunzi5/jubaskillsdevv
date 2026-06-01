@@ -44,7 +44,7 @@ def dashboard():
     group_map = ensure_intern_type_groups()
     db.session.commit()
 
-    intern_query = User.query.filter_by(role='intern', is_deleted=False)
+    intern_query = User.query.filter_by(role='intern', is_deleted=False, is_terminated=False)
     if intern_type in INTERN_TYPE_CHOICES:
         intern_query = intern_query.filter_by(intern_type=intern_type)
     interns = intern_query.order_by(User.created_at.desc()).all()
@@ -67,7 +67,7 @@ def dashboard():
     all_memberships = (
         CohortMember.query
         .join(User, CohortMember.intern_id == User.id)
-        .filter(User.is_deleted == False)
+        .filter(User.is_deleted == False, User.is_terminated == False)
         .order_by(CohortMember.created_at.desc())
         .all()
     )

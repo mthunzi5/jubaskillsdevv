@@ -2,10 +2,14 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
-from app.models import TrainingMaterial, Task, Progress, Certificate, Evaluation, User, TaskDeletionRequest, TaskDeletionHistory, TaskV2, TaskAssignment, QuizQuestion, QuizAnswer, MaterialDeletionRequest, MaterialDeletionHistory
+from app.models import Cohort, CohortMember, TrainingMaterial, Task, Progress, Certificate, Evaluation, User, TaskDeletionRequest, TaskDeletionHistory, TaskV2, TaskAssignment, QuizQuestion, QuizAnswer, MaterialDeletionRequest, MaterialDeletionHistory
 from app.utils.decorators import admin_required, staff_required
 from datetime import datetime
 import os
+import io
+import zipfile
+
+from app.utils.pdf_generator import generate_certificate_pdf
 
 lms_bp = Blueprint('lms', __name__, url_prefix='/lms')
 
@@ -411,8 +415,16 @@ def progress_dashboard():
         
         return render_template('lms/intern_progress.html', progress=progress, intern=current_user)
     else:
-        # Staff view - show all interns
-        interns = User.query.filter_by(role='intern', is_deleted=False).all()
+        # Staff view - show all interns or a specific cohort
+        selected_cohort_id = request.args.get('cohort_id', type=int)
+        cohorts = Cohort.query.filter_by(is_active=True).order_by(Cohort.name).all()
+
+        interns_query = User.query.filter_by(role='intern', is_deleted=False, is_terminated=False)
+        if selected_cohort_id:
+            interns_query = interns_query.join(CohortMember, CohortMember.intern_id == User.id)
+            interns_query = interns_query.filter(CohortMember.cohort_id == selected_cohort_id)
+
+        interns = interns_query.order_by(User.surname, User.name).all()
         progress_data = []
         
         for intern in interns:
@@ -429,7 +441,7 @@ def progress_dashboard():
         
         db.session.commit()
         
-        return render_template('lms/progress_dashboard.html', progress_data=progress_data)
+        return render_template('lms/progress_dashboard.html', progress_data=progress_data, cohorts=cohorts, selected_cohort_id=selected_cohort_id)
 
 # ============= CERTIFICATES =============
 
@@ -444,6 +456,215 @@ def certificates_list():
     
     return render_template('lms/certificates_list.html', certificates=certificates)
 
+@lms_bp.route('/certificates/cohort/<int:cohort_id>')
+@login_required
+@staff_required
+def cohort_certificates(cohort_id):
+    """View cohort certificate status and intern completion progress"""
+    cohort = Cohort.query.get_or_404(cohort_id)
+    memberships = (
+        CohortMember.query
+        .join(User, CohortMember.intern_id == User.id)
+        .filter(CohortMember.cohort_id == cohort_id)
+        .order_by(User.surname, User.name)
+        .all()
+    )
+
+    intern_rows = []
+    for membership in memberships:
+        intern = membership.intern
+        progress = Progress.query.filter_by(intern_id=intern.id).first()
+        if not progress:
+            progress = Progress(intern_id=intern.id)
+            db.session.add(progress)
+        
+        progress.update_progress()
+        certificate = (
+            Certificate.query
+            .filter_by(intern_id=intern.id, is_active=True)
+            .order_by(Certificate.issue_date.desc())
+            .first()
+        )
+        intern_rows.append({
+            'intern': intern,
+            'is_terminated': intern.is_terminated,
+            'progress': progress,
+            'certificate': certificate,
+        })
+
+    db.session.commit()
+
+    cohort_summary = {
+        'total_members': len(intern_rows),
+        'terminated': sum(1 for row in intern_rows if row['is_terminated']),
+        'eligible': sum(1 for row in intern_rows if row['progress'].is_eligible_for_certificate and not row['is_terminated']),
+        'issued': sum(1 for row in intern_rows if row['certificate'] is not None),
+        'not_eligible': sum(1 for row in intern_rows if not row['progress'].is_eligible_for_certificate and not row['is_terminated']),
+    }
+
+    return render_template(
+        'lms/cohort_certificates.html',
+        cohort=cohort,
+        intern_rows=intern_rows,
+        cohort_summary=cohort_summary,
+    )
+
+@lms_bp.route('/certificates/cohort/<int:cohort_id>/generate', methods=['POST'])
+@login_required
+@staff_required
+def generate_cohort_certificates(cohort_id):
+    cohort = Cohort.query.get_or_404(cohort_id)
+    memberships = (
+        CohortMember.query
+        .join(User, CohortMember.intern_id == User.id)
+        .filter(CohortMember.cohort_id == cohort_id, User.is_deleted == False, User.is_terminated == False)
+        .order_by(User.surname, User.name)
+        .all()
+    )
+
+    generated = []
+    skipped = []
+    for membership in memberships:
+        intern = membership.intern
+        progress = Progress.query.filter_by(intern_id=intern.id).first()
+        if not progress:
+            progress = Progress(intern_id=intern.id)
+            db.session.add(progress)
+
+        progress.update_progress()
+        
+        if not progress.is_eligible_for_certificate:
+            skipped.append((intern, 'Not eligible'))
+            continue
+        if progress.certificate_issued:
+            skipped.append((intern, 'Already issued'))
+            continue
+
+        cert_number = Certificate.generate_certificate_number()
+        certificate = Certificate(
+            certificate_number=cert_number,
+            intern_id=intern.id,
+            intern_name=f"{intern.name} {intern.surname}",
+            total_hours=progress.total_hours_logged,
+            final_grade=progress.average_grade,
+            tasks_completed=progress.completed_tasks,
+            issued_by=current_user.id,
+        )
+        db.session.add(certificate)
+        progress.certificate_issued = True
+        generated.append((intern, certificate))
+
+    db.session.commit()
+
+    if generated:
+        flash(f'Generated {len(generated)} certificate(s) for cohort {cohort.name}.', 'success')
+    else:
+        if skipped:
+            flash('No certificates were generated. ' + ' '.join([f"{intern.name} {intern.surname}: {reason}." for intern, reason in skipped]), 'warning')
+        else:
+            flash('No eligible interns found for certificate generation.', 'warning')
+
+    return redirect(url_for('lms.cohort_certificates', cohort_id=cohort.id))
+
+
+@lms_bp.route('/certificates/cohort/<int:cohort_id>/award_and_download', methods=['POST'])
+@login_required
+@staff_required
+def award_and_download_cohort_certificates(cohort_id):
+    """Mark all cohort members as completed (tasks/hours/grade) and generate certificates,
+    then return a ZIP containing all generated PDFs. Skips terminated interns.
+    """
+    cohort = Cohort.query.get_or_404(cohort_id)
+    memberships = (
+        CohortMember.query
+        .join(User, CohortMember.intern_id == User.id)
+        .filter(CohortMember.cohort_id == cohort_id, User.is_deleted == False, User.is_terminated == False)
+        .order_by(User.surname, User.name)
+        .all()
+    )
+
+    generated_files = []
+    from datetime import datetime as _dt
+    for membership in memberships:
+        intern = membership.intern
+
+        # Ensure assignments exist and mark them completed with full grade
+        assignments = TaskAssignment.query.filter_by(intern_id=intern.id).all()
+        for a in assignments:
+            a.status = 'completed'
+            a.grade = 100.0
+            a.graded_by = current_user.id
+            a.graded_at = _dt.utcnow()
+            db.session.add(a)
+
+        # Update progress record or create one
+        progress = Progress.query.filter_by(intern_id=intern.id).first()
+        if not progress:
+            progress = Progress(intern_id=intern.id)
+            db.session.add(progress)
+
+        # Refresh counts from assignments
+        total_tasks = len(assignments)
+        completed_tasks = total_tasks
+        progress.total_tasks = total_tasks
+        progress.completed_tasks = completed_tasks
+        progress.average_grade = 100.0
+        # Set hours: preserve existing if higher, else set to 480 by default
+        progress.total_hours_logged = max(progress.total_hours_logged or 0, 480)
+        progress.completion_percentage = 100.0
+        progress.is_eligible_for_certificate = True
+        progress.certificate_issued = True
+        progress.last_updated = _dt.utcnow()
+        db.session.add(progress)
+
+        # Create certificate if not present
+        existing = Certificate.query.filter_by(intern_id=intern.id, is_active=True).order_by(Certificate.issue_date.desc()).first()
+        if existing:
+            # regenerate PDF for existing certificate
+            cert = existing
+        else:
+            cert_number = Certificate.generate_certificate_number()
+            cert = Certificate(
+                certificate_number=cert_number,
+                intern_id=intern.id,
+                intern_name=f"{intern.name} {intern.surname}",
+                total_hours=progress.total_hours_logged,
+                final_grade=progress.average_grade,
+                tasks_completed=progress.completed_tasks,
+                issued_by=current_user.id,
+                is_approved=True,
+                approved_by=current_user.id,
+                approved_at=_dt.utcnow(),
+            )
+            db.session.add(cert)
+
+        db.session.commit()
+
+        # Generate PDF and collect path
+        try:
+            pdf_path = generate_certificate_pdf(cert)
+            generated_files.append((pdf_path, f"{intern.name}_{intern.surname}_{cert.certificate_number}.pdf"))
+        except Exception:
+            # skip if PDF generation fails for an individual
+            continue
+
+    if not generated_files:
+        flash('No certificates were generated for download.', 'warning')
+        return redirect(url_for('lms.cohort_certificates', cohort_id=cohort.id))
+
+    # Create ZIP in-memory
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for path, arcname in generated_files:
+            try:
+                zf.write(path, arcname)
+            except Exception:
+                # ignore missing files
+                continue
+    memory_file.seek(0)
+
+    return send_file(memory_file, mimetype='application/zip', as_attachment=True, download_name=f"{cohort.name}_certificates.zip")
+
 @lms_bp.route('/certificates/generate/<int:intern_id>', methods=['POST'])
 @login_required
 @staff_required
@@ -452,6 +673,10 @@ def generate_certificate(intern_id):
     intern = User.query.get_or_404(intern_id)
     progress = Progress.query.filter_by(intern_id=intern_id).first()
     
+    if intern.is_terminated:
+        flash('Cannot generate certificate for a terminated learner.', 'danger')
+        return redirect(url_for('lms.progress_dashboard'))
+
     if not progress or not progress.is_eligible_for_certificate:
         flash('Intern is not eligible for certificate yet', 'warning')
         return redirect(url_for('lms.progress_dashboard'))
@@ -551,14 +776,18 @@ def reject_certificate(cert_id):
 @login_required
 def award_certificate_direct(intern_id):
     """Admin awards certificate directly without completion check"""
-    if current_user.role != 'admin':
-        flash('Only administrators can directly award certificates', 'danger')
+    if current_user.role not in ['admin', 'staff']:
+        flash('Only staff and administrators can directly award certificates', 'danger')
         return redirect(url_for('lms.progress_dashboard'))
     
     intern = User.query.get_or_404(intern_id)
     
     if intern.role != 'intern':
         flash('Can only award certificates to interns', 'warning')
+        return redirect(url_for('lms.progress_dashboard'))
+
+    if intern.is_terminated:
+        flash('Cannot award a certificate to a terminated learner.', 'danger')
         return redirect(url_for('lms.progress_dashboard'))
     
     if request.method == 'POST':

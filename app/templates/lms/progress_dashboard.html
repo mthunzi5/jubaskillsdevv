@@ -20,6 +20,31 @@
         </div>
     </div>
 
+    {% if cohorts is defined %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <form method="GET" class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <label class="form-label mb-0">Filter by cohort:</label>
+                </div>
+                <div class="col-auto">
+                    <select class="form-select form-select-sm" name="cohort_id" onchange="this.form.submit()">
+                        <option value="">All cohorts</option>
+                        {% for cohort in cohorts %}
+                        <option value="{{ cohort.id }}" {% if selected_cohort_id == cohort.id %}selected{% endif %}>{{ cohort.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if selected_cohort_id %}
+                <div class="col-auto">
+                    <a href="{{ url_for('lms.progress_dashboard') }}" class="btn btn-outline-secondary btn-sm">Clear filter</a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Progress Cards -->
     <div class="row">
         {% for item in progress_data %}
