@@ -154,6 +154,202 @@ def _send_missing_timesheet_reminders(month_value, only_cohort_id=None):
     return len(reminders_to_create)
 
 
+def _clear_induction_doc_fields(submission, doc_key):
+    meta = INDUCTION_DOC_FIELDS.get(doc_key)
+    if not submission or not meta:
+        return False
+
+    path_attr = meta['path_attr']
+    name_attr = meta['name_attr']
+    size_attr = meta['size_attr']
+    uploaded_attr = meta['uploaded_attr']
+
+    file_path = getattr(submission, path_attr)
+    if file_path:
+        try:
+            os.remove(os.path.abspath(file_path))
+        except OSError:
+            pass
+
+    setattr(submission, path_attr, None)
+    setattr(submission, name_attr, None)
+    setattr(submission, size_attr, None)
+    setattr(submission, uploaded_attr, None)
+    return True
+
+
+@bp.route('/induction/<int:submission_id>/<string:doc_key>/clear', methods=['POST'])
+@login_required
+@staff_required
+def clear_induction_document(submission_id, doc_key):
+    """Clear a single induction document field from a learner submission."""
+    if doc_key not in INDUCTION_DOC_FIELDS:
+        flash('Invalid induction document type.', 'danger')
+        return redirect(url_for('staff.induction_documents'))
+
+    submission = InductionSubmission.query.get_or_404(submission_id)
+    if not getattr(submission, INDUCTION_DOC_FIELDS[doc_key]['path_attr']):
+        flash('This document is already cleared.', 'warning')
+        return redirect(url_for('staff.induction_documents', cohort_id=request.form.get('cohort_id', type=int)))
+
+    _clear_induction_doc_fields(submission, doc_key)
+    db.session.commit()
+    flash(f'{INDUCTION_DOC_FIELDS[doc_key]["label"]} has been cleared for {submission.intern.name}.', 'success')
+    return redirect(url_for('staff.induction_documents', cohort_id=request.form.get('cohort_id', type=int)))
+
+
+@bp.route('/induction/clear-column/<string:doc_key>', methods=['POST'])
+@login_required
+@staff_required
+def clear_induction_column(doc_key):
+    """Clear a specific induction document column for filtered submissions."""
+    if doc_key not in INDUCTION_DOC_FIELDS:
+        flash('Invalid induction document type.', 'danger')
+        return redirect(url_for('staff.induction_documents'))
+
+    cohort_id = request.form.get('cohort_id', type=int)
+    query = InductionSubmission.query
+    if cohort_id:
+        query = query.filter(InductionSubmission.cohort_id == cohort_id)
+
+    submissions = query.all()
+    cleared = 0
+    for submission in submissions:
+        if _clear_induction_doc_fields(submission, doc_key):
+            cleared += 1
+
+    if cleared > 0:
+        db.session.commit()
+        flash(f'Cleared {INDUCTION_DOC_FIELDS[doc_key]["label"]} for {cleared} submissions.', 'success')
+    else:
+        flash(f'No uploaded {INDUCTION_DOC_FIELDS[doc_key]["label"]} files were found to clear.', 'info')
+
+    return redirect(url_for('staff.induction_documents', cohort_id=cohort_id))
+
+
+@bp.route('/timesheets/<int:timesheet_id>/delete', methods=['POST'])
+@login_required
+@staff_required
+def delete_timesheet(timesheet_id):
+    """Permanently delete a timesheet submission."""
+    timesheet = Timesheet.query.get_or_404(timesheet_id)
+    file_path = os.path.abspath(timesheet.file_path) if timesheet.file_path else None
+
+    try:
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
+    except OSError:
+        pass
+
+    db.session.delete(timesheet)
+    db.session.commit()
+
+    flash('Timesheet has been deleted successfully.', 'success')
+    return redirect(request.referrer or url_for('staff.timesheets'))
+
+
+
+@bp.route('/timesheets/delete-cohort/<int:cohort_id>/<string:month>', methods=['POST'])
+@login_required
+@staff_required
+def delete_cohort_timesheets(cohort_id, month):
+    """Delete all timesheets for a specific cohort and month."""
+    cohort = Cohort.query.get_or_404(cohort_id)
+    if len(month) != 7 or '-' not in month:
+        flash('Invalid month format. Use YYYY-MM.', 'danger')
+        return redirect(url_for('staff.timesheet_submission_status'))
+
+    timesheets = Timesheet.query.filter_by(
+        cohort_id=cohort_id,
+        submission_month=month,
+        is_deleted=False,
+    ).all()
+
+    deleted_count = 0
+    for ts in timesheets:
+        file_path = os.path.abspath(ts.file_path) if ts.file_path else None
+        try:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+        except OSError:
+            pass
+
+        db.session.delete(ts)
+        deleted_count += 1
+
+    if deleted_count > 0:
+        db.session.commit()
+        flash(f'Deleted {deleted_count} timesheet(s) for cohort {cohort.name} in {month}.', 'success')
+    else:
+        flash('No timesheets found for the selected cohort and month.', 'warning')
+
+    return redirect(url_for('staff.timesheet_submission_status', cohort_id=cohort_id, month=month))
+
+@bp.route('/timesheets/delete-filtered', methods=['POST'])
+@login_required
+@staff_required
+def delete_filtered_timesheets():
+    """Delete all timesheets for the selected month and intern type."""
+    month = (request.form.get('month') or '').strip()
+    intern_type_filter = request.form.get('intern_type', 'all')
+
+    if len(month) != 7 or '-' not in month:
+        flash('Invalid month format. Use YYYY-MM.', 'danger')
+        return redirect(url_for('staff.timesheets'))
+
+    query = Timesheet.query.filter_by(submission_month=month, is_deleted=False)
+    if intern_type_filter != 'all':
+        query = query.join(User, Timesheet.intern_id == User.id).filter(User.intern_type == intern_type_filter)
+
+    timesheets = query.all()
+    deleted_count = 0
+    for ts in timesheets:
+        file_path = os.path.abspath(ts.file_path) if ts.file_path else None
+        try:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+        except OSError:
+            pass
+
+        db.session.delete(ts)
+        deleted_count += 1
+
+    if deleted_count > 0:
+        db.session.commit()
+        flash(f'Deleted {deleted_count} timesheet(s) for {month} ({intern_type_filter}).', 'success')
+    else:
+        flash('No timesheets found for the selected filters.', 'warning')
+
+    return redirect(url_for('staff.timesheets', month=month, intern_type=intern_type_filter))
+
+@bp.route('/induction/clear-all', methods=['POST'])
+@login_required
+@staff_required
+def clear_all_induction_documents():
+    """Clear every induction document upload for the current filter."""
+    cohort_id = request.form.get('cohort_id', type=int)
+    query = InductionSubmission.query
+    if cohort_id:
+        query = query.filter(InductionSubmission.cohort_id == cohort_id)
+
+    submissions = query.all()
+    cleared = 0
+    for submission in submissions:
+        for doc_key in INDUCTION_DOC_FIELDS:
+            if _clear_induction_doc_fields(submission, doc_key):
+                cleared += 1
+
+    if cleared > 0:
+        db.session.commit()
+        flash(f'Cleared {cleared} induction document(s).', 'success')
+    else:
+        flash('No induction documents found to clear for the selected filter.', 'info')
+
+    if cohort_id:
+        return redirect(url_for('staff.induction_documents', cohort_id=cohort_id))
+    return redirect(url_for('staff.induction_documents'))
+
+
 def _send_missing_induction_reminders(only_cohort_id=None):
     """Send reminders to interns with incomplete induction document submissions."""
     today = datetime.utcnow().date()

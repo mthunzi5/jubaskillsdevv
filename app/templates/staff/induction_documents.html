@@ -98,7 +98,19 @@
         <a href="{{ url_for('staff.download_induction_zip', doc_key=doc_key, cohort_id=selected_cohort_id) }}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-file-earmark-zip"></i> {{ meta.label }} ZIP
         </a>
+        <form method="POST" action="{{ url_for('staff.clear_induction_column', doc_key=doc_key) }}" class="mb-0">
+            <input type="hidden" name="cohort_id" value="{{ selected_cohort_id or '' }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Clear {{ meta.label }} for the current cohort filter? This will remove the uploaded file for all filtered submissions.')">
+                <i class="bi bi-trash"></i> Clear {{ meta.label }}
+            </button>
+        </form>
         {% endfor %}
+        <form method="POST" action="{{ url_for('staff.clear_all_induction_documents') }}" class="mb-0">
+            <input type="hidden" name="cohort_id" value="{{ selected_cohort_id or '' }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Clear all induction documents for the current filter? This will remove ALL uploaded induction files.')">
+                <i class="bi bi-trash"></i> Clear All Induction Documents
+            </button>
+        </form>
     </div>
 </div>
 
@@ -151,6 +163,12 @@
                             <a href="{{ url_for('staff.download_induction_document', submission_id=row.submission.id, doc_key=doc_key) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-download"></i>
                             </a>
+                            <form method="POST" action="{{ url_for('staff.clear_induction_document', submission_id=row.submission.id, doc_key=doc_key) }}" class="d-inline">
+                                <input type="hidden" name="cohort_id" value="{{ selected_cohort_id or '' }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Clear this uploaded document for {{ row.intern.name }}?')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}

@@ -15,15 +15,15 @@
         <div class="card">
             <div class="card-body">
                 {% if existing_current_month %}
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    A timesheet for {{ current_month }} is already submitted
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    A timesheet for {{ current_month }} already exists.
                     {% if existing_current_month.host_company %}
-                    by host: <strong>{{ existing_current_month.host_company.company_name }}</strong>
+                    It was submitted by host: <strong>{{ existing_current_month.host_company.company_name }}</strong>.
                     {% else %}
-                    by learner.
+                    It was submitted by you.
                     {% endif %}
-                    You cannot submit another one for this month.
+                    Submitting again for the same month will replace the existing file and record.
                 </div>
                 {% endif %}
                 <form method="POST" enctype="multipart/form-data">

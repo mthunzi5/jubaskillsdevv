@@ -544,6 +544,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if current_endpoint == 'staff.induction_documents' %}active{% endif %}" href="{{ url_for('staff.induction_documents') }}">
+                                <i class="bi bi-folder2-open"></i> Induction Documents
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if current_endpoint == 'staff.host_feedback' %}active{% endif %}" href="{{ url_for('staff.host_feedback') }}">
                                 <i class="bi bi-chat-dots"></i> Host Feedback
                             </a>

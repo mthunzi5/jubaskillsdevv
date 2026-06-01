@@ -265,10 +265,6 @@ def submit_timesheet():
             submission_month=submission_month,
             is_deleted=False,
         ).order_by(Timesheet.submission_date.desc()).first()
-        if existing:
-            submitter_label = 'host company' if existing.host_company_id else 'intern'
-            flash(f'Timesheet for {submission_month} was already submitted by {submitter_label}.', 'warning')
-            return redirect(url_for('intern.timesheets'))
 
         if 'timesheet_file' not in request.files:
             flash('No file selected.', 'danger')
@@ -285,6 +281,19 @@ def submit_timesheet():
             flash('Only PDF files are allowed.', 'danger')
             return redirect(request.url)
         
+        # If a timesheet already exists for this month, replace it.
+        replaced_existing = False
+        if existing:
+            try:
+                existing_path = os.path.abspath(existing.file_path) if existing.file_path else None
+                if existing_path and os.path.exists(existing_path):
+                    os.remove(existing_path)
+            except OSError:
+                pass
+
+            db.session.delete(existing)
+            replaced_existing = True
+
         # Generate unique filename
         filename = secure_filename(file.filename)
         unique_filename = generate_filename(filename, f"intern_{current_user.id}_")
@@ -363,7 +372,10 @@ def submit_timesheet():
                 related_id=timesheet.id,
             )
         
-        flash('Timesheet submitted successfully!', 'success')
+        if replaced_existing:
+            flash('Existing timesheet replaced successfully.', 'success')
+        else:
+            flash('Timesheet submitted successfully!', 'success')
         return redirect(url_for('intern.timesheets'))
     
     existing_current_month = Timesheet.query.filter_by(
