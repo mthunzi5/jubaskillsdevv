@@ -55,8 +55,8 @@
                 <div class="card-body p-5 position-relative certificate-watermark" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
                     <!-- Logo Row -->
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <img src="{{ url_for('static', filename='images/logo-main.png') }}" alt="Juba Skills" style="max-height: 80px; max-width: 220px; object-fit: contain;">
-                        <img src="{{ url_for('static', filename='images/logo-footer.png') }}" alt="Partner Logo" style="max-height: 80px; max-width: 220px; object-fit: contain;">
+                        <img src="{{ url_for('static', filename='images/logo-footer.png') }}" alt="Juba Skills" style="max-height: 80px; max-width: 220px; object-fit: contain;">
+                        <img src="{{ url_for('static', filename='images/mictt.jfif') }}" alt="MICT Logo" style="max-height: 80px; max-width: 220px; object-fit: contain;">
                     </div>
 
                     <!-- Header -->
@@ -86,34 +86,6 @@
                         {% endif %}
                         <p class="lead mb-4">has successfully completed</p>
                         <h4 class="mb-5" style="color: #2c3e50;">{{ certificate.program_name }}</h4>
-
-                        <!-- Achievement Details -->
-                        <div class="row mb-4">
-                            <div class="col-md-4">
-                                <div class="card bg-light">
-                                    <div class="card-body">
-                                        <h3 class="text-success mb-0">{{ "%.1f"|format(certificate.final_grade) }}%</h3>
-                                        <small class="text-muted">Final Grade</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card bg-light">
-                                    <div class="card-body">
-                                        <h3 class="text-info mb-0">{{ certificate.tasks_completed }}</h3>
-                                        <small class="text-muted">Tasks Completed</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card bg-light">
-                                    <div class="card-body">
-                                        <h3 class="text-warning mb-0">{{ "%.0f"|format(certificate.total_hours) }}</h3>
-                                        <small class="text-muted">Training Hours</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                         <p class="mb-2">Completion Date: <strong>{{ certificate.completion_date.strftime('%B %d, %Y') }}</strong></p>
                     </div>

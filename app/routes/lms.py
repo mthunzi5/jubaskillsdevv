@@ -18,6 +18,48 @@ ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'xlsx', 'xls',
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+def _get_or_create_progress(intern_id):
+    """Fetch progress for an intern, creating and recalculating when needed."""
+    progress = Progress.query.filter_by(intern_id=intern_id).first()
+    if not progress:
+        progress = Progress(intern_id=intern_id)
+        db.session.add(progress)
+    progress.update_progress()
+    return progress
+
+
+def _create_certificate_for_intern(intern, issuer_user):
+    """Create a certificate for an intern if none is active; return (certificate, created_new)."""
+    existing_certificate = (
+        Certificate.query
+        .filter_by(intern_id=intern.id, is_active=True)
+        .order_by(Certificate.issue_date.desc())
+        .first()
+    )
+    if existing_certificate:
+        return existing_certificate, False
+
+    progress = _get_or_create_progress(intern.id)
+    cert_number = Certificate.generate_certificate_number()
+
+    certificate = Certificate(
+        certificate_number=cert_number,
+        intern_id=intern.id,
+        intern_name=f"{intern.name} {intern.surname}",
+        total_hours=progress.total_hours_logged,
+        final_grade=progress.average_grade,
+        tasks_completed=progress.completed_tasks,
+        issued_by=issuer_user.id,
+        is_approved=True,
+        approved_by=issuer_user.id,
+        approved_at=datetime.utcnow(),
+        admin_signature=f"{issuer_user.name} {issuer_user.surname}",
+    )
+    db.session.add(certificate)
+    progress.certificate_issued = True
+    return certificate, True
+
 # ============= TRAINING MATERIALS =============
 
 @lms_bp.route('/materials')
@@ -451,10 +493,12 @@ def certificates_list():
     """View certificates"""
     if current_user.role == 'intern':
         certificates = Certificate.query.filter_by(intern_id=current_user.id, is_active=True).all()
+        cohorts = []
     else:
         certificates = Certificate.query.filter_by(is_active=True).order_by(Certificate.issue_date.desc()).all()
+        cohorts = Cohort.query.filter_by(is_active=True).order_by(Cohort.name.asc()).all()
     
-    return render_template('lms/certificates_list.html', certificates=certificates)
+    return render_template('lms/certificates_list.html', certificates=certificates, cohorts=cohorts)
 
 @lms_bp.route('/certificates/cohort/<int:cohort_id>')
 @login_required
@@ -526,43 +570,22 @@ def generate_cohort_certificates(cohort_id):
     skipped = []
     for membership in memberships:
         intern = membership.intern
-        progress = Progress.query.filter_by(intern_id=intern.id).first()
-        if not progress:
-            progress = Progress(intern_id=intern.id)
-            db.session.add(progress)
 
-        progress.update_progress()
-        
-        if not progress.is_eligible_for_certificate:
-            skipped.append((intern, 'Not eligible'))
-            continue
-        if progress.certificate_issued:
+        certificate, created_new = _create_certificate_for_intern(intern, current_user)
+        if created_new:
+            generated.append((intern, certificate))
+        else:
             skipped.append((intern, 'Already issued'))
-            continue
-
-        cert_number = Certificate.generate_certificate_number()
-        certificate = Certificate(
-            certificate_number=cert_number,
-            intern_id=intern.id,
-            intern_name=f"{intern.name} {intern.surname}",
-            total_hours=progress.total_hours_logged,
-            final_grade=progress.average_grade,
-            tasks_completed=progress.completed_tasks,
-            issued_by=current_user.id,
-        )
-        db.session.add(certificate)
-        progress.certificate_issued = True
-        generated.append((intern, certificate))
 
     db.session.commit()
 
     if generated:
         flash(f'Generated {len(generated)} certificate(s) for cohort {cohort.name}.', 'success')
     else:
-        if skipped:
-            flash('No certificates were generated. ' + ' '.join([f"{intern.name} {intern.surname}: {reason}." for intern, reason in skipped]), 'warning')
-        else:
-            flash('No eligible interns found for certificate generation.', 'warning')
+        flash('No new certificates were generated (all non-terminated learners already had certificates).', 'warning')
+
+    if skipped:
+        flash(f'Skipped {len(skipped)} learner(s) that already had certificates.', 'info')
 
     return redirect(url_for('lms.cohort_certificates', cohort_id=cohort.id))
 
@@ -571,9 +594,7 @@ def generate_cohort_certificates(cohort_id):
 @login_required
 @staff_required
 def award_and_download_cohort_certificates(cohort_id):
-    """Mark all cohort members as completed (tasks/hours/grade) and generate certificates,
-    then return a ZIP containing all generated PDFs. Skips terminated interns.
-    """
+    """Generate missing cohort certificates and download all cohort certificates as ZIP."""
     cohort = Cohort.query.get_or_404(cohort_id)
     memberships = (
         CohortMember.query
@@ -584,61 +605,13 @@ def award_and_download_cohort_certificates(cohort_id):
     )
 
     generated_files = []
-    from datetime import datetime as _dt
+    generated_count = 0
     for membership in memberships:
         intern = membership.intern
 
-        # Ensure assignments exist and mark them completed with full grade
-        assignments = TaskAssignment.query.filter_by(intern_id=intern.id).all()
-        for a in assignments:
-            a.status = 'completed'
-            a.grade = 100.0
-            a.graded_by = current_user.id
-            a.graded_at = _dt.utcnow()
-            db.session.add(a)
-
-        # Update progress record or create one
-        progress = Progress.query.filter_by(intern_id=intern.id).first()
-        if not progress:
-            progress = Progress(intern_id=intern.id)
-            db.session.add(progress)
-
-        # Refresh counts from assignments
-        total_tasks = len(assignments)
-        completed_tasks = total_tasks
-        progress.total_tasks = total_tasks
-        progress.completed_tasks = completed_tasks
-        progress.average_grade = 100.0
-        # Set hours: preserve existing if higher, else set to 480 by default
-        progress.total_hours_logged = max(progress.total_hours_logged or 0, 480)
-        progress.completion_percentage = 100.0
-        progress.is_eligible_for_certificate = True
-        progress.certificate_issued = True
-        progress.last_updated = _dt.utcnow()
-        db.session.add(progress)
-
-        # Create certificate if not present
-        existing = Certificate.query.filter_by(intern_id=intern.id, is_active=True).order_by(Certificate.issue_date.desc()).first()
-        if existing:
-            # regenerate PDF for existing certificate
-            cert = existing
-        else:
-            cert_number = Certificate.generate_certificate_number()
-            cert = Certificate(
-                certificate_number=cert_number,
-                intern_id=intern.id,
-                intern_name=f"{intern.name} {intern.surname}",
-                total_hours=progress.total_hours_logged,
-                final_grade=progress.average_grade,
-                tasks_completed=progress.completed_tasks,
-                issued_by=current_user.id,
-                is_approved=True,
-                approved_by=current_user.id,
-                approved_at=_dt.utcnow(),
-            )
-            db.session.add(cert)
-
-        db.session.commit()
+        cert, created_new = _create_certificate_for_intern(intern, current_user)
+        if created_new:
+            generated_count += 1
 
         # Generate PDF and collect path
         try:
@@ -648,9 +621,13 @@ def award_and_download_cohort_certificates(cohort_id):
             # skip if PDF generation fails for an individual
             continue
 
+    db.session.commit()
+
     if not generated_files:
         flash('No certificates were generated for download.', 'warning')
         return redirect(url_for('lms.cohort_certificates', cohort_id=cohort.id))
+
+    flash(f'Prepared {len(generated_files)} certificate PDF(s). Newly generated: {generated_count}.', 'success')
 
     # Create ZIP in-memory
     memory_file = io.BytesIO()
@@ -664,6 +641,59 @@ def award_and_download_cohort_certificates(cohort_id):
     memory_file.seek(0)
 
     return send_file(memory_file, mimetype='application/zip', as_attachment=True, download_name=f"{cohort.name}_certificates.zip")
+
+
+@lms_bp.route('/certificates/cohort/<int:cohort_id>/download', methods=['POST'])
+@login_required
+@staff_required
+def download_cohort_certificates(cohort_id):
+    """Download all existing active certificates for a cohort as a ZIP file."""
+    cohort = Cohort.query.get_or_404(cohort_id)
+    memberships = (
+        CohortMember.query
+        .join(User, CohortMember.intern_id == User.id)
+        .filter(CohortMember.cohort_id == cohort_id, User.is_deleted == False, User.is_terminated == False)
+        .order_by(User.surname, User.name)
+        .all()
+    )
+
+    certificate_files = []
+    for membership in memberships:
+        intern = membership.intern
+        certificate = (
+            Certificate.query
+            .filter_by(intern_id=intern.id, is_active=True)
+            .order_by(Certificate.issue_date.desc())
+            .first()
+        )
+        if not certificate:
+            continue
+
+        try:
+            pdf_path = generate_certificate_pdf(certificate)
+            certificate_files.append((pdf_path, f"{intern.name}_{intern.surname}_{certificate.certificate_number}.pdf"))
+        except Exception:
+            continue
+
+    if not certificate_files:
+        flash('No certificates available for bulk download in this cohort.', 'warning')
+        return redirect(url_for('lms.cohort_certificates', cohort_id=cohort.id))
+
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for path, arcname in certificate_files:
+            try:
+                zf.write(path, arcname)
+            except Exception:
+                continue
+    memory_file.seek(0)
+
+    return send_file(
+        memory_file,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f"{cohort.name}_issued_certificates.zip"
+    )
 
 @lms_bp.route('/certificates/generate/<int:intern_id>', methods=['POST'])
 @login_required

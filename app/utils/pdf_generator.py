@@ -216,18 +216,18 @@ def generate_certificate_pdf(certificate):
     # Header logos row
     logos_row = []
     try:
-        logo_main = Image(os.path.join('app', 'static', 'images', 'logo-main.png'))
-        logo_main.drawHeight = 0.8 * inch
-        logo_main.drawWidth = 2.5 * inch
-        logos_row.append(logo_main)
+        logo_left = Image(os.path.join('app', 'static', 'images', 'logo-footer.png'))
+        logo_left.drawHeight = 0.8 * inch
+        logo_left.drawWidth = 2.5 * inch
+        logos_row.append(logo_left)
     except Exception:
         logos_row.append(Spacer(1, 0.8 * inch))
 
     try:
-        logo_partner = Image(os.path.join('app', 'static', 'images', 'logo-footer.png'))
-        logo_partner.drawHeight = 0.8 * inch
-        logo_partner.drawWidth = 2.5 * inch
-        logos_row.append(logo_partner)
+        logo_right = Image(os.path.join('app', 'static', 'images', 'mictt.jfif'))
+        logo_right.drawHeight = 0.8 * inch
+        logo_right.drawWidth = 2.5 * inch
+        logos_row.append(logo_right)
     except Exception:
         logos_row.append(Spacer(1, 0.8 * inch))
 
@@ -252,21 +252,6 @@ def generate_certificate_pdf(certificate):
     story.append(Paragraph(f"Program: {certificate.program_name}", normal_center))
     story.append(Spacer(1, 0.05 * inch))
     story.append(Paragraph(f"Certificate Number: {certificate.certificate_number}", normal_center))
-    story.append(Spacer(1, 0.1 * inch))
-
-    metrics = [
-        ['Final Grade', f"{certificate.final_grade or 0:.1f}%"],
-        ['Tasks Completed', str(certificate.tasks_completed or 0)],
-        ['Training Hours', f"{int(certificate.total_hours or 0)}"]
-    ]
-    metrics_tbl = Table(metrics, colWidths=[2.5*inch, 2.5*inch])
-    metrics_tbl.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
-        ('ALIGN',(0,0),(-1,-1),'CENTER'),
-        ('FONTSIZE',(0,0),(-1,-1),12),
-        ('BOTTOMPADDING',(0,0),(-1,-1),6),
-    ]))
-    story.append(metrics_tbl)
     story.append(Spacer(1, 0.5 * inch))
 
     # Footer / signature placeholder

@@ -25,12 +25,17 @@
             </a>
             <form method="POST" action="{{ url_for('lms.generate_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline me-2">
                 <button type="submit" class="btn btn-success btn-sm">
-                    <i class="bi bi-award"></i> Generate All Eligible
+                    <i class="bi bi-award"></i> Generate Bulk Certificates
                 </button>
             </form>
-            <form method="POST" action="{{ url_for('lms.award_and_download_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline">
+            <form method="POST" action="{{ url_for('lms.award_and_download_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline me-2">
                 <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="bi bi-download"></i> Award All & Download ZIP
+                    <i class="bi bi-download"></i> Generate & Download ZIP
+                </button>
+            </form>
+            <form method="POST" action="{{ url_for('lms.download_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline">
+                <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-file-earmark-zip"></i> Download Existing ZIP
                 </button>
             </form>
         </div>
@@ -114,14 +119,7 @@
                                 {% endif %}
                             </td>
                             <td class="text-end">
-                                {% if not row.is_terminated and not row.certificate and row.progress.is_eligible_for_certificate %}
-                                <form method="POST" action="{{ url_for('lms.generate_certificate', intern_id=row.intern.id) }}" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-success">Issue</button>
-                                </form>
-                                {% endif %}
-                                {% if not row.is_terminated and not row.certificate %}
-                                <a href="{{ url_for('lms.award_certificate_direct', intern_id=row.intern.id) }}" class="btn btn-sm btn-outline-warning">Award</a>
-                                {% endif %}
+                                <span class="text-muted small">Use bulk actions above</span>
                             </td>
                         </tr>
                         {% endfor %}

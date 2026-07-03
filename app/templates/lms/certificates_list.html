@@ -28,11 +28,57 @@
                 <a href="{{ url_for('lms.progress_dashboard') }}" class="btn btn-outline-primary btn-sm me-2">
                     <i class="bi bi-graph-up"></i> View Cohort Progress
                 </a>
-                <span class="badge bg-info text-dark">Use cohort progress to generate certificates in bulk.</span>
+                <span class="badge bg-info text-dark">Select a cohort below to generate/download certificates in bulk.</span>
             </div>
             {% endif %}
         </div>
     </div>
+
+    {% if current_user.role != 'intern' and cohorts %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-people"></i> Cohort Certificate Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Cohort</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cohort in cohorts %}
+                                <tr>
+                                    <td>{{ cohort.name }}</td>
+                                    <td class="text-end">
+                                        <a href="{{ url_for('lms.cohort_certificates', cohort_id=cohort.id) }}" class="btn btn-sm btn-outline-secondary me-2">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                        <form method="POST" action="{{ url_for('lms.generate_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline me-2">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="bi bi-award"></i> Generate Bulk Certificates
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('lms.download_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-download"></i> Download Bulk ZIP
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     {% if certificates %}
     <div class="row">
@@ -54,21 +100,6 @@
                     {% endif %}
                     
                     <hr>
-                    
-                    <div class="row text-center mb-3">
-                        <div class="col-4">
-                            <h4 class="mb-0 text-success">{{ "%.1f"|format(cert.final_grade) }}%</h4>
-                            <small class="text-muted">Grade</small>
-                        </div>
-                        <div class="col-4">
-                            <h4 class="mb-0 text-info">{{ cert.tasks_completed }}</h4>
-                            <small class="text-muted">Tasks</small>
-                        </div>
-                        <div class="col-4">
-                            <h4 class="mb-0 text-warning">{{ "%.0f"|format(cert.total_hours) }}</h4>
-                            <small class="text-muted">Hours</small>
-                        </div>
-                    </div>
                     
                     <p class="card-text mb-1"><small class="text-muted">
                         <i class="bi bi-calendar-check"></i> Completed: {{ cert.completion_date.strftime('%Y-%m-%d') }}
