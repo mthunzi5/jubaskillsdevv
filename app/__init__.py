@@ -5,12 +5,39 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
+from sqlalchemy import inspect, text
 from config import config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 jwt = JWTManager()
 migrate = Migrate()
+
+
+def _ensure_runtime_schema_compatibility():
+    """Apply minimal non-destructive schema fixes for older SQLite deployments."""
+    inspector = inspect(db.engine)
+    if not inspector.has_table('users'):
+        return
+
+    user_columns = {column['name'] for column in inspector.get_columns('users')}
+    patch_statements = []
+
+    if 'is_terminated' not in user_columns:
+        patch_statements.append("ALTER TABLE users ADD COLUMN is_terminated BOOLEAN DEFAULT 0")
+    if 'termination_date' not in user_columns:
+        patch_statements.append("ALTER TABLE users ADD COLUMN termination_date DATETIME")
+    if 'requires_password_change' not in user_columns:
+        patch_statements.append("ALTER TABLE users ADD COLUMN requires_password_change BOOLEAN DEFAULT 0")
+    if 'last_login' not in user_columns:
+        patch_statements.append("ALTER TABLE users ADD COLUMN last_login DATETIME")
+
+    if not patch_statements:
+        return
+
+    with db.engine.begin() as connection:
+        for statement in patch_statements:
+            connection.execute(text(statement))
 
 def create_app(config_name='default'):
     """Application factory pattern"""
@@ -80,6 +107,7 @@ def create_app(config_name='default'):
     # Create tables
     with app.app_context():
         db.create_all()
+        _ensure_runtime_schema_compatibility()
         # Create default admin if none exists
         from app.utils.helpers import create_default_admin
         create_default_admin()
