@@ -17,27 +17,108 @@ migrate = Migrate()
 def _ensure_runtime_schema_compatibility():
     """Apply minimal non-destructive schema fixes for older SQLite deployments."""
     inspector = inspect(db.engine)
-    if not inspector.has_table('users'):
-        return
-
-    user_columns = {column['name'] for column in inspector.get_columns('users')}
     patch_statements = []
 
-    if 'is_terminated' not in user_columns:
-        patch_statements.append("ALTER TABLE users ADD COLUMN is_terminated BOOLEAN DEFAULT 0")
-    if 'termination_date' not in user_columns:
-        patch_statements.append("ALTER TABLE users ADD COLUMN termination_date DATETIME")
-    if 'requires_password_change' not in user_columns:
-        patch_statements.append("ALTER TABLE users ADD COLUMN requires_password_change BOOLEAN DEFAULT 0")
-    if 'last_login' not in user_columns:
-        patch_statements.append("ALTER TABLE users ADD COLUMN last_login DATETIME")
+    def queue_missing_columns(table_name, columns_to_add):
+        if not inspector.has_table(table_name):
+            return set()
 
-    if not patch_statements:
-        return
+        existing = {column['name'] for column in inspector.get_columns(table_name)}
+        for column_name, ddl in columns_to_add.items():
+            if column_name not in existing:
+                patch_statements.append(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {ddl}")
+        return existing
+
+    user_columns = queue_missing_columns('users', {
+        'is_terminated': 'BOOLEAN DEFAULT 0',
+        'termination_date': 'DATETIME',
+        'requires_password_change': 'BOOLEAN DEFAULT 0',
+        'last_login': 'DATETIME',
+        'intern_type': 'VARCHAR(20)',
+        'is_profile_complete': 'BOOLEAN DEFAULT 0',
+        'first_login': 'BOOLEAN DEFAULT 1',
+        'created_by': 'INTEGER',
+    })
+
+    queue_missing_columns('intern_groups', {
+        'education_type': "VARCHAR(20) DEFAULT 'mixed'",
+        'description': 'TEXT',
+        'is_active': 'BOOLEAN DEFAULT 1',
+        'archived_at': 'DATETIME',
+        'created_by': 'INTEGER',
+        'created_at': 'DATETIME',
+    })
+
+    cohort_columns = queue_missing_columns('cohorts', {
+        'group_id': 'INTEGER',
+        'status': "VARCHAR(20) DEFAULT 'active'",
+        'start_date': 'DATE',
+        'end_date': 'DATE',
+        'notes': 'TEXT',
+        'is_active': 'BOOLEAN DEFAULT 1',
+        'archived_at': 'DATETIME',
+        'created_by': 'INTEGER',
+        'created_at': 'DATETIME',
+    })
+
+    host_columns = queue_missing_columns('host_companies', {
+        'company_name': 'VARCHAR(150)',
+        'contact_person': 'VARCHAR(120)',
+        'contact_email': 'VARCHAR(120)',
+        'contact_phone': 'VARCHAR(30)',
+        'address': 'VARCHAR(255)',
+        'is_active': 'BOOLEAN DEFAULT 1',
+        'archived_at': 'DATETIME',
+        'login_user_id': 'INTEGER',
+        'created_by': 'INTEGER',
+        'created_at': 'DATETIME',
+    })
+
+    queue_missing_columns('cohort_members', {
+        'created_at': 'DATETIME',
+        'created_by': 'INTEGER',
+    })
+
+    queue_missing_columns('intern_placements', {
+        'cohort_id': 'INTEGER',
+        'is_active': 'BOOLEAN DEFAULT 1',
+        'assigned_at': 'DATETIME',
+        'ended_at': 'DATETIME',
+        'assigned_by': 'INTEGER',
+    })
 
     with db.engine.begin() as connection:
         for statement in patch_statements:
             connection.execute(text(statement))
+
+        # Backfill legacy naming so host companies remain visible in current UI.
+        if 'company_name' in host_columns and 'name' in host_columns:
+            connection.execute(text("""
+                UPDATE host_companies
+                SET company_name = name
+                WHERE (company_name IS NULL OR TRIM(company_name) = '')
+                  AND name IS NOT NULL
+            """))
+
+        # Ensure existing rows are active where older schemas had no active flag.
+        if 'is_active' in cohort_columns:
+            connection.execute(text("""
+                UPDATE cohorts
+                SET is_active = 1
+                WHERE is_active IS NULL
+            """))
+        if 'is_active' in host_columns:
+            connection.execute(text("""
+                UPDATE host_companies
+                SET is_active = 1
+                WHERE is_active IS NULL
+            """))
+        if 'is_terminated' in user_columns:
+            connection.execute(text("""
+                UPDATE users
+                SET is_terminated = 0
+                WHERE is_terminated IS NULL
+            """))
 
 def create_app(config_name='default'):
     """Application factory pattern"""
@@ -77,7 +158,19 @@ def create_app(config_name='default'):
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
     # Register blueprints
-    from app.routes import auth, admin, staff, intern, main, lms, board, request_hub, job_applications
+    from app.routes import (
+        auth,
+        admin,
+        staff,
+        intern,
+        main,
+        lms,
+        board,
+        request_hub,
+        job_applications,
+        intern_management,
+        host_company,
+    )
     app.register_blueprint(auth.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(staff.bp)
@@ -87,6 +180,8 @@ def create_app(config_name='default'):
     app.register_blueprint(board.bp)
     app.register_blueprint(request_hub.request_hub_bp)
     app.register_blueprint(job_applications.bp)
+    app.register_blueprint(intern_management.bp)
+    app.register_blueprint(host_company.bp)
     
     # Register error handlers
     from flask import render_template
