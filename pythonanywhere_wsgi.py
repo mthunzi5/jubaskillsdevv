@@ -1,20 +1,22 @@
-# WSGI Configuration for PythonAnywhere
-# Replace 'yourusername' with your actual PythonAnywhere username
+"""PythonAnywhere WSGI entry point for Juba Skills LMS.
 
-import sys
+Update `project_home` if the repository folder name changes.
+"""
+
 import os
+import sys
 
-# Add your project directory to the sys.path
-project_home = '/home/yourusername/jubalmss'
+project_home = '/home/JubaSkills/jubaskillsdevv'
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 
-# Set environment variables
-os.environ['FLASK_ENV'] = 'production'
-os.environ['SECRET_KEY'] = 'change-this-to-a-random-secret-key-in-production'
+os.environ.setdefault('FLASK_ENV', 'production')
 
-# Import Flask app
-from run import app as application
+from dotenv import load_dotenv
 
-# For debugging (remove in production)
+load_dotenv(os.path.join(project_home, '.env'))
+
+from app import create_app
+
+application = create_app('production')
 application.debug = False
