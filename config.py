@@ -4,6 +4,34 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+def _resolve_database_uri(base_dir: str) -> str:
+    """Resolve DB URI with safe defaults for SQLite paths."""
+    raw_uri = os.environ.get('DATABASE_URI')
+    default_sqlite = 'sqlite:///' + os.path.join(base_dir, 'instance', 'juba_lms.db')
+
+    if not raw_uri:
+        return default_sqlite
+
+    if not raw_uri.startswith('sqlite:///'):
+        return raw_uri
+
+    sqlite_path = raw_uri.replace('sqlite:///', '', 1)
+    if not sqlite_path:
+        return default_sqlite
+
+    # Absolute paths in SQLite URIs start with '/' after stripping sqlite:///.
+    if sqlite_path.startswith('/'):
+        return raw_uri
+
+    # Avoid accidental shadow DBs from values like sqlite:///juba_lms.db.
+    if os.path.basename(sqlite_path) == sqlite_path:
+        fixed_path = os.path.join(base_dir, 'instance', sqlite_path)
+        return 'sqlite:///' + fixed_path
+
+    fixed_path = os.path.join(base_dir, sqlite_path)
+    return 'sqlite:///' + fixed_path
+
 class Config:
     """Base configuration"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
@@ -12,8 +40,7 @@ class Config:
     
     # Database
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI') or \
-        'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'juba_lms.db')
+    SQLALCHEMY_DATABASE_URI = _resolve_database_uri(BASE_DIR)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # File Upload
