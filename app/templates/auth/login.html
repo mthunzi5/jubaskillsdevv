@@ -23,7 +23,7 @@
     
     /* Left side - Landing page */
     .landing-side {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(160deg, #111111 0%, #2f2f2f 55%, #4b4b4b 100%);
         color: white;
         padding: 60px 40px;
         display: flex;
@@ -95,13 +95,13 @@
     .features-list i {
         margin-right: 15px;
         font-size: 1.5rem;
-        color: #ffd700;
+        color: #e5e7eb;
     }
     
     /* Job Application Button */
     .job-application-btn {
         background: rgba(255, 255, 255, 0.95) !important;
-        color: #667eea !important;
+        color: #111111 !important;
         border: 2px solid rgba(255, 255, 255, 0.3) !important;
         transition: all 0.3s ease !important;
         font-weight: 600 !important;
@@ -111,7 +111,7 @@
     
     .job-application-btn:hover {
         background: white !important;
-        color: #667eea !important;
+        color: #111111 !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
         border-color: white !important;
@@ -123,7 +123,7 @@
     
     /* Right side - Login form */
     .login-side {
-        background: #f8f9fa;
+        background: #f4f4f5;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -140,7 +140,7 @@
     }
     
     .login-card h4 {
-        color: #667eea;
+        color: #111111;
         font-weight: 600;
         margin-bottom: 30px;
     }
@@ -153,12 +153,12 @@
     }
     
     .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        border-color: #3f3f46;
+        box-shadow: 0 0 0 0.2rem rgba(63, 63, 70, 0.18);
     }
     
     .btn-login {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #111111 0%, #3f3f46 100%);
         border: none;
         border-radius: 10px;
         padding: 14px;
@@ -170,12 +170,12 @@
     
     .btn-login:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 5px 20px rgba(17, 17, 17, 0.35);
     }
     
     /* Footer */
     .login-footer {
-        background: #2d3748;
+        background: #111111;
         color: white;
         padding: 30px 40px;
         text-align: center;
@@ -315,7 +315,7 @@
                 </form>
                 
                 <div class="text-center mt-4">
-                    <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none" style="color: #667eea;">
+                    <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none" style="color: #3f3f46;">
                         <small><i class="bi bi-key"></i> Forgot your password?</small>
                     </a>
                 </div>

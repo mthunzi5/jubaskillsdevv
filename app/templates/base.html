@@ -442,7 +442,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'users' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.users') }}">
+                            <a class="nav-link {% if 'users' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('admin.users') }}">
                                 <i class="bi bi-people"></i> Users
                             </a>
                         </li>
@@ -457,7 +457,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'job_applications.staff' in request.endpoint %}active{% endif %}" href="{{ url_for('job_applications.staff_dashboard') }}">
+                            <a class="nav-link {% if 'job_applications.staff' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('job_applications.staff_dashboard') }}">
                                 <i class="bi bi-briefcase"></i> Job Applications
                             </a>
                         </li>
@@ -477,22 +477,22 @@
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.materials' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
+                            <a class="nav-link {% if 'lms.materials' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
                                 <i class="bi bi-book"></i> Training Materials
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.tasks' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
+                            <a class="nav-link {% if 'lms.tasks' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
                                 <i class="bi bi-list-task"></i> Tasks
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.progress' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
+                            <a class="nav-link {% if 'lms.progress' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
                                 <i class="bi bi-graph-up"></i> Progress Tracking
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.certificates' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
+                            <a class="nav-link {% if 'lms.certificates' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
                                 <i class="bi bi-award"></i> Certificates
                             </a>
                         </li>
@@ -502,27 +502,27 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
+                            <a class="nav-link {% if 'lms.evaluations' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
                                 <i class="bi bi-clipboard-check"></i> Evaluations
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
+                            <a class="nav-link {% if 'board.board' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('board.board') }}">
                                 <i class="bi bi-chat-square-text"></i> Communication Board
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'request_hub' in request.endpoint %}active{% endif %}" href="{{ url_for('request_hub.staff_index') }}">
+                            <a class="nav-link {% if 'request_hub' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('request_hub.staff_index') }}">
                                 <i class="bi bi-folder"></i> Request Hub
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.task_deletion_requests' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.task_deletion_requests') }}">
+                            <a class="nav-link {% if 'lms.task_deletion_requests' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.task_deletion_requests') }}">
                                 <i class="bi bi-exclamation-triangle"></i> Task Deletion Requests
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.task_deletion_history' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.task_deletion_history') }}">
+                            <a class="nav-link {% if 'lms.task_deletion_history' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.task_deletion_history') }}">
                                 <i class="bi bi-clock-history"></i> Task Deletion History
                             </a>
                         </li>
@@ -533,7 +533,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'timesheets' in request.endpoint %}active{% endif %}" href="{{ url_for('staff.timesheets') }}">
+                            <a class="nav-link {% if 'timesheets' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('staff.timesheets') }}">
                                 <i class="bi bi-file-earmark-text"></i> Timesheets
                             </a>
                         </li>
@@ -543,7 +543,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'interns' in request.endpoint %}active{% endif %}" href="{{ url_for('staff.interns') }}">
+                            <a class="nav-link {% if 'interns' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('staff.interns') }}">
                                 <i class="bi bi-people"></i> Interns
                             </a>
                         </li>
@@ -553,37 +553,37 @@
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.materials' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
+                            <a class="nav-link {% if 'lms.materials' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
                                 <i class="bi bi-book"></i> Training Materials
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.tasks' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
+                            <a class="nav-link {% if 'lms.tasks' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
                                 <i class="bi bi-list-task"></i> Tasks
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.progress' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
+                            <a class="nav-link {% if 'lms.progress' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
                                 <i class="bi bi-graph-up"></i> Progress Tracking
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.certificates' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
+                            <a class="nav-link {% if 'lms.certificates' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
                                 <i class="bi bi-award"></i> Certificates
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
+                            <a class="nav-link {% if 'lms.evaluations' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
                                 <i class="bi bi-clipboard-check"></i> Evaluations
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
+                            <a class="nav-link {% if 'board.board' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('board.board') }}">
                                 <i class="bi bi-chat-square-text"></i> Communication Board
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'request_hub' in request.endpoint %}active{% endif %}" href="{{ url_for('request_hub.staff_index') }}">
+                            <a class="nav-link {% if 'request_hub' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('request_hub.staff_index') }}">
                                 <i class="bi bi-inbox"></i> Request Hub
                             </a>
                         </li>
@@ -594,7 +594,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'timesheets' in request.endpoint %}active{% endif %}" href="{{ url_for('intern.timesheets') }}">
+                            <a class="nav-link {% if 'timesheets' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('intern.timesheets') }}">
                                 <i class="bi bi-file-earmark-text"></i> My Timesheets
                             </a>
                         </li>
@@ -609,37 +609,37 @@
                             </h6>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.materials' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
+                            <a class="nav-link {% if 'lms.materials' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.materials_list') }}">
                                 <i class="bi bi-book"></i> Training Materials
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.tasks' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
+                            <a class="nav-link {% if 'lms.tasks' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.tasks_list') }}">
                                 <i class="bi bi-list-task"></i> My Tasks
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.progress' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
+                            <a class="nav-link {% if 'lms.progress' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.progress_dashboard') }}">
                                 <i class="bi bi-graph-up"></i> My Progress
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.certificates' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
+                            <a class="nav-link {% if 'lms.certificates' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.certificates_list') }}">
                                 <i class="bi bi-award"></i> My Certificates
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'lms.evaluations' in request.endpoint %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
+                            <a class="nav-link {% if 'lms.evaluations' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('lms.evaluations_list') }}">
                                 <i class="bi bi-clipboard-check"></i> Evaluations
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'board.board' in request.endpoint %}active{% endif %}" href="{{ url_for('board.board') }}">
+                            <a class="nav-link {% if 'board.board' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('board.board') }}">
                                 <i class="bi bi-chat-square-text"></i> Communication Board
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if 'request_hub' in request.endpoint %}active{% endif %}" href="{{ url_for('request_hub.intern_index') }}">
+                            <a class="nav-link {% if 'request_hub' in (request.endpoint or '') %}active{% endif %}" href="{{ url_for('request_hub.intern_index') }}">
                                 <i class="bi bi-inbox-fill"></i> My Requests
                             </a>
                         </li>

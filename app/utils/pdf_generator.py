@@ -6,6 +6,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from datetime import datetime
+import io
 import os
 
 
@@ -196,20 +197,32 @@ def download_submission_receipt(submission_id):
 
 
 def generate_certificate_pdf(certificate):
-    """Generate a simple certificate PDF for a Certificate record.
-    Returns the file path of the generated PDF.
-    """
-    # Certificates directory
+    """Generate a certificate PDF on disk and return the file path."""
     certs_dir = os.path.join('app', 'static', 'certificates')
     os.makedirs(certs_dir, exist_ok=True)
 
-    # Filename
     timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
     filename = f"certificate_{certificate.id}_{timestamp}.pdf"
     filepath = os.path.join(certs_dir, filename)
 
-    # Create PDF
     doc = SimpleDocTemplate(filepath, pagesize=A4)
+    story = _build_certificate_story(certificate)
+    doc.build(story)
+
+    return filepath
+
+
+def generate_certificate_pdf_bytes(certificate):
+    """Generate a certificate PDF in memory and return raw bytes."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    story = _build_certificate_story(certificate)
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def _build_certificate_story(certificate):
+    """Build reportlab flowables used by certificate generators."""
     story = []
     styles = getSampleStyleSheet()
 
@@ -262,6 +275,4 @@ def generate_certificate_pdf(certificate):
     story.append(Paragraph(f"Issued On: {certificate.issue_date.strftime('%d %B %Y')}", footer_style))
 
     # Build PDF
-    doc.build(story)
-
-    return filepath
+    return story

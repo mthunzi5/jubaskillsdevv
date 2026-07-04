@@ -9,7 +9,7 @@ import os
 import io
 import zipfile
 
-from app.utils.pdf_generator import generate_certificate_pdf
+from app.utils.pdf_generator import generate_certificate_pdf_bytes
 
 lms_bp = Blueprint('lms', __name__, url_prefix='/lms')
 
@@ -517,26 +517,32 @@ def cohort_certificates(cohort_id):
     intern_rows = []
     for membership in memberships:
         intern = membership.intern
-        progress = Progress.query.filter_by(intern_id=intern.id).first()
-        if not progress:
-            progress = Progress(intern_id=intern.id)
-            db.session.add(progress)
-        
+        stored_progress = Progress.query.filter_by(intern_id=intern.id).first()
+        # Use a transient Progress snapshot to avoid DB writes on a GET request.
+        progress = Progress(intern_id=intern.id)
+        if stored_progress:
+            progress.certificate_issued = bool(stored_progress.certificate_issued)
         progress.update_progress()
+
         certificate = (
             Certificate.query
             .filter_by(intern_id=intern.id, is_active=True)
             .order_by(Certificate.issue_date.desc())
             .first()
         )
+        if not certificate:
+            certificate = (
+                Certificate.query
+                .filter(Certificate.intern_id == intern.id)
+                .order_by(Certificate.issue_date.desc())
+                .first()
+            )
         intern_rows.append({
             'intern': intern,
             'is_terminated': intern.is_terminated,
             'progress': progress,
             'certificate': certificate,
         })
-
-    db.session.commit()
 
     cohort_summary = {
         'total_members': len(intern_rows),
@@ -613,10 +619,10 @@ def award_and_download_cohort_certificates(cohort_id):
         if created_new:
             generated_count += 1
 
-        # Generate PDF and collect path
+        # Generate PDF bytes in-memory so ZIP download does not depend on disk writes.
         try:
-            pdf_path = generate_certificate_pdf(cert)
-            generated_files.append((pdf_path, f"{intern.name}_{intern.surname}_{cert.certificate_number}.pdf"))
+            pdf_bytes = generate_certificate_pdf_bytes(cert)
+            generated_files.append((f"{intern.name}_{intern.surname}_{cert.certificate_number}.pdf", pdf_bytes))
         except Exception:
             # skip if PDF generation fails for an individual
             continue
@@ -632,9 +638,9 @@ def award_and_download_cohort_certificates(cohort_id):
     # Create ZIP in-memory
     memory_file = io.BytesIO()
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for path, arcname in generated_files:
+        for arcname, pdf_bytes in generated_files:
             try:
-                zf.write(path, arcname)
+                zf.writestr(arcname, pdf_bytes)
             except Exception:
                 # ignore missing files
                 continue
@@ -667,11 +673,18 @@ def download_cohort_certificates(cohort_id):
             .first()
         )
         if not certificate:
+            certificate = (
+                Certificate.query
+                .filter(Certificate.intern_id == intern.id)
+                .order_by(Certificate.issue_date.desc())
+                .first()
+            )
+        if not certificate:
             continue
 
         try:
-            pdf_path = generate_certificate_pdf(certificate)
-            certificate_files.append((pdf_path, f"{intern.name}_{intern.surname}_{certificate.certificate_number}.pdf"))
+            pdf_bytes = generate_certificate_pdf_bytes(certificate)
+            certificate_files.append((f"{intern.name}_{intern.surname}_{certificate.certificate_number}.pdf", pdf_bytes))
         except Exception:
             continue
 
@@ -681,9 +694,9 @@ def download_cohort_certificates(cohort_id):
 
     memory_file = io.BytesIO()
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for path, arcname in certificate_files:
+        for arcname, pdf_bytes in certificate_files:
             try:
-                zf.write(path, arcname)
+                zf.writestr(arcname, pdf_bytes)
             except Exception:
                 continue
     memory_file.seek(0)
