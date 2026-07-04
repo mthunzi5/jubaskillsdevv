@@ -12,7 +12,7 @@ from app.models.deletion_history import DeletionHistory
 from app.models.soft_delete import SoftDelete
 from app.models.timesheet import Timesheet, TimesheetTemplate, TimesheetPolicySettings
 from app.models.intern_management import Cohort, HostCompany, InternPlacement, CohortMember, InternGroup
-from app.models.job_application import JobApplication, JobPost
+from app.models.job_application import JobApplication
 from app.models.notification import Notification
 from app.models.induction import InductionPortalSettings, InductionExportAuditLog
 from app.utils.audit import log_audit_event
@@ -63,14 +63,10 @@ def dashboard():
     tvet_interns = User.query.filter_by(role='intern', intern_type='tvet', is_deleted=False).count()
     mixed_interns = User.query.filter_by(role='intern', intern_type='mixed', is_deleted=False).count()
 
-    total_job_posts = 0
-    open_job_posts = 0
     total_job_applications = 0
     submitted_applications = 0
     under_review_applications = 0
     try:
-        total_job_posts = JobPost.query.filter_by(is_archived=False).count()
-        open_job_posts = JobPost.query.filter_by(is_open=True, is_archived=False).count()
         total_job_applications = JobApplication.query.filter_by(is_deleted=False).count()
         submitted_applications = JobApplication.query.filter_by(status='submitted', is_deleted=False).count()
         under_review_applications = JobApplication.query.filter_by(status='under_review', is_deleted=False).count()
@@ -92,8 +88,6 @@ def dashboard():
                          varsity_interns=varsity_interns,
                          tvet_interns=tvet_interns,
                          mixed_interns=mixed_interns,
-                         total_job_posts=total_job_posts,
-                         open_job_posts=open_job_posts,
                          total_job_applications=total_job_applications,
                          submitted_applications=submitted_applications,
                          under_review_applications=under_review_applications,
