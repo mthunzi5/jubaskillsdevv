@@ -25,17 +25,17 @@
             </a>
             <form method="POST" action="{{ url_for('lms.generate_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline me-2">
                 <button type="submit" class="btn btn-success btn-sm">
-                    <i class="bi bi-award"></i> Generate Bulk Certificates
+                    <i class="bi bi-award"></i> Generate All Certificates
                 </button>
             </form>
             <form method="POST" action="{{ url_for('lms.award_and_download_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline me-2">
                 <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="bi bi-download"></i> Generate & Download ZIP
+                    <i class="bi bi-download"></i> Generate All & Download ZIP
                 </button>
             </form>
             <form method="POST" action="{{ url_for('lms.download_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline">
                 <button type="submit" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-file-earmark-zip"></i> Download Existing ZIP
+                    <i class="bi bi-file-earmark-zip"></i> Download All ZIP
                 </button>
             </form>
         </div>
@@ -85,8 +85,6 @@
                             <th>Intern</th>
                             <th>ID Number</th>
                             <th>Completion %</th>
-                            <th>Hours</th>
-                            <th>Grade</th>
                             <th>Status</th>
                             <th>Certificate</th>
                             <th class="text-end">Actions</th>
@@ -98,8 +96,6 @@
                             <td>{{ row.intern.name or 'Unknown' }} {{ row.intern.surname or '' }}</td>
                             <td>{{ row.intern.id_number or 'N/A' }}</td>
                             <td>{{ "%.1f"|format(row.progress.completion_percentage) }}%</td>
-                            <td>{{ "%.0f"|format(row.progress.total_hours_logged) }}</td>
-                            <td>{{ "%.1f"|format(row.progress.average_grade) }}%</td>
                             <td>
                                 {% if row.is_terminated %}
                                 <span class="badge bg-danger">Terminated</span>

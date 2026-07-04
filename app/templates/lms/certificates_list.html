@@ -60,12 +60,12 @@
                                         </a>
                                         <form method="POST" action="{{ url_for('lms.generate_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline me-2">
                                             <button type="submit" class="btn btn-sm btn-success">
-                                                <i class="bi bi-award"></i> Generate Bulk Certificates
+                                                <i class="bi bi-award"></i> Generate All Certificates
                                             </button>
                                         </form>
                                         <form method="POST" action="{{ url_for('lms.download_cohort_certificates', cohort_id=cohort.id) }}" class="d-inline">
                                             <button type="submit" class="btn btn-sm btn-primary">
-                                                <i class="bi bi-download"></i> Download Bulk ZIP
+                                                <i class="bi bi-download"></i> Download All ZIP
                                             </button>
                                         </form>
                                     </td>
