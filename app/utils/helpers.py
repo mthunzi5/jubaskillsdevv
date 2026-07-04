@@ -1,11 +1,23 @@
 import os
 import json
 from datetime import datetime
+from sqlalchemy import inspect
 from app import db
 from app.models.user import User
 
 def create_default_admin():
     """Create default admin account if none exists"""
+    try:
+        inspector = inspect(db.engine)
+        if not inspector.has_table('users'):
+            return
+
+        user_columns = {column['name'] for column in inspector.get_columns('users')}
+        if 'is_terminated' not in user_columns:
+            return
+    except Exception:
+        return
+
     admin = User.query.filter_by(role='admin').first()
     if not admin:
         admin = User(
