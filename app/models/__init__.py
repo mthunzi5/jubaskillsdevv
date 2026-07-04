@@ -20,7 +20,7 @@ from app.models.communication import CommunicationPost, PostAttachment
 from app.models.request_hub import Request, RequestSubmission, RequestDocument
 from app.models.notification import Notification
 from app.models.recurring_request import RecurringRequest
-from app.models.job_application import JobApplication, JobApplicationDocument, JobPost, JobPostRequiredDocument
+from app.models.job_application import JobApplication, JobApplicationDocument, JobApplicationSettings
 from app.models.intern_management import InternGroup, Cohort, CohortMember, HostCompany, InternPlacement
 from app.models.permission import RolePermission
 from app.models.audit_log import OperationAuditLog
@@ -33,7 +33,7 @@ __all__ = ['User', 'Timesheet', 'TimesheetTemplate', 'TimesheetPolicySettings', 
            'TaskV2', 'TaskAssignment', 'QuizQuestion', 'QuizAnswer',
            'CommunicationPost', 'PostAttachment',
            'Request', 'RequestSubmission', 'RequestDocument', 'Notification', 'RecurringRequest',
-           'JobApplication', 'JobApplicationDocument', 'JobPost', 'JobPostRequiredDocument',
+           'JobApplication', 'JobApplicationDocument', 'JobApplicationSettings',
            'InternGroup', 'Cohort', 'CohortMember', 'HostCompany', 'InternPlacement',
            'RolePermission', 'OperationAuditLog', 'InductionSubmission', 'InductionPortalSettings', 'InductionExportAuditLog',
            'MictLearnerProfile']
