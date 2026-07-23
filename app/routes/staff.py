@@ -7,6 +7,7 @@ from app.models.induction import InductionSubmission, InductionExportAuditLog, I
 from app.models.user import User
 from app.models.notification import Notification
 from app.models.intern_management import Cohort, CohortMember, InternPlacement
+from app.models.soft_delete import SoftDelete
 from app.utils.decorators import staff_required, admin_required
 from datetime import datetime
 import os
@@ -227,25 +228,133 @@ def clear_induction_column(doc_key):
     return redirect(url_for('staff.induction_documents', cohort_id=cohort_id))
 
 
+def _remove_timesheet_file(timesheet):
+    """Best-effort removal of the timesheet's file from disk. Returns bytes freed."""
+    file_path = os.path.abspath(timesheet.file_path) if timesheet.file_path else None
+    freed = 0
+    try:
+        if file_path and os.path.exists(file_path):
+            freed = os.path.getsize(file_path)
+            os.remove(file_path)
+    except OSError:
+        pass
+    return freed
+
+
+def _purge_orphan_soft_delete(timesheet_id):
+    """Remove any pending-deletion tracking row left behind for a hard-deleted timesheet."""
+    SoftDelete.query.filter_by(item_type='timesheet', item_id=timesheet_id).delete()
+
+
 @bp.route('/timesheets/<int:timesheet_id>/delete', methods=['POST'])
 @login_required
 @staff_required
 def delete_timesheet(timesheet_id):
     """Permanently delete a timesheet submission."""
     timesheet = Timesheet.query.get_or_404(timesheet_id)
-    file_path = os.path.abspath(timesheet.file_path) if timesheet.file_path else None
-
-    try:
-        if file_path and os.path.exists(file_path):
-            os.remove(file_path)
-    except OSError:
-        pass
+    _remove_timesheet_file(timesheet)
+    _purge_orphan_soft_delete(timesheet.id)
 
     db.session.delete(timesheet)
     db.session.commit()
 
     flash('Timesheet has been deleted successfully.', 'success')
     return redirect(request.referrer or url_for('staff.timesheets'))
+
+
+@bp.route('/timesheets/database')
+@login_required
+@staff_required
+def timesheets_database():
+    """Full database view of every timesheet ever uploaded, regardless of cohort,
+    intern type, or soft-delete/approval status - grouped by month for cleanup."""
+    rows = (
+        db.session.query(
+            Timesheet.submission_month,
+            db.func.count(Timesheet.id),
+            db.func.coalesce(db.func.sum(Timesheet.file_size), 0),
+            db.func.sum(db.case((Timesheet.is_deleted == True, 1), else_=0)),
+        )
+        .group_by(Timesheet.submission_month)
+        .order_by(Timesheet.submission_month.desc())
+        .all()
+    )
+
+    months = [
+        {
+            'month': month,
+            'count': count,
+            'total_size': total_size,
+            'pending_count': pending_count or 0,
+        }
+        for month, count, total_size, pending_count in rows
+    ]
+
+    grand_total_count = sum(m['count'] for m in months)
+    grand_total_size = sum(m['total_size'] for m in months)
+
+    return render_template(
+        'staff/timesheets_database.html',
+        months=months,
+        grand_total_count=grand_total_count,
+        grand_total_size=grand_total_size,
+    )
+
+
+@bp.route('/timesheets/database/<string:month>')
+@login_required
+@staff_required
+def timesheets_database_month(month):
+    """List every timesheet row for a given month, regardless of cohort or status."""
+    if len(month) != 7 or '-' not in month:
+        flash('Invalid month format. Use YYYY-MM.', 'danger')
+        return redirect(url_for('staff.timesheets_database'))
+
+    timesheets = (
+        Timesheet.query
+        .filter_by(submission_month=month)
+        .order_by(Timesheet.is_deleted.asc(), Timesheet.submission_date.desc())
+        .all()
+    )
+    total_size = sum(ts.file_size or 0 for ts in timesheets)
+
+    return render_template(
+        'staff/timesheets_database_month.html',
+        month=month,
+        timesheets=timesheets,
+        total_size=total_size,
+    )
+
+
+@bp.route('/timesheets/database/delete-month', methods=['POST'])
+@login_required
+@staff_required
+def delete_month_timesheets_database():
+    """Permanently delete every timesheet for a month, regardless of cohort,
+    intern type, or soft-delete/pending-approval status. Frees disk space."""
+    month = (request.form.get('month') or '').strip()
+    if len(month) != 7 or '-' not in month:
+        flash('Invalid month format. Use YYYY-MM.', 'danger')
+        return redirect(url_for('staff.timesheets_database'))
+
+    timesheets = Timesheet.query.filter_by(submission_month=month).all()
+
+    deleted_count = 0
+    freed_bytes = 0
+    for ts in timesheets:
+        freed_bytes += _remove_timesheet_file(ts)
+        _purge_orphan_soft_delete(ts.id)
+        db.session.delete(ts)
+        deleted_count += 1
+
+    if deleted_count > 0:
+        db.session.commit()
+        freed_mb = freed_bytes / (1024 * 1024)
+        flash(f'Permanently deleted {deleted_count} timesheet(s) for {month}, freeing {freed_mb:.1f} MB.', 'success')
+    else:
+        flash(f'No timesheets found for {month}.', 'warning')
+
+    return redirect(url_for('staff.timesheets_database'))
 
 
 

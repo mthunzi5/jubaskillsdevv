@@ -31,6 +31,9 @@
             <a href="{{ url_for('staff.timesheet_submission_status') }}" class="btn btn-outline-dark btn-sm" data-bs-toggle="tooltip" title="Track submitted vs pending timesheets by cohort and month">
                 <i class="bi bi-clipboard-data"></i> Submission Status
             </a>
+            <a href="{{ url_for('staff.timesheets_database') }}" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="View and permanently delete every timesheet in the database, including ones without a cohort or stuck pending deletion">
+                <i class="bi bi-hdd-stack"></i> Manage Database
+            </a>
             <a href="{{ url_for('staff.download_month_timesheets', month=month_filter, intern_type=intern_type_filter) }}" class="btn btn-success btn-sm" data-bs-toggle="tooltip" title="Download filtered timesheets as a ZIP file">
                 <i class="bi bi-download"></i> Download (Month)
             </a>
@@ -39,6 +42,9 @@
         <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
             <a href="{{ url_for('staff.timesheet_submission_status') }}" class="btn btn-outline-dark btn-sm" data-bs-toggle="tooltip" title="Track submitted vs pending timesheets by cohort and month">
                 <i class="bi bi-clipboard-data"></i> Submission Status
+            </a>
+            <a href="{{ url_for('staff.timesheets_database') }}" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="View and permanently delete every timesheet in the database, including ones without a cohort or stuck pending deletion">
+                <i class="bi bi-hdd-stack"></i> Manage Database
             </a>
         </div>
         {% endif %}

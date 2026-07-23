@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Timesheet Database - Juba Skills LMS{% endblock %}
+
+{% block page_title %}Timesheet Database{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('staff.timesheets') }}">Timesheets</a></li>
+<li class="breadcrumb-item active" aria-current="page">Database</li>
+{% endblock %}
+
+{% block content %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> This view includes <strong>every</strong> timesheet ever uploaded, regardless of cohort,
+    intern type, or deletion status - including ones interns already tried to delete that are stuck waiting on approval.
+    Deleting here is <strong>immediate and permanent</strong>: the database row and the file on disk are both removed.
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Total timesheets in database</div>
+                <div class="h4 mb-0">{{ grand_total_count }}</div>
+                <small class="text-muted">Across all months, cohorts, and statuses</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted">Total disk space used</div>
+                <div class="h4 mb-0">{{ '%.1f'|format(grand_total_size / (1024*1024)) }} MB</div>
+                <small class="text-muted">Sum of all timesheet file sizes</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if months %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Count</th>
+                        <th>Pending Delete</th>
+                        <th>Size</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in months %}
+                    <tr>
+                        <td>{{ m.month }}</td>
+                        <td>{{ m.count }}</td>
+                        <td>
+                            {% if m.pending_count %}
+                            <span class="badge bg-warning text-dark">{{ m.pending_count }}</span>
+                            {% else %}
+                            <span class="text-muted">0</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ '%.1f'|format(m.total_size / (1024*1024)) }} MB</td>
+                        <td>
+                            <a href="{{ url_for('staff.timesheets_database_month', month=m.month) }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-list-ul"></i> View
+                            </a>
+                            <form method="POST" action="{{ url_for('staff.delete_month_timesheets_database') }}" class="d-inline">
+                                <input type="hidden" name="month" value="{{ m.month }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Permanently delete ALL {{ m.count }} timesheet(s) for {{ m.month }}? This removes them from the database and disk, and cannot be undone.')">
+                                    <i class="bi bi-trash"></i> Delete all
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> No timesheets found in the database.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
