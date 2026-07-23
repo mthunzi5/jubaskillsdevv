@@ -654,7 +654,15 @@ def approve_deletion(soft_delete_id):
                 item_details=timesheet.to_dict(),
                 is_permanent=True
             )
-            
+
+            # Remove the file from disk before dropping the row
+            file_path = os.path.abspath(timesheet.file_path) if timesheet.file_path else None
+            try:
+                if file_path and os.path.exists(file_path):
+                    os.remove(file_path)
+            except OSError:
+                pass
+
             # Permanently delete
             db.session.delete(timesheet)
     
