@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Documents Cleanup - Job Applications{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('job_applications.staff_dashboard') }}">Job Applications</a></li>
+<li class="breadcrumb-item active" aria-current="page">Documents Cleanup</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <h1 class="h3 mb-3"><i class="bi bi-hdd-stack"></i> Job Application Documents Cleanup</h1>
+
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Grouped by the application's current status. Deleting here is
+        <strong>immediate and permanent</strong>: every document file for applications in that status is removed
+        from disk and its database record is deleted. This does not delete the applications themselves, only
+        their uploaded documents. To confirm, you must type <strong>DELETE</strong> in the box that appears.
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted">Total documents on disk</div>
+                    <div class="h4 mb-0">{{ grand_total_count }}</div>
+                    <small class="text-muted">Across all application statuses</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted">Total disk space used</div>
+                    <div class="h4 mb-0">{{ '%.1f'|format(grand_total_size / (1024*1024)) }} MB</div>
+                    <small class="text-muted">Sum of all document file sizes</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if status_rows %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Application Status</th>
+                            <th>Applications</th>
+                            <th>Documents</th>
+                            <th>Size</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in status_rows %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-{{ 'warning text-dark' if row.status == 'submitted' else 'info' if row.status == 'under_review' else 'success' if row.status in ['shortlisted', 'accepted'] else 'danger' }}">
+                                    {{ row.label }}
+                                </span>
+                            </td>
+                            <td>{{ row.application_count }}</td>
+                            <td>{{ row.document_count }}</td>
+                            <td>{{ '%.1f'|format(row.total_size / (1024*1024)) }} MB</td>
+                            <td>
+                                {% if row.document_count %}
+                                <form method="POST" action="{{ url_for('job_applications.bulk_delete_documents_by_status') }}"
+                                      class="d-inline delete-by-status-form">
+                                    <input type="hidden" name="status" value="{{ row.status }}">
+                                    <input type="hidden" name="confirm_text" class="confirm-text-input" value="">
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-by-status-btn"
+                                            data-status-label="{{ row.label }}"
+                                            data-doc-count="{{ row.document_count }}"
+                                            data-size-mb="{{ '%.1f'|format(row.total_size / (1024*1024)) }}">
+                                        <i class="bi bi-trash"></i> Delete all documents
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted small">Nothing to delete</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle"></i> No documents found.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.delete-by-status-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var statusLabel = btn.getAttribute('data-status-label');
+            var docCount = btn.getAttribute('data-doc-count');
+            var sizeMb = btn.getAttribute('data-size-mb');
+            var typed = prompt(
+                'This will PERMANENTLY delete ' + docCount + ' document(s) (' + sizeMb + ' MB) ' +
+                'for all "' + statusLabel + '" applications, removing the files from disk. ' +
+                'This cannot be undone.\n\nType DELETE (in capitals) to confirm:'
+            );
+            if (typed === null) {
+                return;
+            }
+            if (typed.trim() !== 'DELETE') {
+                alert('Confirmation text did not match. Nothing was deleted.');
+                return;
+            }
+            var form = btn.closest('form');
+            form.querySelector('.confirm-text-input').value = 'DELETE';
+            form.submit();
+        });
+    });
+});
+</script>
+{% endblock %}

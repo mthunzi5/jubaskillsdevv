@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app import db
@@ -740,6 +740,108 @@ def delete_document(doc_id):
         flash(f'Error deleting document: {str(e)}', 'danger')
     
     return redirect(url_for('job_applications.staff_view_application', app_id=app_id))
+
+
+VALID_APPLICATION_STATUSES = ['submitted', 'under_review', 'shortlisted', 'accepted', 'rejected']
+
+
+@bp.route('/staff/documents-cleanup')
+@login_required
+@staff_required
+def documents_cleanup():
+    """Storage-cleanup overview: how much disk space job application documents
+    use, grouped by the current status of the application they belong to."""
+    status_rows = []
+    grand_total_count = 0
+    grand_total_size = 0
+
+    for status in VALID_APPLICATION_STATUSES:
+        result = (
+            db.session.query(
+                db.func.count(JobApplicationDocument.id),
+                db.func.coalesce(db.func.sum(JobApplicationDocument.file_size), 0),
+            )
+            .join(JobApplication, JobApplication.id == JobApplicationDocument.application_id)
+            .filter(
+                JobApplication.status == status,
+                JobApplication.is_deleted == False,
+                JobApplicationDocument.is_deleted == False,
+            )
+            .first()
+        )
+        count, total_size = result if result else (0, 0)
+        application_count = JobApplication.query.filter_by(status=status, is_deleted=False).count()
+
+        status_rows.append({
+            'status': status,
+            'label': status.replace('_', ' ').title(),
+            'application_count': application_count,
+            'document_count': count or 0,
+            'total_size': total_size or 0,
+        })
+        grand_total_count += count or 0
+        grand_total_size += total_size or 0
+
+    return render_template(
+        'job_applications/documents_cleanup.html',
+        status_rows=status_rows,
+        grand_total_count=grand_total_count,
+        grand_total_size=grand_total_size,
+    )
+
+
+@bp.route('/staff/documents-cleanup/delete-by-status', methods=['POST'])
+@login_required
+@staff_required
+def bulk_delete_documents_by_status():
+    """Permanently delete every (non-deleted) document attached to applications
+    with a given status, removing the files from disk to free storage space."""
+    status = (request.form.get('status') or '').strip()
+    confirm_text = (request.form.get('confirm_text') or '').strip()
+
+    if status not in VALID_APPLICATION_STATUSES:
+        flash('Invalid status selected.', 'danger')
+        return redirect(url_for('job_applications.documents_cleanup'))
+
+    if confirm_text != 'DELETE':
+        flash('You must type DELETE exactly to confirm this permanent action.', 'danger')
+        return redirect(url_for('job_applications.documents_cleanup'))
+
+    documents = (
+        JobApplicationDocument.query
+        .join(JobApplication, JobApplication.id == JobApplicationDocument.application_id)
+        .filter(
+            JobApplication.status == status,
+            JobApplication.is_deleted == False,
+            JobApplicationDocument.is_deleted == False,
+        )
+        .all()
+    )
+
+    deleted_count = 0
+    freed_bytes = 0
+    for doc in documents:
+        if doc.file_path and os.path.exists(doc.file_path):
+            try:
+                freed_bytes += os.path.getsize(doc.file_path)
+                os.remove(doc.file_path)
+            except OSError:
+                current_app.logger.exception('Failed to remove job application document file %s', doc.file_path)
+        db.session.delete(doc)
+        deleted_count += 1
+
+    if deleted_count > 0:
+        db.session.commit()
+        freed_mb = freed_bytes / (1024 * 1024)
+        flash(
+            f'Permanently deleted {deleted_count} document(s) for {status.replace("_", " ").title()} '
+            f'applications, freeing {freed_mb:.1f} MB.',
+            'success',
+        )
+    else:
+        flash(f'No documents found for {status.replace("_", " ").title()} applications.', 'warning')
+
+    return redirect(url_for('job_applications.documents_cleanup'))
 
 
 @bp.route('/staff/export-applications', methods=['POST'])
