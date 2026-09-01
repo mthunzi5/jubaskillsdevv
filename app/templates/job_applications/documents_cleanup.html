@@ -40,6 +40,25 @@
         </div>
     </div>
 
+    {% if grand_total_count %}
+    <div class="card border-danger mb-3">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h6 class="mb-1 text-danger"><i class="bi bi-exclamation-triangle"></i> Delete every document, every status</h6>
+                <small class="text-muted">Removes all {{ grand_total_count }} document(s) ({{ '%.1f'|format(grand_total_size / (1024*1024)) }} MB) from disk in one action. Cannot be undone.</small>
+            </div>
+            <form method="POST" action="{{ url_for('job_applications.bulk_delete_all_documents') }}" class="d-inline delete-all-form">
+                <input type="hidden" name="confirm_text" class="confirm-text-input" value="">
+                <button type="button" class="btn btn-danger delete-all-btn"
+                        data-doc-count="{{ grand_total_count }}"
+                        data-size-mb="{{ '%.1f'|format(grand_total_size / (1024*1024)) }}">
+                    <i class="bi bi-trash3-fill"></i> Delete ALL documents
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="card">
         <div class="card-body">
             {% if status_rows %}
@@ -98,6 +117,29 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    var deleteAllBtn = document.querySelector('.delete-all-btn');
+    if (deleteAllBtn) {
+        deleteAllBtn.addEventListener('click', function () {
+            var docCount = deleteAllBtn.getAttribute('data-doc-count');
+            var sizeMb = deleteAllBtn.getAttribute('data-size-mb');
+            var typed = prompt(
+                'This will PERMANENTLY delete ALL ' + docCount + ' document(s) (' + sizeMb + ' MB) ' +
+                'across EVERY application status, removing the files from disk. ' +
+                'This cannot be undone.\n\nType DELETE ALL (in capitals) to confirm:'
+            );
+            if (typed === null) {
+                return;
+            }
+            if (typed.trim() !== 'DELETE ALL') {
+                alert('Confirmation text did not match. Nothing was deleted.');
+                return;
+            }
+            var form = deleteAllBtn.closest('form');
+            form.querySelector('.confirm-text-input').value = 'DELETE ALL';
+            form.submit();
+        });
+    }
+
     document.querySelectorAll('.delete-by-status-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var statusLabel = btn.getAttribute('data-status-label');

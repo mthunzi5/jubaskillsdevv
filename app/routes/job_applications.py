@@ -790,6 +790,42 @@ def documents_cleanup():
     )
 
 
+@bp.route('/staff/documents-cleanup/delete-all', methods=['POST'])
+@login_required
+@staff_required
+def bulk_delete_all_documents():
+    """Permanently delete every job application document on disk, regardless
+    of the status (or deletion state) of the application it belongs to."""
+    confirm_text = (request.form.get('confirm_text') or '').strip()
+
+    if confirm_text != 'DELETE ALL':
+        flash('You must type DELETE ALL exactly to confirm this permanent action.', 'danger')
+        return redirect(url_for('job_applications.documents_cleanup'))
+
+    documents = JobApplicationDocument.query.filter_by(is_deleted=False).all()
+
+    deleted_count = 0
+    freed_bytes = 0
+    for doc in documents:
+        if doc.file_path and os.path.exists(doc.file_path):
+            try:
+                freed_bytes += os.path.getsize(doc.file_path)
+                os.remove(doc.file_path)
+            except OSError:
+                current_app.logger.exception('Failed to remove job application document file %s', doc.file_path)
+        db.session.delete(doc)
+        deleted_count += 1
+
+    if deleted_count > 0:
+        db.session.commit()
+        freed_mb = freed_bytes / (1024 * 1024)
+        flash(f'Permanently deleted all {deleted_count} document(s) across every status, freeing {freed_mb:.1f} MB.', 'success')
+    else:
+        flash('No documents found to delete.', 'warning')
+
+    return redirect(url_for('job_applications.documents_cleanup'))
+
+
 @bp.route('/staff/documents-cleanup/delete-by-status', methods=['POST'])
 @login_required
 @staff_required
